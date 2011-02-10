@@ -4,9 +4,9 @@ Created on Feb 10, 2011
 @author: willmore
 '''
 
-from d2c.model.RawImage import RawImage
+from d2c.model.SourceImage import SourceImage
 
 class DAO:
         
-    def getRawImages(self):
-        return [RawImage("foobar"), RawImage("foobar")]
+    def getSourceImages(self):
+        return [SourceImage("foobar"), SourceImage("foobar")]
