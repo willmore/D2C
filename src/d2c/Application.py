@@ -5,22 +5,21 @@ Created on Feb 10, 2011
 '''
 
 import wx
+from data.DAO import DAO
 from gui.Gui import Gui
 
 
 class Application:
-    '''
-    classdocs
-    '''
 
     def __init__(self):
-        '''
-        Constructor
-        '''
-        self.app = wx.App()
         
-        self.frame = Gui()
-        self.frame.Show()
+        self._dao = DAO()
+        self._app = wx.App()
+        
+        self._frame = Gui()
+        self._frame.Show()
+        
+        
         
     def MainLoop(self):
-        self.app.MainLoop()
+        self._app.MainLoop()
