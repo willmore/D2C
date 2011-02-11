@@ -14,7 +14,7 @@ class Gui(wx.Frame):
     _ID_ADD_IMAGE = 2
     
     def __init__(self, parent=None, id=-1, title='D2C'):
-        wx.Frame.__init__(self, parent, id, title, size=(250, 150))
+        wx.Frame.__init__(self, parent, id, title, size=(550, 550))
 
         # Menubar
         menubar = wx.MenuBar()
@@ -27,36 +27,43 @@ class Gui(wx.Frame):
 
         self.Bind(wx.EVT_MENU, self.OnQuit, id=1)
         
-        hbox1 = wx.BoxSizer(wx.HORIZONTAL)
+        gridSizer = wx.GridSizer(rows=1, cols=2, hgap=5, vgap=5)
         
         #left panel items 
         self._items = wx.ListBox(self, self._ID_LISTBOX, wx.DefaultPosition, (170, 130), ["Source Images", "Deployment Descriptors", "Deployments"], wx.LB_SINGLE)
         self._items.SetSelection(0)
-        self.Bind(wx.EVT_LISTBOX, self.OnSelect, id=self._ID_LISTBOX)
+        self.Bind(wx.EVT_LISTBOX, self.OnListSelect, id=self._ID_LISTBOX)
 
-        hbox1.Add(self._items, 0, wx.ALL, 5)
+        gridSizer.Add(self._items, 0, wx.ALL|wx.EXPAND, 5)
+        
 
-
-        self._sourceImagesPanel = wx.Panel(self, -1)
-        wx.Button(self._sourceImagesPanel, self._ID_ADD_IMAGE, 'Add Image', (150, 130), (110, -1))
-        self.Bind(wx.EVT_BUTTON, self.OnAddImage, id=self._ID_ADD_IMAGE)
+        self._sourceImagesPanel = RawImagePanel(self)
         
-        hbox1.Add(self._sourceImagesPanel, 1, wx.ALL, 5)
+        gridSizer.Add(self._sourceImagesPanel, 0, wx.ALL|wx.EXPAND, 5)
         
-        #self._deploymentDescPanel = wx.Panel(self, -1)
-        
-        self.SetSizer(hbox1)
+        self.SetSizer(gridSizer)
+ 
     
     def OnQuit(self, event):
         self.Close()
 
-    def OnSelect(self, event):
-        print event
+    def OnListSelect(self, event):
+        print self._items.GetStringSelection();
     
     def OnAddImage(self, event):
         print "Add Image"
     
-   
+
+class RawImagePanel(wx.Panel):    
+    
+    def __init__(self, parent, id=-1):
+        wx.Panel.__init__(self, parent, id)
+
+        self._addButton = wx.Button(self, wx.ID_ANY, 'Add Image', size=(110, -1))
+        self.Bind(wx.EVT_BUTTON, self.OnAddImage, id=self._addButton.GetId())
+    
+    def OnAddImage(self, event):
+        print "Add Image"
 
 
 
