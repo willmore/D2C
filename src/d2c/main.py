@@ -7,6 +7,7 @@ class Usage(Exception):
     def __init__(self, msg):
         self.msg = msg
 
+
 def main(argv=None):
     if argv is None:
         argv = sys.argv

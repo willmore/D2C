@@ -30,16 +30,19 @@ class Gui(wx.Frame):
         gridSizer = wx.GridSizer(rows=1, cols=2, hgap=5, vgap=5)
         
         #left panel items 
-        self._items = wx.ListBox(self, self._ID_LISTBOX, wx.DefaultPosition, (170, 130), ["Source Images", "Deployment Descriptors", "Deployments"], wx.LB_SINGLE)
+        self._items = wx.ListBox(self, self._ID_LISTBOX, wx.DefaultPosition, (170, 130), ["Source Images", "Dummy", "Deployment Descriptors", "Deployments"], wx.LB_SINGLE)
         self._items.SetSelection(0)
         self.Bind(wx.EVT_LISTBOX, self.OnListSelect, id=self._ID_LISTBOX)
 
         gridSizer.Add(self._items, 0, wx.ALL|wx.EXPAND, 5)
         
-
-        self._sourceImagesPanel = RawImagePanel(self)
+        self._containerPanel = ContainerPanel(self)
         
-        gridSizer.Add(self._sourceImagesPanel, 0, wx.ALL|wx.EXPAND, 5)
+        
+        gridSizer.Add(self._containerPanel, 0, wx.ALL|wx.EXPAND, 5)
+        
+        self._containerPanel.addPanel("Source Images", RawImagePanel(self._containerPanel))
+        self._containerPanel.addPanel("Dummy", DummyPanel(self._containerPanel))
         
         self.SetSizer(gridSizer)
  
@@ -48,22 +51,54 @@ class Gui(wx.Frame):
         self.Close()
 
     def OnListSelect(self, event):
-        print self._items.GetStringSelection();
+        self._containerPanel.showPanel(self._items.GetStringSelection())
+
     
     def OnAddImage(self, event):
         print "Add Image"
     
+class ContainerPanel(wx.Panel):
+    
+    _panels = {}
+
+    def __init__(self, parent, id=-1):
+        wx.Panel.__init__(self, parent, id)
+        self._sizer = wx.BoxSizer(wx.VERTICAL)
+        #self.sizer.Add(self.panel_one, 1, wx.EXPAND)
+        #self.sizer.Add(self.panel_two, 1, wx.EXPAND)
+        self.SetSizer(self._sizer)
+    
+    def addPanel(self, label, panel):
+        assert panel.GetParent() == self
+        self._panels[label] = panel
+        self._sizer.Add(panel, 0, wx.ALL|wx.EXPAND, 0)
+        
+    def showPanel(self, label):
+        for l, p in self._panels.items():
+            if l == label:
+                p.Show()
+            else:
+                p.Hide()
+                
 
 class RawImagePanel(wx.Panel):    
     
-    def __init__(self, parent, id=-1):
-        wx.Panel.__init__(self, parent, id)
+    def __init__(self, *args):
+        wx.Panel.__init__(self, *args)
 
         self._addButton = wx.Button(self, wx.ID_ANY, 'Add Image', size=(110, -1))
         self.Bind(wx.EVT_BUTTON, self.OnAddImage, id=self._addButton.GetId())
     
     def OnAddImage(self, event):
         print "Add Image"
+
+
+class DummyPanel(wx.Panel):    
+    
+    def __init__(self, parent, id=-1):
+        wx.Panel.__init__(self, parent, id)
+        
+        wx.StaticText(self, -1, 'Dummy Panel')
 
 
 
