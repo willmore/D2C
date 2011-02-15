@@ -5,6 +5,9 @@ Created on Feb 9, 2011
 '''
 
 import wx
+import os
+
+from d2c.data.dao import DAO
 
 
 class Gui(wx.Frame):    
@@ -47,6 +50,9 @@ class Gui(wx.Frame):
         gridSizer.Add(self._containerPanel, 0, wx.ALL|wx.EXPAND, 5)
         
         self.SetSizer(gridSizer)
+        
+    def getCredentialPanel(self):
+        return self._containerPanel.getPanel("Credentials")
     
     def OnQuit(self, event):
         self.Close()
@@ -63,8 +69,8 @@ class ContainerPanel(wx.Panel):
     
     _panels = {}
 
-    def __init__(self, parent, id=-1):
-        wx.Panel.__init__(self, parent, id)
+    def __init__(self, parent):
+        wx.Panel.__init__(self, parent)
         self._sizer = wx.BoxSizer(wx.VERTICAL)
         self.SetSizer(self._sizer)
     
@@ -81,17 +87,45 @@ class ContainerPanel(wx.Panel):
             elif p.IsShown():
                 p.Hide()
         self.Layout()
+    
+    def getPanel(self, label):
+        return self._panels[label]
 
 class RawImagePanel(wx.Panel):    
     
     def __init__(self, *args):
         wx.Panel.__init__(self, *args)
 
-        self._addButton = wx.Button(self, wx.ID_ANY, 'Add Image', size=(110, -1))
-        self.Bind(wx.EVT_BUTTON, self.OnAddImage, id=self._addButton.GetId())
+        vbox = wx.BoxSizer(wx.VERTICAL)
+        self.SetSizer(vbox)
+        
+        hbox1 = wx.BoxSizer(wx.HORIZONTAL)
+        hbox1.Add(wx.TextCtrl(self), 1, wx.EXPAND)
+        
+        hbox2 = wx.BoxSizer(wx.HORIZONTAL)
+
+        self._addButton = wx.Button(self, wx.ID_ANY, 'Add Image', size=(110, -1))        
+        self._newFile = wx.TextCtrl(self)
     
-    def OnAddImage(self, event):
-        print "Add Image"
+    
+        self._findButton = wx.Button(self, wx.ID_ANY, 'Find Image', size=(110, -1))
+        self._findButton.Bind(wx.EVT_BUTTON, self.OnFindImage)
+    
+    
+        hbox2.Add(self._addButton, 0, wx.ALIGN_CENTER_VERTICAL)
+        hbox2.Add(self._newFile, 1, wx.ALIGN_CENTER_VERTICAL)
+        
+        vbox.Add(hbox1, 1, wx.EXPAND)
+        vbox.Add(self._findButton, 0)
+        vbox.Add(hbox2, 0, wx.EXPAND)
+        
+    def OnFindImage(self, event):
+        dlg = wx.FileDialog(self, "Choose an image", os.getcwd(), "", "*.*", wx.OPEN)
+        if dlg.ShowModal() == wx.ID_OK:
+            path = dlg.GetPath()
+            self._newFile.SetValue(path)
+        dlg.Destroy()
+
 
 
 class CredentialPanel(wx.Panel):    
@@ -103,13 +137,13 @@ class CredentialPanel(wx.Panel):
         self._aws_secret_access_key = wx.TextCtrl(self);
         self._ec2_cert = wx.TextCtrl(self);
         self._ec2_private_key = wx.TextCtrl(self);   
-        self._updateButton = wx.Button(self, wx.ID_ANY, 'Save Credentials', size=(120, -1))
-        self.Bind(wx.EVT_BUTTON, self.OnSave, id=self._updateButton.GetId())
+        self._updateButton = wx.Button(self, wx.ID_ANY, 'Save Credentials', size=(130, -1))
         
-        vbox = wx.FlexGridSizer(5,2,0,0)
-        vbox.AddGrowableCol(1, 1)
         
-        vbox.AddMany([ (wx.StaticText(self, -1, 'AWS Key ID'),0, wx.ALIGN_CENTER),
+        fgs = wx.FlexGridSizer(5,2,0,0)
+        fgs.AddGrowableCol(1, 1)
+        
+        fgs.AddMany([ (wx.StaticText(self, -1, 'AWS Key ID'),0, wx.ALIGN_CENTER),
                            (self._aws_key_id, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL|wx.EXPAND),
                            
                            (wx.StaticText(self, -1, 'AWS Secret Access Key'),0, wx.ALIGN_CENTER_HORIZONTAL),
@@ -123,14 +157,7 @@ class CredentialPanel(wx.Panel):
                             
                            (self._updateButton, 1)])
         
-        self.SetSizer(vbox)
-        
-    def setAWSCred(self, cred):
-        self._aws_key_id.WriteText(cred.access_key_id)
-        self._aws_secret_access_key.WriteText(cred.secret_access_key)
-
-    def OnSave(self, event):
-        print "Saving creds"
+        self.SetSizer(fgs)
 
 
 
