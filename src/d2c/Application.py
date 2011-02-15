@@ -5,7 +5,7 @@ Created on Feb 10, 2011
 '''
 
 import wx
-from data.DAO import DAO
+from data.dao import DAO
 from gui.Gui import Gui
 
 
@@ -17,9 +17,7 @@ class Application:
         self._app = wx.App()
         
         self._frame = Gui()
-        self._frame.Show()
-        
-        
+        self._frame.Show()     
         
     def MainLoop(self):
         self._app.MainLoop()
