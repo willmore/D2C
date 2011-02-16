@@ -9,6 +9,7 @@ from data.dao import DAO
 from gui.Gui import Gui
 
 from controller.CredController import CredController
+from controller.ImageController import ImageController
 
 
 class Application:
@@ -21,6 +22,7 @@ class Application:
         self._frame = Gui()
         
         self._credController = CredController(self._frame.getCredentialPanel(), self._dao)
+        self._imageController = ImageController(self._frame.getImagePanel(), self._dao)
         
         self._frame
         self._frame.Show()     

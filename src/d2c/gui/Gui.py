@@ -7,16 +7,17 @@ Created on Feb 9, 2011
 import wx
 import os
 
-from d2c.data.dao import DAO
-
-
 class Gui(wx.Frame):    
     
     _ID_LISTBOX = 1
     _ID_ADD_IMAGE = 2
     
+    #Labels
+    LABEL_CREDENTIALS = "Credentials"
+    LABEL_SOURCE_IMAGES = "Source Images"
+    
     def __init__(self, parent=None, id=-1, title='D2C'):
-        wx.Frame.__init__(self, parent, id, title, size=(550, 550))
+        wx.Frame.__init__(self, parent, id, title, size=(750, 450))
 
         # Menubar
         menubar = wx.MenuBar()
@@ -36,8 +37,8 @@ class Gui(wx.Frame):
         #left panel items 
         labels = []
         self._containerPanel = ContainerPanel(self)
-        for (label, panel) in [("Credentials", CredentialPanel(self._containerPanel)),
-                               ("Source Images", RawImagePanel(self._containerPanel))
+        for (label, panel) in [(self.LABEL_CREDENTIALS, CredentialPanel(self._containerPanel)),
+                               (self.LABEL_SOURCE_IMAGES, RawImagePanel(self._containerPanel))
                                ]:
             self._containerPanel.addPanel(label, panel)
             labels.append(label)
@@ -52,7 +53,10 @@ class Gui(wx.Frame):
         self.SetSizer(gridSizer)
         
     def getCredentialPanel(self):
-        return self._containerPanel.getPanel("Credentials")
+        return self._containerPanel.getPanel(self.LABEL_CREDENTIALS)
+    
+    def getImagePanel(self):
+        return self._containerPanel.getPanel(self.LABEL_SOURCE_IMAGES)
     
     def OnQuit(self, event):
         self.Close()
@@ -97,34 +101,56 @@ class RawImagePanel(wx.Panel):
         wx.Panel.__init__(self, *args)
 
         vbox = wx.BoxSizer(wx.VERTICAL)
-        self.SetSizer(vbox)
+        
+        self._list = wx.ListCtrl(self, -1, style=wx.LC_REPORT, size=(110,300))
         
         hbox1 = wx.BoxSizer(wx.HORIZONTAL)
-        hbox1.Add(wx.TextCtrl(self), 1, wx.EXPAND)
+        hbox1.Add(self._list, 1, wx.EXPAND)
+        
+        self._list.InsertColumn(0, 'Name', width=110)
+
+        #self._list.SetColumnWidth(0, 220)
+        
+        self._list.InsertStringItem(1, "foobar")
+        self._list.InsertStringItem(2, "baz")
         
         hbox2 = wx.BoxSizer(wx.HORIZONTAL)
 
-        self._addButton = wx.Button(self, wx.ID_ANY, 'Add Image', size=(110, -1))        
+        self._addButton = wx.Button(self, wx.ID_ANY, 'Add Image', size=(110, -1)) 
         self._newFile = wx.TextCtrl(self)
     
     
         self._findButton = wx.Button(self, wx.ID_ANY, 'Find Image', size=(110, -1))
-        self._findButton.Bind(wx.EVT_BUTTON, self.OnFindImage)
+        self._findButton.Bind(wx.EVT_BUTTON, self._OnFindImage)
     
+        self.createAMIButton = wx.Button(self, wx.ID_ANY, 'Create AMI', size=(110, -1))
     
         hbox2.Add(self._addButton, 0, wx.ALIGN_CENTER_VERTICAL)
+        hbox2.Add(self._findButton, 0, wx.ALIGN_CENTER_VERTICAL)
         hbox2.Add(self._newFile, 1, wx.ALIGN_CENTER_VERTICAL)
         
         vbox.Add(hbox1, 1, wx.EXPAND)
-        vbox.Add(self._findButton, 0)
         vbox.Add(hbox2, 0, wx.EXPAND)
+        vbox.Add(self.createAMIButton, 0)
+        self.SetSizer(vbox)
         
-    def OnFindImage(self, event):
+    def SetImages(self, images): 
+        self._list.DeleteAllItems()
+        
+        for i in images:
+            self._list.Append((i.path,))
+    
+    def _OnFindImage(self, event):
         dlg = wx.FileDialog(self, "Choose an image", os.getcwd(), "", "*.*", wx.OPEN)
         if dlg.ShowModal() == wx.ID_OK:
             path = dlg.GetPath()
             self._newFile.SetValue(path)
         dlg.Destroy()
+        
+    
+        
+    
+            
 
 
 

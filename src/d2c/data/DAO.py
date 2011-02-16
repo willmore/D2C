@@ -29,11 +29,31 @@ class DAO:
         c.execute('''create table if not exists ec2_cred
                     (id integer primary key, cert text, private_key text)''')
         
+        c.execute('''create table if not exists src_img
+                    (path text primary key)''')
+        
         self._conn.commit()
         c.close()
           
     def getSourceImages(self):
-        return [SourceImage("foobar"), SourceImage("foobar")]
+        c = self._conn.cursor()
+
+        out = []
+
+        for r in c.execute("select path from src_img"):
+            out.append(SourceImage(r[0]))
+        
+        c.close()
+        
+        return out   
+    
+    def addSourceImage(self, srcImgPath):
+        c = self._conn.cursor()
+
+        c.execute("insert into src_img values (?)", (srcImgPath,))
+        
+        self._conn.commit()
+        c.close()
     
     def saveAWSCred(self, aws_cred):
         c = self._conn.cursor()
