@@ -96,6 +96,7 @@ class AMICreator:
         count = (max_len - start) + 1 # add one for some reason...
         cmd = "/bin/dd if=%s of=%s bs=512 skip=%d count=%s" % (fullImg, outputImg, start, count)
         print "Execing: " + cmd
+        
         resp = subprocess.call(string.split(cmd, " "))
         
         
@@ -106,6 +107,7 @@ class AMICreator:
         print "cmd is " + cmd
         line = subprocess.call("fdisk -lu %s 2>&1 | grep Linux | grep -iv swap" % fullImg)
         print line
+        #TODO finish
         
 if __name__ == "__main__":
     ami = AMICreator("/Users/willmore/Documents/Research/ubuntu3.vdi")
