@@ -13,7 +13,7 @@ class Gui(wx.Frame):
     _ID_ADD_IMAGE = 2
     
     #Labels
-    LABEL_CREDENTIALS = "Credentials"
+    LABEL_CONFIGURATION = "Configuration"
     LABEL_SOURCE_IMAGES = "Source Images"
     
     def __init__(self, parent=None, id=-1, title='D2C'):
@@ -37,7 +37,7 @@ class Gui(wx.Frame):
         #left panel items 
         labels = []
         self._containerPanel = ContainerPanel(self)
-        for (label, panel) in [(self.LABEL_CREDENTIALS, CredentialPanel(self._containerPanel)),
+        for (label, panel) in [(self.LABEL_CONFIGURATION, ConfPanel(self._containerPanel)),
                                (self.LABEL_SOURCE_IMAGES, RawImagePanel(self._containerPanel))
                                ]:
             self._containerPanel.addPanel(label, panel)
@@ -52,8 +52,8 @@ class Gui(wx.Frame):
         
         self.SetSizer(gridSizer)
         
-    def getCredentialPanel(self):
-        return self._containerPanel.getPanel(self.LABEL_CREDENTIALS)
+    def getConfigurationPanel(self):
+        return self._containerPanel.getPanel(self.LABEL_CONFIGURATION)
     
     def getImagePanel(self):
         return self._containerPanel.getPanel(self.LABEL_SOURCE_IMAGES)
@@ -154,11 +154,14 @@ class RawImagePanel(wx.Panel):
 
 
 
-class CredentialPanel(wx.Panel):    
+class ConfPanel(wx.Panel):    
     
     def __init__(self, parent, id=-1):
         wx.Panel.__init__(self, parent, id)
  
+        
+        self.ec2_tool_home = wx.TextCtrl(self);
+        self.aws_user_id = wx.TextCtrl(self);
         self._aws_key_id = wx.TextCtrl(self);
         self._aws_secret_access_key = wx.TextCtrl(self);
         self._ec2_cert = wx.TextCtrl(self);
@@ -166,19 +169,25 @@ class CredentialPanel(wx.Panel):
         self._updateButton = wx.Button(self, wx.ID_ANY, 'Save Credentials', size=(130, -1))
         
         
-        fgs = wx.FlexGridSizer(5,2,0,0)
+        fgs = wx.FlexGridSizer(7,2,0,0)
         fgs.AddGrowableCol(1, 1)
         
-        fgs.AddMany([ (wx.StaticText(self, -1, 'AWS Key ID'),0, wx.ALIGN_CENTER),
+        fgs.AddMany([   (wx.StaticText(self, -1, 'EC2 Tool Home'),0, wx.ALIGN_RIGHT),
+                        (self.ec2_tool_home, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL|wx.EXPAND),
+                        
+                        (wx.StaticText(self, -1, 'AWS User ID'),0, wx.ALIGN_RIGHT),
+                        (self.aws_user_id, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL|wx.EXPAND),
+                     
+                           (wx.StaticText(self, -1, 'AWS Key ID'),0, wx.ALIGN_RIGHT),
                            (self._aws_key_id, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL|wx.EXPAND),
                            
-                           (wx.StaticText(self, -1, 'AWS Secret Access Key'),0, wx.ALIGN_CENTER_HORIZONTAL),
+                           (wx.StaticText(self, -1, 'AWS Secret Access Key'),0, wx.ALIGN_RIGHT),
                            (self._aws_secret_access_key,0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL|wx.EXPAND),
                            
-                           (wx.StaticText(self, -1, 'EC2 Certificate'),0, wx.ALIGN_CENTER),
+                           (wx.StaticText(self, -1, 'EC2 Certificate'),0, wx.ALIGN_RIGHT),
                            (self._ec2_cert, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL|wx.EXPAND),
                            
-                           (wx.StaticText(self, -1, 'EC2 Private Key'),0, wx.ALIGN_CENTER_HORIZONTAL),
+                           (wx.StaticText(self, -1, 'EC2 Private Key'),0, wx.ALIGN_RIGHT),
                            (self._ec2_private_key,0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL|wx.EXPAND),
                             
                            (self._updateButton, 1)])

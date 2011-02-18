@@ -15,17 +15,19 @@ class ConfValidationError(Exception):
 
 class Configuration:
     
-    def __init__(self, ec2ToolHome, awsUserId):
+    def __init__(self, ec2ToolHome, awsUserId, ec2Cred, awsCred):
         self.ec2ToolHome = ec2ToolHome
         self.awsUserId = awsUserId
+        self.awsCred = awsCred
+        self.ec2Cred = ec2Cred
         
-    def __validate(self):
+    def validate(self):
         self.__validateEc2ToolHome()
         self.__validateAwsUserId()
         
     def __validateEc2ToolHome(self):
-        if not os.path.exists(self.ec2ToolHome):
+        if self.ec2ToolHome and not os.path.exists(self.ec2ToolHome):
             raise ConfValidationError("EC2 Tool Home directory not found: " + self.ec2ToolHome)
     
     def __validateAwsUserId(self):
-        return re.match("\d{12}")
+        return self.awsUserId and re.match("\d{12}", self.awsUserId)
