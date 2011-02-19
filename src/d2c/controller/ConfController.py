@@ -16,17 +16,21 @@ class ConfController:
         self._dao = dao
          
         conf = dao.getConfiguration()
+        
+        if conf is not None: 
+            if conf.ec2ToolHome is not None:
+                self._credView.ec2_tool_home.WriteText(conf.ec2ToolHome)
+            
+            if conf.awsUserId is not None:
+                self._credView.aws_user_id.WriteText(conf.awsUserId)
          
-        self._credView.ec2_tool_home.WriteText(conf.ec2ToolHome)
-        self._credView.aws_user_id.WriteText(conf.awsUserId)
-         
-        if conf.awsCred is not None:
-            self._credView._aws_key_id.WriteText(conf.awsCred.access_key_id)
-            self._credView._aws_secret_access_key.WriteText(conf.awsCred.secret_access_key)
+            if conf.awsCred is not None:
+                self._credView._aws_key_id.WriteText(conf.awsCred.access_key_id)
+                self._credView._aws_secret_access_key.WriteText(conf.awsCred.secret_access_key)
        
-        if conf.ec2Cred is not None:
-            self._credView._ec2_cert.WriteText(conf.ec2Cred.cert)
-            self._credView._ec2_private_key.WriteText(conf.ec2Cred.private_key)  
+            if conf.ec2Cred is not None:
+                self._credView._ec2_cert.WriteText(conf.ec2Cred.cert)
+                self._credView._ec2_private_key.WriteText(conf.ec2Cred.private_key)  
         
         credView._updateButton.Bind(wx.EVT_BUTTON, self._onSave)
         

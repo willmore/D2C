@@ -147,13 +147,6 @@ class RawImagePanel(wx.Panel):
             self._newFile.SetValue(path)
         dlg.Destroy()
         
-    
-        
-    
-            
-
-
-
 class ConfPanel(wx.Panel):    
     
     def __init__(self, parent, id=-1):
