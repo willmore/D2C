@@ -115,65 +115,9 @@ class DAO:
         if None is cursor.execute("select * from conf where key==?", (key,)).fetchone():
             cursor.execute("insert into conf (key, value) values (?,?)", (key, value))
         else:
-            cursor.executr("update conf set value=? where key=?" (value, key))
+            cursor.execute("update conf set value=? where key=?", (value, key))
     
-    def saveAWSCred(self, aws_cred):
-        c = self._conn.cursor()
-        
-        c.execute("select count(*) from aws_cred")
-        if c.fetchone()[0] == 0:
-            c.execute("insert into aws_cred values (1, ?,?)", (aws_cred.access_key_id, aws_cred.secret_access_key))
-        else:
-            c.execute("update aws_cred set access_key_id=?, secret_access_key=? where id = 1", (aws_cred.access_key_id, aws_cred.secret_access_key))
-        
-        self._conn.commit()
-        c.close()
-        
-    def saveEC2Cred(self, ec2Cred):
-        c = self._conn.cursor()
-        
-        c.execute("select count(*) from ec2_cred")
-        
-        if c.fetchone()[0] == 0:
-            c.execute("insert into ec2_cred values (1, ?,?)", (ec2Cred.ec2_cert, ec2Cred.ec2_private_key))
-        else:
-            c.execute("update ec2_cred set cert=?, private_key=? where id = 1", (ec2Cred.ec2_cert, ec2Cred.ec2_private_key))
-        
-        self._conn.commit()
-        c.close()
-    
-    
-    def getAWSCred(self):
-        
-        c = self._conn.cursor()
-        
-        c.execute("select access_key_id, secret_access_key from aws_cred where id = 1")
-        row = c.fetchone()
-        
-        if row is None:
-            return None
-        
-        cred = AWSCred(row[0], row[1])
-    
-        c.close()
-        
-        return cred    
-        
-    
-    def getEC2Cred(self):
-        c = self._conn.cursor()
-        
-        c.execute("select cert, private_key from ec2_cred where id=1")
-        row = c.fetchone()
-        
-        if row is None:
-            return None
-        
-        cred = EC2Cred(row[0], row[1])
-    
-        c.close()
-        
-        return cred   
+   
         
     
 

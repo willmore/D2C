@@ -5,7 +5,7 @@ Created on Feb 10, 2011
 '''
 
 import wx
-from data.dao import DAO
+from data.DAO import DAO
 from gui.Gui import Gui
 
 from controller.ConfController import ConfController

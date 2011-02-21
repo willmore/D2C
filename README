@@ -1,6 +1,10 @@
 Desktop To Cloud (D2C)
 ------------------------------
 
+Required libraries:
+wxPython
+http://wiki.wxpython.org/InstallingOnUbuntuOrDebian
+
 Required tools:
 http://s3.amazonaws.com/ec2-downloads/ec2-ami-tools.zip
-Tools for bundling and uploading AMIs. Install at /opt/EC2TOOLS
+Tools for bundling and uploading AMIs. Recommended installation directory is /opt/EC2TOOLS.
