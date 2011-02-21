@@ -5,6 +5,15 @@ Required libraries:
 wxPython
 http://wiki.wxpython.org/InstallingOnUbuntuOrDebian
 
+
+
 Required tools:
+VirtualBox
+Installation instructions for Ubuntu 10:
+http://www.techienote.com/2010/10/installing-virtualbox-on-ubuntu-10-10.html
+Note: instead of installing package viturtualbox-3.2, I installed virtualbox-ose.
+The only required executable from this package is VirtualBoxManage.
+
+EC2 AMI Tools
 http://s3.amazonaws.com/ec2-downloads/ec2-ami-tools.zip
 Tools for bundling and uploading AMIs. Recommended installation directory is /opt/EC2TOOLS.
