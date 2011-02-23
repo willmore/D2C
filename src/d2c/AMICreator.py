@@ -10,6 +10,7 @@ import string
 import platform
 import shlex
 import re
+import shutil
 from d2c.model.EC2Cred import EC2Cred
 
 class UnsupportedPlatformError(Exception):
@@ -39,6 +40,10 @@ def extractMainPartition(fullImg, outputImg):
     
     
 def __extractMainPartitionMac(fullImg, outputImg):
+        '''
+        This code does not work, as OSX cannot mount rw ext4
+        '''
+        
         print "Img is %s" % fullImg
         cmd = ("/usr/sbin/fdisk", "-d", fullImg)
         lines = subprocess.check_output(cmd)
@@ -64,7 +69,7 @@ def __extractMainPartitionMac(fullImg, outputImg):
         
         print "Max start: %d; max len: %d " % (max_start, max_len)
         
-        count = (max_len - start) + 1 # add one for some reason...
+        count = (max_len - max_start)
         cmd = "/bin/dd if=%s of=%s bs=512 skip=%d count=%s" % (fullImg, outputImg, start, count)
         print "Execing: " + cmd
         
@@ -81,23 +86,18 @@ def __extractMainPartitionLinux(fullImg, outputImg):
                              stdin=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=True)
       
     (stdoutdata, stderrdata) = p.communicate()
-       
-       
-    # 2>&1 | grep Linux | grep -iv swap"
-    print "Output"
-    #print stdoutdata
-    #TODO finish
-       
+              
     partitionLines = False
     
     partitions = []
        
     for line in string.split(stdoutdata, "\n"):
-        
-        match = re.match("(\S+)[\s\*]+(\d+)[\s]+(\d+)[\s]+(\d+)[\s]+(\d+)[\s]+(.+)", line)
+        print line
+        print "-----"
+        match = re.match("(\S+)[\s\*]+(\d+)[\s]+(\d+)[\s]+(\S+)[\s]+(\S+)[\s]+(.+)", line)
         if match is not None:
             print match.groups()
-            partitions.append({'start':int(match.group(2)), 'blocks':int(match.group(4)), 
+            partitions.append({'start':int(match.group(2)), 'end':int(match.group(3)), 
                                'system':match.group(6)})
     
     print partitions
@@ -120,11 +120,10 @@ def __extractMainPartitionLinux(fullImg, outputImg):
                                                           outputImg, 
                                                           blockSize, 
                                                           linuxPartition['start'], 
-                                                          linuxPartition['blocks'])
-    
-    print "Cmd = " + cmd
+                                                          linuxPartition['end'] - linuxPartition['start'] + 1)
+    print "Executing: " + cmd
     res = subprocess.call(shlex.split(cmd))
-    print "Result = %d" %(res,) 
+    print "Done!"
     
 
 class AMICreator:
@@ -175,13 +174,50 @@ class AMICreator:
         
     def __fixImage(self, partitionImg):
         #TODO
-        return None
+        
+        mntPoint = "/tmp/d2c_mnt/"
+        
+        #Step 1: mount
+        proc = subprocess.Popen(("sudo", "mount", mntPoint, partitionImg),
+                         stdout=subprocess.PIPE, 
+                         stdin=subprocess.PIPE, 
+                         stderr=subprocess.PIPE, 
+                         close_fds=True)
+        (stdoutput, stderroutput) = proc.communicate()
+        if 0 != proc.returnCode:
+            raise Exception("Mount command did not succeed. Error output:\n\t" + stderroutput)
+        
+        #Step 2: copy kernel
+        kernelSrcTar = "data/2.6.35-24-virtual.tar"
+        proc = subprocess.Popen(("tar", "-C", mntPoint, "-xf", kernelSrcTar),
+                         stdout=subprocess.PIPE, 
+                         stdin=subprocess.PIPE, 
+                         stderr=subprocess.PIPE, 
+                         close_fds=True)
+        (stdoutput, stderroutput) = proc.communicate()
+        if 0 != proc.returnCode:
+            raise Exception("Extracting kernel to image did not succeed. Error output:\n\t" + stderroutput)
+        
+        
+        #Step 3: Save old fstab
+        shutil.copyfile(mntPoint + "/etc/fstab", mntPoint + "/etc/fstab.save")
+        
+        #Step 4: write out fstab
+        f = open(mntPoint + "/etc/fstab", 'w')
+        f.write("/dev/sda1       /       ext4    defaults        1 1\n\
+                none            /dev/pts        devpts  gid=5,mode=620  0 0\n\
+                none            /dev/shm        tmpfs   defaults        0 0\n\
+                none    /proc   proc    defaults        0 0\n\
+                none    /sys    sysfs   defaults        0 0\n\
+                /dev/sda2       /mnt    ext3    defaults        0 0\n\
+                /dev/sda3       swap    swap    defaults        0 0\n")
+        
+        #Step 5: unmount
+        subprocess.Popen(("sudo", "mount", mntPoint, partitionImg))
           
     def __extractMainPartition(self, fullImg, outputImg):
        extractMainPartition(fullImg, outputImg)
         
-    
-   
 
 class AMITools: 
     
@@ -216,7 +252,8 @@ if __name__ == "__main__":
     
     #extractRawImage('/media/host/ubuntu.vdi', '/media/host/ubuntu.img')
     
-    extractMainPartition('/media/host/ubuntu.img', '/media/host/ubuntu-main-partition.img')
+    #extractRawImage('/media/host/ubuntu-small.vdi', '/media/host/ubuntu-small.img')
+    extractMainPartition('/media/host/ubuntu-small.img', '/media/host/ubuntu-main-partition.img')
     
     #amiTools = AMITools()
     
