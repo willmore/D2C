@@ -19,9 +19,18 @@ being unable to mount the shared host folder due to an invalid vmboxsf.ko module
 running insmod on the module. See following for more details:
 http://forums.virtualbox.org/viewtopic.php?f=3&t=33413
 
+boto - Python library wrapping AWS web service
+http://code.google.com/p/boto/
+Currently developing against version 2.0 Beta 4
+
+
 EC2 AMI Tools
 http://s3.amazonaws.com/ec2-downloads/ec2-ami-tools.zip
 Tools for bundling and uploading AMIs. Recommended installation directory is /opt/EC2TOOLS.
+
+EC2 API Tools
+http://aws.amazon.com/developertools/351
+
 
 EC2 AMI Tools dependencies:
         - curl

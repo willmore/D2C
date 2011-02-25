@@ -13,6 +13,8 @@ import re
 import shutil
 import logger
 import time
+import boto
+import boto.ec2
 from model.EC2Cred import EC2Cred
 
 class UnsupportedPlatformError(Exception):
@@ -257,9 +259,15 @@ class AMICreator:
 class AMITools: 
     
     
-    def __init__(self, ec2_tools="/opt/EC2TOOLS"):
-    
+    def __init__(self, ec2_tools, accessKey, secretKey):
+        region = "eu-west-1"
+        self.__ec2Conn = boto.ec2.connect_to_region(region, aws_access_key_id=accessKey, 
+                                                    aws_secret_access_key=secretKey)
         self.__EC2_TOOLS = ec2_tools
+    
+    def registerAMI(self, manifest):
+       
+        return self.__ec2Conn.register_image(image_location=manifest)
     
     def uploadBundle(self, bucket, manifest, accessKey, secretKey):
         __UPLOAD_CMD = "export EC2_HOME=%s; %s/bin/ec2-upload-bundle -b %s -m %s -a %s -s %s"
@@ -310,8 +318,10 @@ if __name__ == "__main__":
     #                                      ec2Cred, settings['userid'])
     
     
-    AMITools("/opt/EC2TOOLS").uploadBundle("ee.ut.cs.cloud/testupload/" + str(time.time()), 
-                                           "/media/host/xyz-bundle/xyz-main-partition.img.manifest.xml", 
-                                           settings['accessKey'], 
-                                           settings['secretKey'])
+    #AMITools("/opt/EC2TOOLS").uploadBundle("ee.ut.cs.cloud/testupload/" + str(time.time()), 
+    #                                       "/media/host/xyz-bundle/xyz-main-partition.img.manifest.xml", 
+    #                                       settings['accessKey'], 
+    #                                       settings['secretKey'])
+    
+    AMITools("/opt/EC2TOOLS", settings['accessKey'], settings['secretKey']).registerAMI("ee.ut.cs.cloud/testupload/1298626840.76/xyz-main-partition.img.manifest.xml")
     
