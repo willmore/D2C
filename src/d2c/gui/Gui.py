@@ -30,8 +30,11 @@ class Gui(wx.Frame):
 
         self.Bind(wx.EVT_MENU, self.OnQuit, id=1)
         
-        gridSizer = wx.FlexGridSizer(rows=1, cols=2, hgap=5, vgap=5)
-        gridSizer.AddGrowableCol(1, 1)
+        #gridSizer = wx.FlexGridSizer(rows=1, cols=2, hgap=5, vgap=5)
+        #gridSizer.AddGrowableCol(1, 1)
+        vbox = wx.BoxSizer(wx.VERTICAL)
+        hbox = wx.BoxSizer(wx.HORIZONTAL)
+
         
         
         #left panel items 
@@ -47,10 +50,11 @@ class Gui(wx.Frame):
         self._items.SetSelection(0)
         self.Bind(wx.EVT_LISTBOX, self.OnListSelect, id=self._ID_LISTBOX)
 
-        gridSizer.Add(self._items, 0, wx.ALL|wx.EXPAND, 5) 
-        gridSizer.Add(self._containerPanel, 0, wx.ALL|wx.EXPAND, 5)
+        hbox.Add(self._items, 0, wx.ALL|wx.EXPAND, 5)
+        hbox.Add(self._containerPanel, 1, wx.ALL|wx.EXPAND, 5)
+        vbox.Add(hbox, 1, wx.EXPAND)
         
-        self.SetSizer(gridSizer)
+        self.SetSizer(vbox)
         
     def getConfigurationPanel(self):
         return self._containerPanel.getPanel(self.LABEL_CONFIGURATION)
