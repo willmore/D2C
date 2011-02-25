@@ -12,6 +12,7 @@ import shlex
 import re
 import shutil
 import logger
+import time
 from model.EC2Cred import EC2Cred
 
 class UnsupportedPlatformError(Exception):
@@ -260,17 +261,28 @@ class AMITools:
     
         self.__EC2_TOOLS = ec2_tools
     
+    def uploadBundle(self, bucket, manifest, accessKey, secretKey):
+        __UPLOAD_CMD = "export EC2_HOME=%s; %s/bin/ec2-upload-bundle -b %s -m %s -a %s -s %s"
+        
+        uploadCmd = __UPLOAD_CMD % (self.__EC2_TOOLS, self.__EC2_TOOLS, 
+                                    bucket, manifest, accessKey, secretKey)
+        
+        print "Executing: " + uploadCmd
+        
+        out = subprocess.call(uploadCmd, shell=True)
+
     def bundleImage(self, img, destDir, ec2Cred, userId):
     
         if not os.path.exists(destDir):
             os.makedirs(destDir)
     
-        __BUNDLE_CMD = "export EC2_HOME=%s; %s/bin/ec2-bundle-image -i %s -c %s -k %s -u %s -r %s -d %s"
+        __BUNDLE_CMD = "export EC2_HOME=%s; %s/bin/ec2-bundle-image -i %s -c %s -k %s -u %s -r %s -d %s --kernel %s"
     
         arch = "i386"
+        kernelId = "aki-4deec439" # eu west pygrub, no initrd specification necessary
         
         bundleCmd = __BUNDLE_CMD % (self.__EC2_TOOLS, self.__EC2_TOOLS, img, ec2Cred.cert, ec2Cred.private_key, 
-                                    userId, arch, destDir)
+                                    userId, arch, destDir, kernelId)
         
         print "CMD = " + bundleCmd
         
@@ -293,7 +305,13 @@ if __name__ == "__main__":
     #ec2izeImage("/media/host/xyz-main-partition.img", logger)
     #amiTools = AMITools()
     
-    AMITools("/opt/EC2TOOLS").bundleImage("/media/host/xyz-main-partition.img", 
-                                          "/media/host/xyz-bundle/", 
-                                          ec2Cred, settings['userid'])
+    #AMITools("/opt/EC2TOOLS").bundleImage("/media/host/xyz-main-partition.img", 
+    #                                      "/media/host/xyz-bundle/", 
+    #                                      ec2Cred, settings['userid'])
+    
+    
+    AMITools("/opt/EC2TOOLS").uploadBundle("ee.ut.cs.cloud/testupload/" + str(time.time()), 
+                                           "/media/host/xyz-bundle/xyz-main-partition.img.manifest.xml", 
+                                           settings['accessKey'], 
+                                           settings['secretKey'])
     
