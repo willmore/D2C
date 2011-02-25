@@ -120,49 +120,14 @@ def ec2izeImage(partitionImg, logger=logger.DevNullLogger()):
                     logger.write("Unmount failed: " + stderroutput)
                     
                 logger.write("Done EC2ing image")
-    
-def __extractMainPartitionMac(fullImg, outputImg):
-        '''
-        This code does not work, as OSX cannot mount rw ext4
-        '''
-        
-        print "Img is %s" % fullImg
-        cmd = ("/usr/sbin/fdisk", "-d", fullImg)
-        lines = subprocess.check_output(cmd)
-        
-        # Examine first two fields of each line,
-        # save start and length of largest partition.
-        # We only support one partition now.
-        
-        max_start = 0
-        max_len = 0
-        
-        for line in string.split(lines, "\n"):
-            parts = string.split(line, ",")[:2]
-            
-            if len(parts) != 2:
-                continue
-            
-            (start, length) = map(int, parts)
-            
-            if length > max_len:
-                max_len = length
-                max_start = start
-        
-        print "Max start: %d; max len: %d " % (max_start, max_len)
-        
-        count = (max_len - max_start)
-        cmd = "/bin/dd if=%s of=%s bs=512 skip=%d count=%s" % (fullImg, outputImg, start, count)
-        print "Execing: " + cmd
-        
-        resp = subprocess.call(string.split(cmd, " "))
+  
         
         
 def __extractMainPartitionLinux(fullImg, outputImg, logger=logger.DevNullLogger()):
     
     logger.write("Img is %s" % fullImg)
     cmd = "/sbin/fdisk -lu %s" % fullImg
-    logger.write("cmd is " + cmd)
+    logger.write("Executing: " + cmd)
     
     p = subprocess.Popen(shlex.split(cmd), stdout=subprocess.PIPE, 
                              stdin=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=True)
@@ -178,7 +143,7 @@ def __extractMainPartitionLinux(fullImg, outputImg, logger=logger.DevNullLogger(
             partitions.append({'start':int(match.group(2)), 'end':int(match.group(3)), 
                                'system':match.group(6)})
     
-    print partitions
+    logger.write("Image partitions are: " + partitions)
 
     linuxPartition = None
 
@@ -200,7 +165,7 @@ def __extractMainPartitionLinux(fullImg, outputImg, logger=logger.DevNullLogger(
                                                           linuxPartition['start'], 
                                                           linuxPartition['end'] - linuxPartition['start'] + 1)
     logger.write("Executing: " + cmd)
-    res = subprocess.call(shlex.split(cmd))
+    logger.write(subprocess.call(shlex.split(cmd)))
     logger.write("Done extracting partition.")
     
 
@@ -209,61 +174,71 @@ class AMICreator:
         Encapsulates all procedures to covert a VirtualBox VDI to an Amazon S3-backed AMI
     '''
     
-    __JOB_ROOT = "/tmp/d2c/job/"
+    __JOB_ROOT = "/media/host/d2c/job/"
     __IMAGE_DIR = "/tmp/d2c/data/images/"
     
     
-    def __init__(self, srcImg, ec2Cred, s3Cred, userId, s3Bucket):
+    def __init__(self, srcImg, ec2Cred, 
+                 userId, s3Bucket, amiTools, 
+                 logger=logger.DevNullLogger()):
         self.__srcImg = srcImg
         self.__ec2Cred = ec2Cred
         self.__userId = userId
-        self.__s3Cred = s3Cred
         self.__s3Bucket = s3Bucket
+        self.__amiTools = amiTools
+        self.__logger = logger
     
     def createAMI(self):
-        jobId = "foobar" #TODO generate something meaningful here
+        """
+        returns the newly created AMI ID
+        """
+                       
+        self.__logger.write("Extracting raw image from VDI")
         
-        jobDir = self.__JOB_ROOT + jobId
-        mntDir = jobDir + "/mnt"
-        subprocess.Popen(("mkdir", "-p", mntDir))
-        subprocess.Popen(("mkdir", "-p", self.__IMAGE_DIR))
+        jobId = str(time.time())
+        jobDir = self.__JOB_ROOT + "/" + jobId
+        self.__logger.write("Job directory is: " + jobDir)
         
-        fullImg = self.__IMAGE_DIR + string.replace(os.path.basename(self.__srcImg), ".vdi", ".fullImg")
-        partitionImg = self.__IMAGE_DIR + string.replace(os.path.basename(self.__srcImg), ".vdi", ".img")
-
-        print "Creating raw img at: " + fullImg
-        subprocess.call(("VBoxManage", "clonehd", "-format", "RAW", self.__srcImg, fullImg))                
-        print "Raw img created"
+        imgName = os.path.basename(self.__srcImg)
+        rawImg = jobDir + "/" + imgName + ".raw"
         
-        print "Extracting main partition"
+        extractRawImage(self.__srcImg, rawImg, self.__logger)
+        
+        self.__logger.write("Raw img created")
+        
+        self.__logger.write("Extracting main partition")
         #we only support one partition now
-        self.__extractMainPartition(fullImg, partitionImg)
-        
-        print "Fixing image"
-        self.__fixImage(partitionImg)
-        
-        print "Finally creating AMI"
-        manifest = self.bundleImage(partitionImg)
-        manifestFile = self.uploadBundle(manifest)
-        self.registerAMI(self.__s3Bucket, manifestFile)
+        outputImg = jobDir + "/" + imgName + ".main"
+        extractMainPartition(rawImg, outputImg, self.__logger)
+        self.__logger.write("EC2izing image")
+        ec2izeImage(outputImg, self.__logger)       
+
+        self.__logger.write("Bundling AMI")
+        bundleDir = jobDir + "/bundle"
+        manifest = self.__amiTools.bundleImage(outputImg, 
+                                               bundleDir, 
+                                               self.__ec2Cred,
+                                               self.__userId)
     
-    def __extractRawImage(self, srcImg, destImg):
-        extractRawImage(srcImg, destImg)
-        
     
-          
-    def __extractMainPartition(self, fullImg, outputImg):
-       extractMainPartition(fullImg, outputImg)
+        self.__logger.write("Uploading bundle")
+        s3ManifestPath = self._amiTools.uploadBundle("ee.ut.cs.cloud/testupload/" + str(time.time()), 
+                                                     manifest)
+    
+        self.__logger.write("Registering AMI")
+        amiId = self._amiTools.registerAMI(s3ManifestPath)
+        
+        return amiId
         
 
 class AMITools: 
-    
-    
-    def __init__(self, ec2_tools, accessKey, secretKey):
+     
+    def __init__(self, ec2_tools, accessKey, secretKey, logger=logger.DevNullLogger()):
         region = "eu-west-1"
         self.__ec2Conn = boto.ec2.connect_to_region(region, aws_access_key_id=accessKey, 
                                                     aws_secret_access_key=secretKey)
         self.__EC2_TOOLS = ec2_tools
+        self.__logger = logger
     
     def registerAMI(self, manifest):
        
@@ -275,9 +250,9 @@ class AMITools:
         uploadCmd = __UPLOAD_CMD % (self.__EC2_TOOLS, self.__EC2_TOOLS, 
                                     bucket, manifest, accessKey, secretKey)
         
-        print "Executing: " + uploadCmd
+        self.__logger.write("Executing: " + uploadCmd)
         
-        out = subprocess.call(uploadCmd, shell=True)
+        self.__logger.write(subprocess.call(uploadCmd, shell=True))
 
     def bundleImage(self, img, destDir, ec2Cred, userId):
     
@@ -292,9 +267,11 @@ class AMITools:
         bundleCmd = __BUNDLE_CMD % (self.__EC2_TOOLS, self.__EC2_TOOLS, img, ec2Cred.cert, ec2Cred.private_key, 
                                     userId, arch, destDir, kernelId)
         
-        print "CMD = " + bundleCmd
+        self.__logger.write("Executing: " + bundleCmd)
         
-        out = subprocess.call(bundleCmd, shell=True)
+        self.__logger.write(subprocess.call(bundleCmd, shell=True))
+        
+        return destDir + "/" + os.path.basename(img) + ".manifest.xml"
         
 if __name__ == "__main__":
     
@@ -305,8 +282,12 @@ if __name__ == "__main__":
         
  
     ec2Cred = EC2Cred(settings['cert'], settings['privateKey'])
+     
+    amiid = AMICreator("/media/host/xyz.vdi", ec2Cred, 
+                            settings['userid'], "et.cs.ut.cloud",
+                            amiTools=AMITools("/opt/EC2TOOLS", settings['accessKey'], settings['secretKey']),
+                            logger=logger.StdOutLogger()).createAMI()
     
-    logger = logger.StdOutLogger();
     
     #extractRawImage('/media/host/xyz.vdi', '/media/host/xyz-full.img', logger)
     #extractMainPartition('/media/host/xyz-full.img', '/media/host/xyz-main-partition.img', logger)
@@ -323,5 +304,5 @@ if __name__ == "__main__":
     #                                       settings['accessKey'], 
     #                                       settings['secretKey'])
     
-    AMITools("/opt/EC2TOOLS", settings['accessKey'], settings['secretKey']).registerAMI("ee.ut.cs.cloud/testupload/1298626840.76/xyz-main-partition.img.manifest.xml")
+    #AMITools("/opt/EC2TOOLS", settings['accessKey'], settings['secretKey']).registerAMI("ee.ut.cs.cloud/testupload/1298626840.76/xyz-main-partition.img.manifest.xml")
     
