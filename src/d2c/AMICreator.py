@@ -11,7 +11,8 @@ import platform
 import shlex
 import re
 import shutil
-from d2c.model.EC2Cred import EC2Cred
+import logger
+from model.EC2Cred import EC2Cred
 
 class UnsupportedPlatformError(Exception):
     def __init__(self, value):
@@ -26,18 +27,96 @@ class UnsupportedImageError(Exception):
         return repr(self.value)
 
 
-def extractRawImage(srcImg, destImg):
-    subprocess.call(("VBoxManage", "clonehd", "-format", "RAW", srcImg, destImg))
+def extractRawImage(srcImg, destImg, log=logger.DevNullLogger()):
+    cmd = "VBoxManage clonehd -format RAW %s %s" % (srcImg, destImg)
+    log.write("Executing: " + cmd)
+    subprocess.call(shlex.split(cmd))
 
 
-def extractMainPartition(fullImg, outputImg):
+def extractMainPartition(fullImg, outputImg, logger=logger.DevNullLogger()):
     #if "Darwin" == platform.system():
         #    self.__extractMainPartitionMac(fullImg, outputImg)
     if "Linux" == platform.system():
-        __extractMainPartitionLinux(fullImg, outputImg)
+        __extractMainPartitionLinux(fullImg, outputImg, logger)
     else:
         raise UnsupportedPlatformError(platform.system())
-    
+
+def ec2izeImage(partitionImg, logger=logger.DevNullLogger()):
+        """
+        Mounts an image and does the following:
+        1. Writes new kernel and modules.
+        2. Writes an /etc/fstab to it suitable for EC2.
+           The preexisting fstab will be preserved as /etc/fstab.save
+        """
+        
+        mntPoint = "/opt/d2c/mnt/"
+        assert isinstance(partitionImg, basestring)
+       
+        fstab = None
+       
+        try:
+            #Step 1: mount
+            cmd = "mount %s" % (partitionImg,)
+            logger.write("Executing: " + cmd)
+            
+            proc = subprocess.Popen(shlex.split(cmd),
+                         stdout=subprocess.PIPE, 
+                         stderr=subprocess.PIPE, 
+                         close_fds=True)
+            (stdoutput, stderroutput) = proc.communicate()
+            if 0 != proc.returncode:
+                raise Exception("Mount command did not succeed '" + cmd +". Error output:\n\t" + stderroutput)
+            
+            #Step 2: copy kernel
+            kernelSrcTar = "../data/kernels/2.6.35-24-virtual.tar"
+        
+            cmd = "tar -C %s -xf %s" % (mntPoint, kernelSrcTar)
+            logger.write("Executing: " + cmd)
+            proc = subprocess.Popen(shlex.split(cmd),
+                         stdout=subprocess.PIPE, 
+                         stderr=subprocess.PIPE, 
+                         close_fds=True)
+            (stdoutput, stderroutput) = proc.communicate()
+            if 0 != proc.returncode:
+                raise Exception("Extracting kernel to image did not succeed. Error output:\n\t" + stderroutput)
+        
+        
+            #Step 3: Save old fstab
+            fromFile = mntPoint + "/etc/fstab"
+            toFile = mntPoint + "/etc/fstab.save"
+            logger.write("Saving image's old fstab")
+            logger.write("Executing: mv %/etc/fstab")
+            shutil.copyfile(fromFile, toFile)
+        
+            #Step 4: write out fstab
+            logger.write("Writting out new EC2 /etc/fstab")
+            fstab = open(fromFile, 'w')
+            fstab.write("/dev/sda1\t/\text4\tdefaults\t1\t1\n")
+            fstab.write("none\t/dev/pts\tdevpts\tgid=5,mode=620\t0\t0\n")
+            fstab.write("none\t/dev/shm\ttmpfs\tdefaults\t0\t0\n")
+            fstab.write("none\t/proc\tproc\tdefaults\t0\t0\n")
+            fstab.write("none\t/sys\tsysfs\tdefaults\t0\t0\n")
+            fstab.write("/dev/sda2\t/mnt\text3\tdefaults\t0\t0\n")
+            fstab.write("/dev/sda3\tswap\tswap\tdefaults\t0\t0\n")
+            
+        
+        finally:
+            if fstab is not None and not fstab.closed:
+                logger.write("Closing images /etc/fstab")
+                fstab.close()
+        
+            if os.path.ismount(mntPoint):
+                #Step 5: unmount
+                logger.write("Unmounting " + mntPoint)
+                proc = subprocess.Popen(("umount", mntPoint),
+                                 stdout=subprocess.PIPE, 
+                                 stderr=subprocess.PIPE, 
+                                 close_fds=True)
+                (stdoutput, stderroutput) = proc.communicate()
+                if proc.returncode != 0:
+                    logger.write("Unmount failed: " + stderroutput)
+                    
+                logger.write("Done EC2ing image")
     
 def __extractMainPartitionMac(fullImg, outputImg):
         '''
@@ -76,24 +155,20 @@ def __extractMainPartitionMac(fullImg, outputImg):
         resp = subprocess.call(string.split(cmd, " "))
         
         
-def __extractMainPartitionLinux(fullImg, outputImg):
-    #TODO
-    print "Img is %s" % fullImg
+def __extractMainPartitionLinux(fullImg, outputImg, logger=logger.DevNullLogger()):
+    
+    logger.write("Img is %s" % fullImg)
     cmd = "/sbin/fdisk -lu %s" % fullImg
-    print "cmd is " + cmd
-        
+    logger.write("cmd is " + cmd)
+    
     p = subprocess.Popen(shlex.split(cmd), stdout=subprocess.PIPE, 
                              stdin=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=True)
       
     (stdoutdata, stderrdata) = p.communicate()
-              
-    partitionLines = False
-    
+                  
     partitions = []
        
     for line in string.split(stdoutdata, "\n"):
-        print line
-        print "-----"
         match = re.match("(\S+)[\s\*]+(\d+)[\s]+(\d+)[\s]+(\S+)[\s]+(\S+)[\s]+(.+)", line)
         if match is not None:
             print match.groups()
@@ -121,9 +196,9 @@ def __extractMainPartitionLinux(fullImg, outputImg):
                                                           blockSize, 
                                                           linuxPartition['start'], 
                                                           linuxPartition['end'] - linuxPartition['start'] + 1)
-    print "Executing: " + cmd
+    logger.write("Executing: " + cmd)
     res = subprocess.call(shlex.split(cmd))
-    print "Done!"
+    logger.write("Done extracting partition.")
     
 
 class AMICreator:
@@ -172,48 +247,7 @@ class AMICreator:
     def __extractRawImage(self, srcImg, destImg):
         extractRawImage(srcImg, destImg)
         
-    def __fixImage(self, partitionImg):
-        #TODO
-        
-        mntPoint = "/tmp/d2c_mnt/"
-        
-        #Step 1: mount
-        proc = subprocess.Popen(("sudo", "mount", mntPoint, partitionImg),
-                         stdout=subprocess.PIPE, 
-                         stdin=subprocess.PIPE, 
-                         stderr=subprocess.PIPE, 
-                         close_fds=True)
-        (stdoutput, stderroutput) = proc.communicate()
-        if 0 != proc.returnCode:
-            raise Exception("Mount command did not succeed. Error output:\n\t" + stderroutput)
-        
-        #Step 2: copy kernel
-        kernelSrcTar = "data/2.6.35-24-virtual.tar"
-        proc = subprocess.Popen(("tar", "-C", mntPoint, "-xf", kernelSrcTar),
-                         stdout=subprocess.PIPE, 
-                         stdin=subprocess.PIPE, 
-                         stderr=subprocess.PIPE, 
-                         close_fds=True)
-        (stdoutput, stderroutput) = proc.communicate()
-        if 0 != proc.returnCode:
-            raise Exception("Extracting kernel to image did not succeed. Error output:\n\t" + stderroutput)
-        
-        
-        #Step 3: Save old fstab
-        shutil.copyfile(mntPoint + "/etc/fstab", mntPoint + "/etc/fstab.save")
-        
-        #Step 4: write out fstab
-        f = open(mntPoint + "/etc/fstab", 'w')
-        f.write("/dev/sda1       /       ext4    defaults        1 1\n\
-                none            /dev/pts        devpts  gid=5,mode=620  0 0\n\
-                none            /dev/shm        tmpfs   defaults        0 0\n\
-                none    /proc   proc    defaults        0 0\n\
-                none    /sys    sysfs   defaults        0 0\n\
-                /dev/sda2       /mnt    ext3    defaults        0 0\n\
-                /dev/sda3       swap    swap    defaults        0 0\n")
-        
-        #Step 5: unmount
-        subprocess.Popen(("sudo", "mount", mntPoint, partitionImg))
+    
           
     def __extractMainPartition(self, fullImg, outputImg):
        extractMainPartition(fullImg, outputImg)
@@ -246,15 +280,14 @@ if __name__ == "__main__":
         (k,v) = string.split(l.strip(), "=")
         settings[k] = v
         
-    #ami = AMICreator("/Users/willmore/Documents/Research/ubuntu3.vdi")
-    #ami.createAMI()
+ 
     ec2Cred = EC2Cred(settings['cert'], settings['privateKey'])
     
-    #extractRawImage('/media/host/ubuntu.vdi', '/media/host/ubuntu.img')
+    logger = logger.StdOutLogger();
     
-    #extractRawImage('/media/host/ubuntu-small.vdi', '/media/host/ubuntu-small.img')
-    extractMainPartition('/media/host/ubuntu-small.img', '/media/host/ubuntu-main-partition.img')
-    
+    #extractRawImage('/media/host/xyz.vdi', '/media/host/xyz-full.img', logger)
+    #extractMainPartition('/media/host/xyz-full.img', '/media/host/xyz-main-partition.img', logger)
+    ec2izeImage("/media/host/xyz-main-partition.img", logger)
     #amiTools = AMITools()
     
     #amiTools.bundleImage("/opt/EC2TOOLS", "/tmp/d2c/data/images/ubuntu3.img", "/tmp/amibundle/", 
