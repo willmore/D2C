@@ -22,3 +22,13 @@ http://forums.virtualbox.org/viewtopic.php?f=3&t=33413
 EC2 AMI Tools
 http://s3.amazonaws.com/ec2-downloads/ec2-ami-tools.zip
 Tools for bundling and uploading AMIs. Recommended installation directory is /opt/EC2TOOLS.
+
+EC2 AMI Tools dependencies:
+        - curl
+        - gzip
+        - mkfifo
+        - openssl
+        - rsync
+        - Ruby 1.8.2 or later
+			- Might need to explicitly install libopenssl-ruby
+        - tee

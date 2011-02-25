@@ -260,13 +260,16 @@ class AMITools:
     
         self.__EC2_TOOLS = ec2_tools
     
-    def bundleImage(self, ec2Home, img, destDir, ec2Cred, userId):
+    def bundleImage(self, img, destDir, ec2Cred, userId):
+    
+        if not os.path.exists(destDir):
+            os.makedirs(destDir)
     
         __BUNDLE_CMD = "export EC2_HOME=%s; %s/bin/ec2-bundle-image -i %s -c %s -k %s -u %s -r %s -d %s"
     
         arch = "i386"
         
-        bundleCmd = __BUNDLE_CMD % (self.__EC2_TOOLS, ec2Home, img, ec2Cred.cert, ec2Cred.private_key, 
+        bundleCmd = __BUNDLE_CMD % (self.__EC2_TOOLS, self.__EC2_TOOLS, img, ec2Cred.cert, ec2Cred.private_key, 
                                     userId, arch, destDir)
         
         print "CMD = " + bundleCmd
@@ -287,9 +290,10 @@ if __name__ == "__main__":
     
     #extractRawImage('/media/host/xyz.vdi', '/media/host/xyz-full.img', logger)
     #extractMainPartition('/media/host/xyz-full.img', '/media/host/xyz-main-partition.img', logger)
-    ec2izeImage("/media/host/xyz-main-partition.img", logger)
+    #ec2izeImage("/media/host/xyz-main-partition.img", logger)
     #amiTools = AMITools()
     
-    #amiTools.bundleImage("/opt/EC2TOOLS", "/tmp/d2c/data/images/ubuntu3.img", "/tmp/amibundle/", 
-    #                     ec2Cred, settings['userid'])
+    AMITools("/opt/EC2TOOLS").bundleImage("/media/host/xyz-main-partition.img", 
+                                          "/media/host/xyz-bundle/", 
+                                          ec2Cred, settings['userid'])
     
