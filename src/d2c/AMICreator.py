@@ -53,12 +53,14 @@ def ec2izeImage(partitionImg, logger=logger.DevNullLogger()):
         """
         
         mntPoint = "/opt/d2c/mnt/"
+        mntSrc = "/opt/d2c/mntsrc"
         assert isinstance(partitionImg, basestring)
        
         fstab = None
        
         try:
             #Step 1: mount
+            os.symlink(partitionImg, mntSrc)
             cmd = "mount %s" % (partitionImg,)
             logger.write("Executing: " + cmd)
             
@@ -88,7 +90,7 @@ def ec2izeImage(partitionImg, logger=logger.DevNullLogger()):
             fromFile = mntPoint + "/etc/fstab"
             toFile = mntPoint + "/etc/fstab.save"
             logger.write("Saving image's old fstab")
-            logger.write("Executing: mv %/etc/fstab")
+            logger.write("Executing: mv /etc/fstab")
             shutil.copyfile(fromFile, toFile)
         
             #Step 4: write out fstab
@@ -105,13 +107,13 @@ def ec2izeImage(partitionImg, logger=logger.DevNullLogger()):
         
         finally:
             if fstab is not None and not fstab.closed:
-                logger.write("Closing images /etc/fstab")
+                logger.write("Closing image's /etc/fstab")
                 fstab.close()
-        
+                
             if os.path.ismount(mntPoint):
                 #Step 5: unmount
                 logger.write("Unmounting " + mntPoint)
-                proc = subprocess.Popen(("umount", mntPoint),
+                proc = subprocess.Popen(("umount", "/dev/loop0"), #/dev/loop0 is temp hack
                                  stdout=subprocess.PIPE, 
                                  stderr=subprocess.PIPE, 
                                  close_fds=True)
@@ -120,6 +122,9 @@ def ec2izeImage(partitionImg, logger=logger.DevNullLogger()):
                     logger.write("Unmount failed: " + stderroutput)
                     
                 logger.write("Done EC2ing image")
+                
+            if os.path.exists(mntSrc):
+                os.unlink(mntSrc)
   
         
         
@@ -143,7 +148,7 @@ def __extractMainPartitionLinux(fullImg, outputImg, logger=logger.DevNullLogger(
             partitions.append({'start':int(match.group(2)), 'end':int(match.group(3)), 
                                'system':match.group(6)})
     
-    logger.write("Image partitions are: " + partitions)
+    logger.write("Image partitions are: " + str(partitions))
 
     linuxPartition = None
 
@@ -174,7 +179,7 @@ class AMICreator:
         Encapsulates all procedures to covert a VirtualBox VDI to an Amazon S3-backed AMI
     '''
     
-    __JOB_ROOT = "/media/host/d2c/job/"
+    __JOB_ROOT = "/opt/d2c/job"
     __IMAGE_DIR = "/tmp/d2c/data/images/"
     
     
@@ -210,6 +215,7 @@ class AMICreator:
         #we only support one partition now
         outputImg = jobDir + "/" + imgName + ".main"
         extractMainPartition(rawImg, outputImg, self.__logger)
+        
         self.__logger.write("EC2izing image")
         ec2izeImage(outputImg, self.__logger)       
 
@@ -222,7 +228,7 @@ class AMICreator:
     
     
         self.__logger.write("Uploading bundle")
-        s3ManifestPath = self._amiTools.uploadBundle("ee.ut.cs.cloud/testupload/" + str(time.time()), 
+        s3ManifestPath = self.__amiTools.uploadBundle("ee.ut.cs.cloud/testupload/" + str(time.time()), 
                                                      manifest)
     
         self.__logger.write("Registering AMI")
@@ -239,16 +245,19 @@ class AMITools:
                                                     aws_secret_access_key=secretKey)
         self.__EC2_TOOLS = ec2_tools
         self.__logger = logger
+        self.__accessKey = accessKey
+        self.__secretKey = secretKey
     
     def registerAMI(self, manifest):
        
         return self.__ec2Conn.register_image(image_location=manifest)
     
-    def uploadBundle(self, bucket, manifest, accessKey, secretKey):
+    def uploadBundle(self, bucket, manifest):
         __UPLOAD_CMD = "export EC2_HOME=%s; %s/bin/ec2-upload-bundle -b %s -m %s -a %s -s %s"
         
         uploadCmd = __UPLOAD_CMD % (self.__EC2_TOOLS, self.__EC2_TOOLS, 
-                                    bucket, manifest, accessKey, secretKey)
+                                    bucket, manifest, 
+                                    self.__accessKey, self.__secretKey)
         
         self.__logger.write("Executing: " + uploadCmd)
         
