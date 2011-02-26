@@ -231,8 +231,8 @@ class AMICreator:
         s3ManifestPath = self.__amiTools.uploadBundle("ee.ut.cs.cloud/testupload/" + str(time.time()), 
                                                      manifest)
     
-        self.__logger.write("Registering AMI")
-        amiId = self._amiTools.registerAMI(s3ManifestPath)
+        self.__logger.write("Registering AMI: " + s3ManifestPath)
+        amiId = self.__amiTools.registerAMI(s3ManifestPath)
         
         return amiId
         
@@ -262,6 +262,8 @@ class AMITools:
         self.__logger.write("Executing: " + uploadCmd)
         
         self.__logger.write(subprocess.call(uploadCmd, shell=True))
+        
+        return bucket + "/" + os.path.basename(manifest)
 
     def bundleImage(self, img, destDir, ec2Cred, userId):
     
