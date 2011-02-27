@@ -9,6 +9,8 @@ Created on Feb 15, 2011
 @author: willmore
 '''
 import wx
+from wx.lib.pubsub import Publisher as pub
+
 from d2c.model.SourceImage import SourceImage
 
 
@@ -40,5 +42,8 @@ class ImageController:
         
     def _createAMIImage(self, event):
         #TODO
-        print "TODO"
+        i = self._imageView._list.GetFirstSelected();
+        img = self._imageView._list.GetItem(i).GetText()
+        pub.sendMessage("CREATE AMI", img)
+
         

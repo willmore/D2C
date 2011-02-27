@@ -10,6 +10,7 @@ from gui.Gui import Gui
 
 from controller.ConfController import ConfController
 from controller.ImageController import ImageController
+from controller.AMIController import AMIController
 
 
 class Application:
@@ -23,6 +24,7 @@ class Application:
         
         self._credController = ConfController(self._frame.getConfigurationPanel(), self._dao)
         self._imageController = ImageController(self._frame.getImagePanel(), self._dao)
+        self._amiController = AMIController(self._frame.getAMIPanel(), self._dao)
         
         self._frame
         self._frame.Show()     
