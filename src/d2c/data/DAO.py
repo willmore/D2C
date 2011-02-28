@@ -52,6 +52,7 @@ class DAO:
         return out   
     
     def addSourceImage(self, srcImgPath):
+                
         c = self._conn.cursor()
 
         c.execute("insert into src_img values (?)", (srcImgPath,))

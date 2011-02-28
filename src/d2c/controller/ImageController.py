@@ -33,7 +33,6 @@ class ImageController:
             wx.MessageBox('Path must not be empty', 'Info')
             return
 
-        
         self._dao.addSourceImage(path)
         self._refreshImgList()
         

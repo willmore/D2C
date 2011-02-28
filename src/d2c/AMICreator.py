@@ -13,7 +13,6 @@ import re
 import shutil
 import logger
 import time
-import boto
 import boto.ec2
 from model.EC2Cred import EC2Cred
 
@@ -32,7 +31,8 @@ class UnsupportedImageError(Exception):
 
 def extractRawImage(srcImg, destImg, log=logger.DevNullLogger()):
     cmd = "VBoxManage clonehd -format RAW %s %s" % (srcImg, destImg)
-    log.write("Executing: " + cmd)
+    log.write("Executing: " + str(shlex.split(cmd)))    
+    
     subprocess.call(shlex.split(cmd))
 
 
@@ -186,18 +186,19 @@ class AMICreator:
     def __init__(self, srcImg, ec2Cred, 
                  userId, s3Bucket, amiTools, 
                  logger=logger.DevNullLogger()):
+        print "Initing AMICreator"
         self.__srcImg = srcImg
         self.__ec2Cred = ec2Cred
         self.__userId = userId
         self.__s3Bucket = s3Bucket
         self.__amiTools = amiTools
         self.__logger = logger
+        print "Inited AMICreator"
     
     def createAMI(self):
         """
-        returns the newly created AMI ID
+        Creates AMI and returns the newly created AMI ID
         """
-                       
         self.__logger.write("Extracting raw image from VDI")
         
         jobId = str(time.time())
@@ -241,8 +242,13 @@ class AMITools:
      
     def __init__(self, ec2_tools, accessKey, secretKey, logger=logger.DevNullLogger()):
         region = "eu-west-1"
+        #TODO: add timeout - if network connection fails, this will spin forever
+        #TODO: add configurable region
+        logger.write("Initiating connection to ec2 region '%s'..." % region)
         self.__ec2Conn = boto.ec2.connect_to_region(region, aws_access_key_id=accessKey, 
                                                     aws_secret_access_key=secretKey)
+        logger.write("EC2 connection established")
+        
         self.__EC2_TOOLS = ec2_tools
         self.__logger = logger
         self.__accessKey = accessKey

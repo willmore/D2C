@@ -7,6 +7,7 @@ Created on Feb 9, 2011
 import wx
 import os
 from wx.lib.pubsub import Publisher as pub
+from .ContainerPanel import ContainerPanel
 
 class Gui(wx.Frame):    
     
@@ -77,44 +78,24 @@ class Gui(wx.Frame):
     def OnListSelect(self, event):
         self._containerPanel.showPanel(self._items.GetStringSelection())
 
-    
-    def OnAddImage(self, event):
-        print "Add Image"
-    
-class ContainerPanel(wx.Panel):
-    "Contains multiple panels in same position, with only one visible"
-    
-    _panels = {}
-
-    def __init__(self, parent):
-        wx.Panel.__init__(self, parent)
-        self._sizer = wx.BoxSizer(wx.VERTICAL)
-        self.SetSizer(self._sizer)
-    
-    def addPanel(self, label, panel):
-        assert panel.GetParent() == self
-        self._panels[label] = panel
-        self._sizer.Add(panel, 0, wx.ALL|wx.EXPAND, 0)
-        panel.Hide()
-        
-    def showPanel(self, label):
-        for l, p in self._panels.items():
-            if l == label:
-                p.Show()
-            elif p.IsShown():
-                p.Hide()
-        self.Layout()
-    
-    def getPanel(self, label):
-        return self._panels[label]
-
 class AMIPanel(wx.Panel):    
     
     def __init__(self, *args):
         wx.Panel.__init__(self, *args)
         
         vbox = wx.BoxSizer(wx.VERTICAL)
+ 
+        #Logger panel setup
+        self._logPanel = ContainerPanel(self, -1, size=(200,100))
         
+        hbox2 = wx.BoxSizer(wx.HORIZONTAL)
+        hbox2.Add(self._logPanel, 1, wx.EXPAND)
+        vbox.Add(hbox2, 1, wx.EXPAND)
+        
+        self.addLogPanel('test')
+        self.showLogPanel('test')
+        #self.appendLogPanelText('test', 'foobar')
+ 
         self._list = wx.ListCtrl(self, -1, style=wx.LC_REPORT, size=(110,300))
         
         hbox1 = wx.BoxSizer(wx.HORIZONTAL)
@@ -124,8 +105,23 @@ class AMIPanel(wx.Panel):
         self._list.InsertColumn(1, 'Status', width=110)
         self._list.InsertColumn(2, 'Created', width=110)
         
-        vbox.Add(hbox1, 1, wx.EXPAND)
+        vbox.Add(hbox1, 0, wx.EXPAND)
+        
         self.SetSizer(vbox)
+        
+        self.Layout()     
+            
+        
+    def addLogPanel(self, id):
+        self._logPanel.addPanel(id, wx.TextCtrl(self._logPanel, -1, "Dummy text", size=(100,100), style=wx.TE_MULTILINE )) #style=wx.TE_READONLY
+        
+    def showLogPanel(self, id):
+        self._logPanel.showPanel(id)
+        
+    def appendLogPanelText(self, logPanelId, text):
+        print "Appending '%s' to %s" % (text, logPanelId)
+        self._logPanel.getPanel(logPanelId).AppendText(text)
+
 
 class RawImagePanel(wx.Panel):    
     
@@ -141,13 +137,11 @@ class RawImagePanel(wx.Panel):
         
         self._list.InsertColumn(0, 'Name')
         self._list.SetColumnWidth(0, 340)
-
-        
+      
         hbox2 = wx.BoxSizer(wx.HORIZONTAL)
 
         self._addButton = wx.Button(self, wx.ID_ANY, 'Add Image', size=(110, -1)) 
         self._newFile = wx.TextCtrl(self)
-    
     
         self._findButton = wx.Button(self, wx.ID_ANY, 'Find Image', size=(110, -1))
         self._findButton.Bind(wx.EVT_BUTTON, self._OnFindImage)
