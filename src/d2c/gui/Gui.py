@@ -85,16 +85,7 @@ class AMIPanel(wx.Panel):
         
         vbox = wx.BoxSizer(wx.VERTICAL)
  
-        #Logger panel setup
-        self._logPanel = ContainerPanel(self, -1, size=(200,100))
-        
-        hbox2 = wx.BoxSizer(wx.HORIZONTAL)
-        hbox2.Add(self._logPanel, 1, wx.EXPAND)
-        vbox.Add(hbox2, 1, wx.EXPAND)
-        
-        self.addLogPanel('test')
-        self.showLogPanel('test')
-        #self.appendLogPanelText('test', 'foobar')
+     
  
         self._list = wx.ListCtrl(self, -1, style=wx.LC_REPORT, size=(110,300))
         
@@ -107,19 +98,25 @@ class AMIPanel(wx.Panel):
         
         vbox.Add(hbox1, 0, wx.EXPAND)
         
+        #Logger panel setup
+        self._logPanel = ContainerPanel(self, -1, size=(200,100))
+        
+        hbox2 = wx.BoxSizer(wx.HORIZONTAL)
+        hbox2.Add(self._logPanel, 1, wx.EXPAND)
+        vbox.Add(hbox2, 1, wx.EXPAND)
+        
         self.SetSizer(vbox)
         
         self.Layout()     
             
         
     def addLogPanel(self, id):
-        self._logPanel.addPanel(id, wx.TextCtrl(self._logPanel, -1, "Dummy text", size=(100,100), style=wx.TE_MULTILINE )) #style=wx.TE_READONLY
+        self._logPanel.addPanel(id, wx.TextCtrl(self._logPanel, -1, size=(100,100), style=wx.TE_MULTILINE )) #style=wx.TE_READONLY
         
     def showLogPanel(self, id):
         self._logPanel.showPanel(id)
         
     def appendLogPanelText(self, logPanelId, text):
-        print "Appending '%s' to %s" % (text, logPanelId)
         self._logPanel.getPanel(logPanelId).AppendText(text)
 
 

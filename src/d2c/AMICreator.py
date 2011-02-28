@@ -6,6 +6,7 @@ Created on Feb 16, 2011
 
 import os
 import subprocess
+from subprocess import Popen
 import string
 import platform
 import shlex
@@ -29,11 +30,27 @@ class UnsupportedImageError(Exception):
         return repr(self.value)
 
 
-def extractRawImage(srcImg, destImg, log=logger.DevNullLogger()):
-    cmd = "VBoxManage clonehd -format RAW %s %s" % (srcImg, destImg)
-    log.write("Executing: " + str(shlex.split(cmd)))    
+def __execCmd(cmd, log):
     
-    subprocess.call(shlex.split(cmd))
+    log.write("Executing: " + cmd)    
+    
+    p = Popen(cmd, shell=True,
+           stdout=subprocess.PIPE, stderr=subprocess.STDOUT, close_fds=True)
+    
+    while True:
+        line = p.stdout.readline()
+        if not line: break
+        log.write(line)
+        
+    if 0 != p.returncode:
+        raise Exception("Command did not succeed: '" + cmd)
+         
+
+
+def extractRawImage(srcImg, destImg, log=logger.DevNullLogger()):
+    __execCmd("VBoxManage clonehd -format RAW %s %s" % (srcImg, destImg), log)
+    
+
 
 
 def extractMainPartition(fullImg, outputImg, logger=logger.DevNullLogger()):

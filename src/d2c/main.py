@@ -15,7 +15,7 @@ def main(argv=None):
         try:
             opts, args = getopt.getopt(argv[1:], "h", ["help"])
         except getopt.error, msg:
-             raise Usage(msg)
+            raise Usage(msg)
         # more code, unchanged
     except Usage, err:
         print >>sys.stderr, err.msg
