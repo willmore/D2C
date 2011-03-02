@@ -5,8 +5,8 @@ Created on Feb 10, 2011
 '''
 
 import wx
-from data.DAO import DAO
-from gui.Gui import Gui
+from d2c.data.DAO import DAO
+from d2c.gui.Gui import Gui
 
 from controller.ConfController import ConfController
 from controller.ImageController import ImageController

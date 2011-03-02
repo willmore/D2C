@@ -82,15 +82,16 @@ class AMIPanel(wx.Panel):
     
     def __init__(self, *args):
         wx.Panel.__init__(self, *args)
+        self.splitter = wx.SplitterWindow(self, -1)
         
+        
+
         vbox = wx.BoxSizer(wx.VERTICAL)
  
-     
- 
-        self._list = wx.ListCtrl(self, -1, style=wx.LC_REPORT, size=(110,300))
+        self._list = wx.ListCtrl(self.splitter, -1, style=wx.LC_REPORT, size=(110,300))
         
         hbox1 = wx.BoxSizer(wx.HORIZONTAL)
-        hbox1.Add(self._list, 1, wx.EXPAND)
+        hbox1.Add(self.splitter, 1, wx.EXPAND)
         
         self._list.InsertColumn(0, 'Name', width=110)
         self._list.InsertColumn(1, 'Status', width=110)
@@ -99,11 +100,13 @@ class AMIPanel(wx.Panel):
         vbox.Add(hbox1, 0, wx.EXPAND)
         
         #Logger panel setup
-        self._logPanel = ContainerPanel(self, -1, size=(200,100))
+        self._logPanel = ContainerPanel(self.splitter, -1, size=(200,100))
         
-        hbox2 = wx.BoxSizer(wx.HORIZONTAL)
-        hbox2.Add(self._logPanel, 1, wx.EXPAND)
-        vbox.Add(hbox2, 1, wx.EXPAND)
+        #hbox2 = wx.BoxSizer(wx.HORIZONTAL)
+        #hbox2.Add(self._logPanel, 1, wx.EXPAND)
+        #vbox.Add(hbox2, 1, wx.EXPAND)
+        
+        self.splitter.SplitHorizontally(self._list, self._logPanel)
         
         self.SetSizer(vbox)
         
