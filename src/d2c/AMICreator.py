@@ -15,7 +15,6 @@ import shutil
 import logger
 import time
 import boto.ec2
-from model.EC2Cred import EC2Cred
 
 class UnsupportedPlatformError(Exception):
     def __init__(self, value):

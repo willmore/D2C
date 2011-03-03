@@ -99,20 +99,14 @@ class AMIPanel(wx.Panel):
         
         vbox.Add(hbox1, 0, wx.EXPAND)
         
-        #Logger panel setup
         self._logPanel = ContainerPanel(self.splitter, -1, size=(200,100))
-        
-        #hbox2 = wx.BoxSizer(wx.HORIZONTAL)
-        #hbox2.Add(self._logPanel, 1, wx.EXPAND)
-        #vbox.Add(hbox2, 1, wx.EXPAND)
-        
+   
         self.splitter.SplitHorizontally(self._list, self._logPanel)
         
         self.SetSizer(vbox)
         
         self.Layout()     
-            
-        
+           
     def addLogPanel(self, id):
         self._logPanel.addPanel(id, wx.TextCtrl(self._logPanel, -1, size=(100,100), style=wx.TE_MULTILINE )) #style=wx.TE_READONLY
         
@@ -120,7 +114,7 @@ class AMIPanel(wx.Panel):
         self._logPanel.showPanel(id)
         
     def appendLogPanelText(self, logPanelId, text):
-        self._logPanel.getPanel(logPanelId).AppendText(text)
+        self._logPanel.getPanel(logPanelId).AppendText(str(text) + "\n")
 
 
 class RawImagePanel(wx.Panel):    
