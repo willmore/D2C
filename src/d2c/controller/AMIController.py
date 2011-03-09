@@ -8,33 +8,48 @@ from wx.lib.pubsub import Publisher
 import traceback
 from threading import Thread
 from d2c.AMICreator import AMICreator
-from d2c.AMICreator import AMITools
+from d2c.AMITools import AMIToolsFactory
+
 
 class _AmiLogMsg:
         
-        def __init__(self,img,msg):
-            self.img = img
-            self.msg = msg
+    def __init__(self,img,msg):
+        self.img = img
+        self.msg = msg
 
 
 class AMIController:
     
-    def __init__(self, amiView, dao):
+    JOB_CODE_SUCCESS = 0
+    
+    def __init__(self, amiView, dao, amiToolsFactory=AMIToolsFactory()):
         self.__dao = dao
         self.__amiView = amiView
+        self.__amiToolsFactory = amiToolsFactory
         
         Publisher.subscribe(self.__createAMI, "CREATE AMI")
         Publisher.subscribe(self._handleAMILog, "AMI LOG")
+        Publisher.subscribe(self._handleAMIJobDone, "AMI JOB DONE")
+    
+    def _handleAMIJobDone(self, msg):
+        (jobId, amiId, code, execption) = msg
+        
+        if code != self.JOB_CODE_SUCCESS:
+            self.__dao.upateAMIJob()
     
     def _handleAMILog(self, msg):
         
         self.__amiView.appendLogPanelText(msg.data.img, msg.data.msg)
         
+    def _sendFinishMessage(self, jobid, amiid=None, code=JOB_CODE_SUCCESS, exception=None):
+        wx.CallAfter(Publisher().sendMessage, "AMI JOB DONE", (jobid, amiid, code, exception))
+        
     class __AMIThread(Thread):
             
-            def __init__(self, img, conf, logger):
+            def __init__(self, img, conf, amiToolsFactory, logger):
                 Thread.__init__(self)
                 self.__img = img
+                self.__amiToolsFactory = amiToolsFactory
                 self.__conf = conf
                 self.__logger = logger
                 
@@ -44,11 +59,15 @@ class AMIController:
                                        self.__conf.ec2Cred, 
                                        self.__conf.awsUserId, 
                                        "et.cs.ut.cloud",
-                                       amiTools=AMITools(self.__conf.ec2ToolHome, 
+                                       amiTools=self.__amiToolsFactory.getAMITools(
+                                                         self.__conf.ec2ToolHome, 
                                                          self.__conf.awsCred.access_key_id, 
-                                                         self.__conf.awsCred.secret_access_key),
+                                                         self.__conf.awsCred.secret_access_key,
+                                                         self.__logger),
                                        logger=self.__logger
                                        ).createAMI()
+                                       
+                    self._sendFinishMessage(self, amiid, code=JOB_CODE_SUCCESS, exception=None)
                                    
                 except:
                     traceback.print_exc()
@@ -61,11 +80,12 @@ class AMIController:
         self.__amiView.addLogPanel(rawImg)
         self.__amiView.showLogPanel(rawImg)
 
+
         amiThread = self.__AMIThread(rawImg, 
-                                     self.__dao.getConfiguration(), 
+                                     self.__dao.getConfiguration(),
+                                     self.__amiToolsFactory,
                                      self.__createLogger(rawImg))
         amiThread.start()  
-        #self.__amiView.Layout()
      
     class __CreationLogger:
         

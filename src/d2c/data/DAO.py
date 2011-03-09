@@ -4,10 +4,12 @@ Created on Feb 10, 2011
 @author: willmore
 '''
 
+import time
 from d2c.model.SourceImage import SourceImage
 from d2c.model.EC2Cred import EC2Cred
 from d2c.model.AWSCred import AWSCred
 from d2c.model.Configuration import Configuration
+
 
 import sqlite3
 
@@ -25,20 +27,77 @@ class DAO:
         c = self._conn.cursor()
         
         c.execute('''create table if not exists aws_cred
-                    (id integer primary key, access_key_id text, secret_access_key text)''')
-        
-        c.execute('''create table if not exists ec2_cred
-                    (id integer primary key, cert text, private_key text)''')
-        
-        c.execute('''create table if not exists conf
-                    (key text, value text)''')
+                    (id integer primary key, 
+                    access_key_id text, 
+                    secret_access_key text)''')
         
         c.execute('''create table if not exists src_img
                     (path text primary key)''')
         
+        c.execute('''create table if not exists ami
+                    (id text primary key,
+                    src_img text,
+                    foreign key(src_img) REFERENCES src_img(path))''')
+        
+        c.execute('''create table if not exists ec2_cred
+                    (id integer primary key, 
+                    cert text, 
+                    private_key text)''')
+        
+        c.execute('''create table if not exists conf
+                    (key text, value text)''')
+        
+        
+        
+        c.execute('''create table if not exists ami_creation_job
+                    (id integer primary key, 
+                    src_img text,
+                    log text,
+                    start_time integer, 
+                    end_time integer, 
+                    return_code integer,
+                    foreign key(src_img) references src_img(path))''')
+        
         self._conn.commit()
         c.close()
           
+    def createAmiJob(self, srcImg, startTime=time.time()):
+        c = self._conn.cursor()
+
+        c.execute("insert into ami_creation_job (src_img, start_time) values (?,?)", (srcImg,startTime))
+        newId = c.lastrowid
+        self._conn.commit()
+        c.close()
+        
+        return newId
+    
+    def createAmi(self, amiId, srcImg):
+        
+        c = self._conn.cursor()
+        c.execute("insert into ami_creation_job (id, src_img) values (?,?)", (id,srcImg))
+        self._conn.commit()
+        c.close()
+    
+    def setAmiJobFinishTime(self, jobId, endTime):        
+        c = self._conn.cursor()
+
+        c.execute("update ami_creation_job set end_time=? where id=?", (endTime,jobId))
+        newId = c.lastrowid
+        self._conn.commit()
+        c.close()
+        
+        return newId
+    
+    def setAmiJobLog(self, jobId, log):        
+        c = self._conn.cursor()
+
+        c.execute("update ami_creation_job set log=? where id=?", (log,jobId))
+        newId = c.lastrowid
+        self._conn.commit()
+        c.close()
+        
+        return newId
+    
     def getSourceImages(self):
         c = self._conn.cursor()
 
@@ -118,8 +177,13 @@ class DAO:
         else:
             cursor.execute("update conf set value=? where key=?", (value, key))
     
-   
+    def addAMI(self, amiid, srcImg):     
+        c = self._conn.cursor()
+
+        c.execute("insert into ami(id, src_img) values (?,?)", (amiid, srcImg))
         
+        self._conn.commit()
+        c.close()  
     
 
              

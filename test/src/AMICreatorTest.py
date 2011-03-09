@@ -35,26 +35,27 @@ class AMICreatorTest(unittest.TestCase):
         #                                       "/media/host/xyz-bundle/xyz-main-partition.img.manifest.xml", 
         #                                       settings['accessKey'], 
         #                                       settings['secretKey'])
-        
+       
         amiTools = AMITools("/opt/EC2TOOLS", settings['accessKey'], settings['secretKey'])
-        
-        outputImg = "/media/host/opt/d2c/job/1299075184.06/openfoam.vdi.main"
+        """
+        outputImg = "/media/host/opt/d2c/job/1299148902.92/openfoam.vdi.main"
         
         #AMICreator.ec2izeImage(outputImg, logger)       
 
         logger.write("Bundling AMI")
-        jobDir = '/media/host/opt/d2c/job/1299075184.06'
+        jobDir = '/media/host/opt/d2c/job/1299148902.92'
         bundleDir = jobDir + "/bundle"
-        """manifest = amiTools.bundleImage(outputImg, 
+        manifest = amiTools.bundleImage(outputImg, 
                                                bundleDir, 
                                                ec2Cred,
-                                               settings['userid'])"""
+                                               settings['userid'])
     
-        manifest = "/media/host/opt/d2c/job/1299075184.06/bundle/openfoam.vdi.main.manifest.xml"
+        manifest = "/media/host/opt/d2c/job/1299148902.92/bundle/openfoam.vdi.main.manifest.xml"
         logger.write("Uploading bundle")
         s3ManifestPath = amiTools.uploadBundle("ee.ut.cs.cloud/testupload/" + str(time.time()), 
                                                      manifest)
-    
+        """
+        s3ManifestPath = "ee.ut.cs.cloud/testupload/1299158318.77/openfoam.vdi.main.manifest.xml"
         logger.write("Registering AMI: " + s3ManifestPath)
         amiId = amiTools.registerAMI(s3ManifestPath)        
 

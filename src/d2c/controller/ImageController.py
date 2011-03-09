@@ -40,7 +40,6 @@ class ImageController:
         self._imageView.SetImages(self._dao.getSourceImages())
         
     def _createAMIImage(self, event):
-        #TODO
         i = self._imageView._list.GetFirstSelected();
         img = self._imageView._list.GetItem(i).GetText()
         pub.sendMessage("CREATE AMI", img)

@@ -11,12 +11,13 @@ from d2c.gui.Gui import Gui
 from controller.ConfController import ConfController
 from controller.ImageController import ImageController
 from controller.AMIController import AMIController
-
+from d2c.AMITools import AMIToolsFactory
 
 class Application:
 
-    def __init__(self):
+    def __init__(self, amiToolsFactory=AMIToolsFactory()):
         
+        self._amiToolsFactory = amiToolsFactory
         self._dao = DAO()
         self._app = wx.App()
         
@@ -24,7 +25,7 @@ class Application:
         
         self._credController = ConfController(self._frame.getConfigurationPanel(), self._dao)
         self._imageController = ImageController(self._frame.getImagePanel(), self._dao)
-        self._amiController = AMIController(self._frame.getAMIPanel(), self._dao)
+        self._amiController = AMIController(self._frame.getAMIPanel(), self._dao, self._amiToolsFactory)
         
         self._frame
         self._frame.Show()     
