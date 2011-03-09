@@ -10,41 +10,16 @@ from threading import Thread
 from d2c.AMICreator import AMICreator
 from d2c.AMITools import AMIToolsFactory
 
-
 class _AmiLogMsg:
         
-    def __init__(self,img,msg):
+    def __init__(self, img, msg):
         self.img = img
         self.msg = msg
+        
+class Codes:
+    JOB_CODE_SUCCESS=0
 
-
-class AMIController:
-    
-    JOB_CODE_SUCCESS = 0
-    
-    def __init__(self, amiView, dao, amiToolsFactory=AMIToolsFactory()):
-        self.__dao = dao
-        self.__amiView = amiView
-        self.__amiToolsFactory = amiToolsFactory
-        
-        Publisher.subscribe(self.__createAMI, "CREATE AMI")
-        Publisher.subscribe(self._handleAMILog, "AMI LOG")
-        Publisher.subscribe(self._handleAMIJobDone, "AMI JOB DONE")
-    
-    def _handleAMIJobDone(self, msg):
-        (jobId, amiId, code, execption) = msg
-        
-        if code != self.JOB_CODE_SUCCESS:
-            self.__dao.upateAMIJob()
-    
-    def _handleAMILog(self, msg):
-        
-        self.__amiView.appendLogPanelText(msg.data.img, msg.data.msg)
-        
-    def _sendFinishMessage(self, jobid, amiid=None, code=JOB_CODE_SUCCESS, exception=None):
-        wx.CallAfter(Publisher().sendMessage, "AMI JOB DONE", (jobid, amiid, code, exception))
-        
-    class __AMIThread(Thread):
+class AMIThread(Thread):
             
             def __init__(self, img, conf, amiToolsFactory, logger):
                 Thread.__init__(self)
@@ -52,6 +27,13 @@ class AMIController:
                 self.__amiToolsFactory = amiToolsFactory
                 self.__conf = conf
                 self.__logger = logger
+            
+            @classmethod
+            def _sendFinishMessage(cls, jobid, amiid=None, 
+                                   code=Codes.JOB_CODE_SUCCESS, exception=None):
+                wx.CallAfter(Publisher().sendMessage, "AMI JOB DONE", 
+                             (jobid, amiid, code, exception))
+    
                 
             def run(self):
                 try:
@@ -67,13 +49,41 @@ class AMIController:
                                        logger=self.__logger
                                        ).createAMI()
                                        
-                    self._sendFinishMessage(self, amiid, code=JOB_CODE_SUCCESS, exception=None)
+                    self._sendFinishMessage(self, amiid, code=Codes.JOB_CODE_SUCCESS, exception=None)
                                    
                 except:
                     traceback.print_exc()
-                    
+
+class AMIController:
+    
+    
+    def __init__(self, amiView, dao, amiToolsFactory=AMIToolsFactory()):
+        self.__dao = dao
+        self.__amiView = amiView
+        self.__amiToolsFactory = amiToolsFactory
+        
+        Publisher.subscribe(self.__createAMI, "CREATE AMI")
+        Publisher.subscribe(self._handleAMILog, "AMI LOG")
+        Publisher.subscribe(self._handleAMIJobDone, "AMI JOB DONE")
+    
+    def _handleAMIJobDone(self, msg):
+        print "message is " + str(msg)
+        (jobId, amiId, code, execption) = msg.data
+        
+        if code != Codes.JOB_CODE_SUCCESS:
+            self.__dao.upateAMIJob()
+    
+    def _handleAMILog(self, msg):
+        
+        self.__amiView.appendLogPanelText(msg.data.img, msg.data.msg)              
         
     def __createAMI(self, msg):
+        '''
+        Listens for AMI creation request, which are generally sent from ImageController.
+        1. Create and display a new log panel which display AMI creation log.
+        2. Spawn an AMIThread which creates the AMI.
+        3. Add a new entry into the AMI list with the in-creation-progress AMI information.
+        '''
         
         rawImg = msg.data.encode('ascii')
         
@@ -81,11 +91,13 @@ class AMIController:
         self.__amiView.showLogPanel(rawImg)
 
 
-        amiThread = self.__AMIThread(rawImg, 
+        amiThread = AMIThread(rawImg, 
                                      self.__dao.getConfiguration(),
                                      self.__amiToolsFactory,
                                      self.__createLogger(rawImg))
-        amiThread.start()  
+        amiThread.start()
+        
+        self.__amiView.addAMIEntry(name=rawImg)
      
     class __CreationLogger:
         
@@ -97,7 +109,8 @@ class AMIController:
     
     def __createLogger(self, img):
         return self.__CreationLogger(img)
-    
+
+
         
                 
         

@@ -115,6 +115,10 @@ class AMIPanel(wx.Panel):
         
     def appendLogPanelText(self, logPanelId, text):
         self._logPanel.getPanel(logPanelId).AppendText(str(text) + "\n")
+        
+    def addAMIEntry(self, name):
+        print "TODO"
+        return
 
 
 class RawImagePanel(wx.Panel):    
