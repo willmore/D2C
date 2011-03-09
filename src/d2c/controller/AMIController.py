@@ -28,8 +28,8 @@ class AMIThread(Thread):
                 self.__conf = conf
                 self.__logger = logger
             
-            @classmethod
-            def _sendFinishMessage(cls, jobid, amiid=None, 
+            
+            def _sendFinishMessage(self, jobid, amiid=None, 
                                    code=Codes.JOB_CODE_SUCCESS, exception=None):
                 wx.CallAfter(Publisher().sendMessage, "AMI JOB DONE", 
                              (jobid, amiid, code, exception))
@@ -49,7 +49,7 @@ class AMIThread(Thread):
                                        logger=self.__logger
                                        ).createAMI()
                                        
-                    self._sendFinishMessage(self, amiid, code=Codes.JOB_CODE_SUCCESS, exception=None)
+                    self._sendFinishMessage(self.__img, amiid, code=Codes.JOB_CODE_SUCCESS, exception=None)
                                    
                 except:
                     traceback.print_exc()
@@ -70,8 +70,7 @@ class AMIController:
         print "message is " + str(msg)
         (jobId, amiId, code, execption) = msg.data
         
-        if code != Codes.JOB_CODE_SUCCESS:
-            self.__dao.upateAMIJob()
+        
     
     def _handleAMILog(self, msg):
         
