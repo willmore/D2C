@@ -9,17 +9,17 @@ from d2c.model.SourceImage import SourceImage
 from d2c.model.EC2Cred import EC2Cred
 from d2c.model.AWSCred import AWSCred
 from d2c.model.Configuration import Configuration
-
+from d2c.model.AMI import AMI
 
 import sqlite3
 
 
 class DAO:
     
-    _SQLITE_FILE = "/tmp/d2c_db.sqlite"
-      
     def __init__(self):
+        self._SQLITE_FILE = "/tmp/d2c_db.sqlite"
         self._conn = sqlite3.connect(self._SQLITE_FILE)  
+        self._conn.row_factory = sqlite3.Row
         self._init_db()
         
     def _init_db(self):
@@ -176,6 +176,35 @@ class DAO:
             cursor.execute("insert into conf (key, value) values (?,?)", (key, value))
         else:
             cursor.execute("update conf set value=? where key=?", (value, key))
+    
+    def __rowToAMI(self, row):
+        
+        return AMI(amiId=row['id'])
+    
+    def getAMIBySrcImg(self, srcImg):
+        c = self._conn.cursor()
+        
+        h = c.execute("select * from ami where src_img=? limit 1", (srcImg,))
+        
+        row = h.fetchone()
+        
+        c.close()
+    
+        return self.__rowToAMI(row) if row is not None else None
+    
+    def getAMIs(self):
+        c = self._conn.cursor()
+        
+        c.execute("select * from ami")
+        
+        out = []
+        
+        for row in c:
+            out.append(self.__rowToAMI(row))
+        
+        c.close()
+    
+        return out
     
     def addAMI(self, amiid, srcImg):     
         c = self._conn.cursor()

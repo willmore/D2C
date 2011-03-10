@@ -21,38 +21,37 @@ class Codes:
 
 class AMIThread(Thread):
             
-            def __init__(self, img, conf, amiToolsFactory, logger):
-                Thread.__init__(self)
-                self.__img = img
-                self.__amiToolsFactory = amiToolsFactory
-                self.__conf = conf
-                self.__logger = logger
+    def __init__(self, img, conf, amiToolsFactory, logger):
+        Thread.__init__(self)
+        self.__img = img
+        self.__amiToolsFactory = amiToolsFactory
+        self.__conf = conf
+        self.__logger = logger
             
-            
-            def _sendFinishMessage(self, jobid, amiid=None, 
-                                   code=Codes.JOB_CODE_SUCCESS, exception=None):
-                wx.CallAfter(Publisher().sendMessage, "AMI JOB DONE", 
+    def _sendFinishMessage(self, jobid, amiid=None, 
+                            code=Codes.JOB_CODE_SUCCESS, exception=None):
+        wx.CallAfter(Publisher().sendMessage, "AMI JOB DONE", 
                              (jobid, amiid, code, exception))
     
                 
-            def run(self):
-                try:
-                    amiid = AMICreator(self.__img, 
-                                       self.__conf.ec2Cred, 
-                                       self.__conf.awsUserId, 
-                                       "et.cs.ut.cloud",
-                                       amiTools=self.__amiToolsFactory.getAMITools(
+        def run(self):
+            try:
+                amiid = AMICreator(self.__img, 
+                                   self.__conf.ec2Cred, 
+                                   self.__conf.awsUserId, 
+                                   "et.cs.ut.cloud",
+                                   amiTools=self.__amiToolsFactory.getAMITools(
                                                          self.__conf.ec2ToolHome, 
                                                          self.__conf.awsCred.access_key_id, 
                                                          self.__conf.awsCred.secret_access_key,
                                                          self.__logger),
-                                       logger=self.__logger
-                                       ).createAMI()
+                                    logger=self.__logger
+                                    ).createAMI()
                                        
-                    self._sendFinishMessage(self.__img, amiid, code=Codes.JOB_CODE_SUCCESS, exception=None)
+                self._sendFinishMessage(self.__img, amiid, code=Codes.JOB_CODE_SUCCESS, exception=None)
                                    
-                except:
-                    traceback.print_exc()
+            except:
+                traceback.print_exc()
 
 class AMIController:
     
@@ -61,15 +60,19 @@ class AMIController:
         self.__dao = dao
         self.__amiView = amiView
         self.__amiToolsFactory = amiToolsFactory
+    
+        self.__refreshAMIList()
         
         Publisher.subscribe(self.__createAMI, "CREATE AMI")
         Publisher.subscribe(self._handleAMILog, "AMI LOG")
         Publisher.subscribe(self._handleAMIJobDone, "AMI JOB DONE")
     
+    def __refreshAMIList(self):
+        self.__amiView.setAMIs(self.__dao.getAMIs())
+    
     def _handleAMIJobDone(self, msg):
-        print "message is " + str(msg)
-        (jobId, amiId, code, execption) = msg.data
-        
+        (jobId, amiId, code, exception) = msg.data
+        self.__amiView.addAMIEntry(amiId)
         
     
     def _handleAMILog(self, msg):

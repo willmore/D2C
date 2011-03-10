@@ -12,7 +12,7 @@ import wx
 from wx.lib.pubsub import Publisher as pub
 
 from d2c.model.SourceImage import SourceImage
-
+import d2c.AMICreator
 
 class ImageController:
     
@@ -42,6 +42,9 @@ class ImageController:
     def _createAMIImage(self, event):
         i = self._imageView._list.GetFirstSelected();
         img = self._imageView._list.GetItem(i).GetText()
-        pub.sendMessage("CREATE AMI", img)
+        if d2c.AMICreator.can_create_ami(img):
+            pub.sendMessage("CREATE AMI", img)
+        else:
+            wx.MessageBox('Cannot create an AMI. AMI already exists for this image.', 'Info')
 
         

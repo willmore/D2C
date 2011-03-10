@@ -42,21 +42,26 @@ class AMITools:
     def __init__(self, ec2_tools, accessKey, secretKey, logger):
         
         self.__logger = logger
+        self.__EC2_TOOLS = ec2_tools   
+        self.__accessKey = accessKey
+        self.__secretKey = secretKey
+        self.__ec2Conn = None
+    
+    def __getEc2Conn(self):
         
         #TODO un-hardcode
         region = "eu-west-1"
-        #TODO: add timeout - if network connection fails, this will spin forever
-        #TODO: add configurable region
-        self.__logger.write("Initiating connection to ec2 region '%s'..." % region)
-        self.__ec2Conn = boto.ec2.connect_to_region(region, aws_access_key_id=accessKey, 
-                                                    aws_secret_access_key=secretKey)
-        self.__logger.write("EC2 connection established")
-        
-        self.__EC2_TOOLS = ec2_tools
-        
-        self.__accessKey = accessKey
-        self.__secretKey = secretKey
-        
+         
+        if self.__ec2Conn is None:
+            #TODO: add timeout - if network connection fails, this will spin forever
+            #TODO: add configurable region
+            self.__logger.write("Initiating connection to ec2 region '%s'..." % region)
+            self.__ec2Conn = boto.ec2.connect_to_region(region, 
+                                                        aws_access_key_id=self.__accessKey, 
+                                                        aws_secret_access_key=self.__secretKey)
+            self.__logger.write("EC2 connection established")
+            
+        return self.__ec2Conn
         
     def __execCmd(self, cmd):
     
@@ -78,7 +83,7 @@ class AMITools:
     
     def registerAMI(self, manifest):
        
-        return self.__ec2Conn.register_image(image_location=manifest)
+        return self.__getEc2Conn().register_image(image_location=manifest)
     
     def uploadBundle(self, bucket, manifest):
         __UPLOAD_CMD = "export EC2_HOME=%s; %s/bin/ec2-upload-bundle -b %s -m %s -a %s -s %s"
@@ -89,7 +94,7 @@ class AMITools:
         
         self.__logger.write("Executing: " + uploadCmd)
         
-        self.__logger.write(subprocess.call(uploadCmd, shell=True))
+        self.__execCmd(uploadCmd)
         
         return bucket + "/" + os.path.basename(manifest)
 
@@ -100,15 +105,17 @@ class AMITools:
     
         __BUNDLE_CMD = "export EC2_HOME=%s; %s/bin/ec2-bundle-image -i %s -c %s -k %s -u %s -r %s -d %s --kernel %s"
     
-        arch = "i386"
-        kernelId = "aki-4deec439" # eu west pygrub, no initrd specification necessary
+        arch = "x86_64"
+        kernelId = {'i386':"aki-4deec439", # eu west pygrub, i386
+                    'x86_64':'aki-4feec43b'} # eu west pygrub, x86_64
         
-        bundleCmd = __BUNDLE_CMD % (self.__EC2_TOOLS, self.__EC2_TOOLS, img, ec2Cred.cert, ec2Cred.private_key, 
-                                    userId, arch, destDir, kernelId)
+        bundleCmd = __BUNDLE_CMD % (self.__EC2_TOOLS, self.__EC2_TOOLS, 
+                                    img, ec2Cred.cert, ec2Cred.private_key, 
+                                    userId, arch, destDir, kernelId[arch])
         
         self.__logger.write("Executing: " + bundleCmd)
         
-        self.__logger.write(subprocess.call(bundleCmd, shell=True))
+        self.__execCmd(bundleCmd)
         
         return destDir + "/" + os.path.basename(img) + ".manifest.xml"
 
@@ -117,11 +124,11 @@ class AMITools:
 
     def extractMainPartition(self, fullImg, outputImg):
         if "Linux" == platform.system():
-            self.__extractMainPartitionLinux(fullImg, outputImg, logger)
+            self.__extractMainPartitionLinux(fullImg, outputImg)
         else:
             raise UnsupportedPlatformError(platform.system())
 
-    def ec2izeImage(self, partitionImg, logger=logger.DevNullLogger()):
+    def ec2izeImage(self, partitionImg):
             """
             Mounts an image and does the following:
             1. Writes new kernel and modules.
@@ -139,39 +146,28 @@ class AMITools:
                 #Step 1: mount
                 os.symlink(partitionImg, mntSrc)
                 cmd = "mount %s" % (partitionImg,)
-                logger.write("Executing: " + cmd)
                 
-                proc = subprocess.Popen(shlex.split(cmd),
-                             stdout=subprocess.PIPE, 
-                             stderr=subprocess.PIPE, 
-                             close_fds=True)
-                (_, stderroutput) = proc.communicate()
-                if 0 != proc.returncode:
-                    raise Exception("Mount command did not succeed '" + cmd +". Error output:\n\t" + stderroutput)
+                self.__execCmd(cmd)
                 
                 #Step 2: copy kernel
-                kernelSrcTar = "../data/kernels/2.6.35-24-virtual.tar"
+                
+                #TODO determine architecture
+                arch = 'x86_64'
+                kernelSrcTar = {'i386':"../data/kernels/2.6.35-24-virtual.tar",
+                                'x86_64':"../../data/kernels/2.6.35-24-virtual-x86_64.tar"}
             
-                cmd = "tar -C %s -xf %s" % (mntPoint, kernelSrcTar)
-                logger.write("Executing: " + cmd)
-                proc = subprocess.Popen(shlex.split(cmd),
-                             stdout=subprocess.PIPE, 
-                             stderr=subprocess.PIPE, 
-                             close_fds=True)
-                (_, stderroutput) = proc.communicate()
-                if 0 != proc.returncode:
-                    raise Exception("Extracting kernel to image did not succeed. Error output:\n\t" + stderroutput)
-            
+                cmd = "tar -C %s -xf %s" % (mntPoint, kernelSrcTar[arch])
+                self.__execCmd(cmd)
             
                 #Step 3: Save old fstab
                 fromFile = mntPoint + "/etc/fstab"
                 toFile = mntPoint + "/etc/fstab.save"
-                logger.write("Saving image's old fstab")
-                logger.write("Executing: mv /etc/fstab")
+                self.__logger.write("Saving image's old fstab")
+                self.__logger.write("Executing: mv /etc/fstab")
                 shutil.copyfile(fromFile, toFile)
             
                 #Step 4: write out fstab
-                logger.write("Writting out new EC2 /etc/fstab")
+                self.__logger.write("Writting out new EC2 /etc/fstab")
                 fstab = open(fromFile, 'w')
                 fstab.write("/dev/sda1\t/\text4\tdefaults\t1\t1\n")
                 fstab.write("none\t/dev/pts\tdevpts\tgid=5,mode=620\t0\t0\n")
@@ -184,21 +180,14 @@ class AMITools:
             
             finally:
                 if fstab is not None and not fstab.closed:
-                    logger.write("Closing image's /etc/fstab")
+                    self.__logger.write("Closing image's /etc/fstab")
                     fstab.close()
                     
                 if os.path.ismount(mntPoint):
                     #Step 5: unmount
-                    logger.write("Unmounting " + mntPoint)
-                    proc = subprocess.Popen(("umount", "/dev/loop0"), #/dev/loop0 is temp hack
-                                     stdout=subprocess.PIPE, 
-                                     stderr=subprocess.PIPE, 
-                                     close_fds=True)
-                    (_, stderroutput) = proc.communicate()
-                    if proc.returncode != 0:
-                        logger.write("Unmount failed: " + stderroutput)
-                        
-                    logger.write("Done EC2ing image")
+                    self.__logger.write("Unmounting " + mntPoint)
+                    self.__execCmd("umount /dev/loop0") #/dev/loop0 is temp hack
+                    self.__logger.write("Done EC2ing image")
                     
                 if os.path.exists(mntSrc):
                     os.unlink(mntSrc)
@@ -246,6 +235,5 @@ class AMITools:
                                                               blockSize, 
                                                               linuxPartition['start'], 
                                                               linuxPartition['end'] - linuxPartition['start'] + 1)
-        self.__logger.write("Executing: " + cmd)
-        self.__logger.write(subprocess.call(shlex.split(cmd)))
+        self.__execCmd(cmd)
         self.__logger.write("Done extracting partition.")

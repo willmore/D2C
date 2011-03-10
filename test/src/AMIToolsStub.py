@@ -21,7 +21,7 @@ class AMIToolsStub:
     def extractRawImage(self, srcImg, destImg, log):
         self.__logger.write("Extracting image")
 
-    def extractMainPartition(self, fullImg, outputImg, logger):
+    def extractMainPartition(self, fullImg, outputImg):
         self.__logger.write("Extracting main partition")
     
     def ec2izeImage(self, partitionImg, logger):

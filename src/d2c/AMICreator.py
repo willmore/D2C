@@ -10,7 +10,13 @@ import time
 
 from d2c.data.DAO import DAO
 
-
+def can_create_ami(srcImg):
+    """
+    returns true if an AMI can be created
+    """
+    dao = DAO()
+    
+    return None is dao.getAMIBySrcImg(srcImg)
 
 class AMICreator:
     '''
@@ -20,16 +26,16 @@ class AMICreator:
     __JOB_ROOT = "/media/host/opt/d2c/job"
     __IMAGE_DIR = "/tmp/d2c/data/images/"
     
-    
     def __init__(self, srcImg, ec2Cred, 
                  userId, s3Bucket, amiTools, 
-                 logger=logger.DevNullLogger()):
+                 logger):
         self.__srcImg = srcImg
         self.__ec2Cred = ec2Cred
         self.__userId = userId
         self.__s3Bucket = s3Bucket
         self.__amiTools = amiTools
         self.__logger = logger
+        self.__dao = DAO()
     
     def createAMI(self):
         """
@@ -51,7 +57,7 @@ class AMICreator:
         self.__logger.write("Extracting main partition")
         #we only support one partition now
         outputImg = jobDir + "/" + imgName + ".main"
-        self.__amiTools.extractMainPartition(rawImg, outputImg, self.__logger)
+        self.__amiTools.extractMainPartition(rawImg, outputImg)
         
         self.__logger.write("EC2izing image")
         self.__amiTools.ec2izeImage(outputImg, self.__logger)       
@@ -71,8 +77,8 @@ class AMICreator:
         self.__logger.write("Registering AMI: " + s3ManifestPath)
         amiId = self.__amiTools.registerAMI(s3ManifestPath)
         
-        dao = DAO()
-        dao.addAMI(amiId, self.__srcImg)
+        
+        self.__dao.addAMI(amiId, self.__srcImg)
         
         return amiId     
     
