@@ -10,6 +10,7 @@ from .ContainerPanel import ContainerPanel
 from .AMIPanel import AMIPanel
 from .ConfPanel import ConfPanel
 from .RawImagePanel import RawImagePanel
+from .DeploymentDescPanel import DeploymentDescPanel
 
 class Gui(wx.Frame):    
     
@@ -20,6 +21,7 @@ class Gui(wx.Frame):
     LABEL_CONFIGURATION = "Configuration"
     LABEL_SOURCE_IMAGES = "Source Images"
     LABEL_AMIS = "AMIs"
+    LABEL_DEPLOYMENT_DECS = "Deployment Descriptors"
     
     def __init__(self, parent=None, id=-1, title='D2C'):
         wx.Frame.__init__(self, parent, id, title, size=(750, 450))
@@ -44,7 +46,8 @@ class Gui(wx.Frame):
         self._containerPanel = ContainerPanel(self)
         for (label, panel) in [(self.LABEL_CONFIGURATION, ConfPanel(self._containerPanel)),
                                (self.LABEL_SOURCE_IMAGES, RawImagePanel(self._containerPanel)),
-                               (self.LABEL_AMIS, AMIPanel(self._containerPanel))
+                               (self.LABEL_AMIS, AMIPanel(self._containerPanel)),
+                               (self.LABEL_DEPLOYMENT_DECS, DeploymentDescPanel(self._containerPanel))
                                ]:
             self._containerPanel.addPanel(label, panel)
             labels.append(label)
