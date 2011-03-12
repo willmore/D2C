@@ -48,19 +48,17 @@ class AMICreatorTest(unittest.TestCase):
         partitionImg = jobDir + "worker.vdi.main"
         amiTools.ec2izeImage(partitionImg)
         
-        
-        
         #AMICreator.ec2izeImage(outputImg, logger)       
         
         logger.write("Bundling AMI")
         bundleDir = jobDir + "/bundle"
-        manifest = amiTools.bundleImage(partitionImg, 
-                                               bundleDir, 
+        manifest = amiTools.bundleImage(partitionImg,
+                                               bundleDir,
                                                ec2Cred,
                                                settings['userid'])
     
         logger.write("Uploading bundle")
-        s3ManifestPath = amiTools.uploadBundle("ee.ut.cs.cloud/testupload/" + str(time.time()), 
+        s3ManifestPath = amiTools.uploadBundle("ee.ut.cs.cloud/testupload/" + str(time.time()),
                                                      manifest)
         logger.write("Registering AMI: " + s3ManifestPath)
         amiId = amiTools.registerAMI(s3ManifestPath)       

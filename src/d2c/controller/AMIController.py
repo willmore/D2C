@@ -30,13 +30,13 @@ class AMIThread(Thread):
             
     def _sendFinishMessage(self, jobid, amiid=None, 
                             code=Codes.JOB_CODE_SUCCESS, exception=None):
+    
         wx.CallAfter(Publisher().sendMessage, "AMI JOB DONE", 
                              (jobid, amiid, code, exception))
-    
-                
-        def run(self):
-            try:
-                amiid = AMICreator(self.__img, 
+            
+    def run(self):
+        try:
+            ami = AMICreator(self.__img, 
                                    self.__conf.ec2Cred, 
                                    self.__conf.awsUserId, 
                                    "et.cs.ut.cloud",
@@ -47,11 +47,11 @@ class AMIThread(Thread):
                                                          self.__logger),
                                     logger=self.__logger
                                     ).createAMI()
-                                       
-                self._sendFinishMessage(self.__img, amiid, code=Codes.JOB_CODE_SUCCESS, exception=None)
+
+            self._sendFinishMessage(self.__img, ami, code=Codes.JOB_CODE_SUCCESS, exception=None)
                                    
-            except:
-                traceback.print_exc()
+        except:
+            traceback.print_exc()
 
 class AMIController:
     
@@ -71,9 +71,9 @@ class AMIController:
         self.__amiView.setAMIs(self.__dao.getAMIs())
     
     def _handleAMIJobDone(self, msg):
-        (jobId, amiId, code, exception) = msg.data
-        self.__amiView.addAMIEntry(amiId)
-        
+        (jobId, ami, code, exception) = msg.data
+        print "HandleDone %s" % str(ami)
+        self.__amiView.addAMIEntry(ami)   
     
     def _handleAMILog(self, msg):
         
@@ -91,8 +91,7 @@ class AMIController:
         
         self.__amiView.addLogPanel(rawImg)
         self.__amiView.showLogPanel(rawImg)
-
-
+        print "Starting thread"
         amiThread = AMIThread(rawImg, 
                                      self.__dao.getConfiguration(),
                                      self.__amiToolsFactory,

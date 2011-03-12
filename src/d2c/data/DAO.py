@@ -10,7 +10,6 @@ from d2c.model.EC2Cred import EC2Cred
 from d2c.model.AWSCred import AWSCred
 from d2c.model.Configuration import Configuration
 from d2c.model.AMI import AMI
-
 import sqlite3
 
 
@@ -46,9 +45,7 @@ class DAO:
         
         c.execute('''create table if not exists conf
                     (key text, value text)''')
-        
-        
-        
+              
         c.execute('''create table if not exists ami_creation_job
                     (id integer primary key, 
                     src_img text,
@@ -179,12 +176,23 @@ class DAO:
     
     def __rowToAMI(self, row):
         
-        return AMI(amiId=row['id'])
+        return AMI(amiId=row['id'], srcImg=row['src_img'])
     
     def getAMIBySrcImg(self, srcImg):
         c = self._conn.cursor()
         
         h = c.execute("select * from ami where src_img=? limit 1", (srcImg,))
+        
+        row = h.fetchone()
+        
+        c.close()
+    
+        return self.__rowToAMI(row) if row is not None else None
+    
+    def getAMIById(self, id):
+        c = self._conn.cursor()
+        
+        h = c.execute("select * from ami where id=? limit 1", (id,))
         
         row = h.fetchone()
         

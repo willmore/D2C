@@ -6,6 +6,7 @@ Created on Feb 10, 2011
 
 class AMI:
     
-    def __init__(self, amiId):
+    def __init__(self, amiId, srcImg):
         self.amiId = amiId
+        self.srcImg = srcImg
 

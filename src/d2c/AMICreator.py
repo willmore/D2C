@@ -5,7 +5,6 @@ Created on Feb 16, 2011
 '''
 
 import os
-import logger
 import time
 
 from d2c.data.DAO import DAO
@@ -67,19 +66,18 @@ class AMICreator:
         manifest = self.__amiTools.bundleImage(outputImg, 
                                                bundleDir, 
                                                self.__ec2Cred,
-                                               self.__userId)
-    
+                                               self.__userId) 
     
         self.__logger.write("Uploading bundle")
         s3ManifestPath = self.__amiTools.uploadBundle("ee.ut.cs.cloud/testupload/" + str(time.time()), 
                                                      manifest)
     
         self.__logger.write("Registering AMI: " + s3ManifestPath)
-        amiId = self.__amiTools.registerAMI(s3ManifestPath)
-        
+        amiId = self.__amiTools.registerAMI(s3ManifestPath)     
         
         self.__dao.addAMI(amiId, self.__srcImg)
+        ami = self.__dao.getAMIById(amiId)
         
-        return amiId     
+        return ami    
     
         
