@@ -92,8 +92,6 @@ class AMITools:
                                     bucket, manifest, 
                                     self.__accessKey, self.__secretKey)
         
-        self.__logger.write("Executing: " + uploadCmd)
-        
         self.__execCmd(uploadCmd)
         
         return bucket + "/" + os.path.basename(manifest)
@@ -174,8 +172,8 @@ class AMITools:
                 fstab.write("none\t/dev/shm\ttmpfs\tdefaults\t0\t0\n")
                 fstab.write("none\t/proc\tproc\tdefaults\t0\t0\n")
                 fstab.write("none\t/sys\tsysfs\tdefaults\t0\t0\n")
-                fstab.write("/dev/sda2\t/mnt\text3\tdefaults\t0\t0\n")
-                fstab.write("/dev/sda3\tswap\tswap\tdefaults\t0\t0\n")
+                fstab.write("/dev/sda2\t/mnt\text3\tdefaults,nobootwait\t0\t0\n")
+                fstab.write("/dev/sda3\tswap\tswap\tdefaults,nobootwait\t0\t0\n")
                 
             
             finally:
@@ -210,7 +208,6 @@ class AMITools:
         for line in string.split(stdoutdata, "\n"):
             match = re.match("(\S+)[\s\*]+(\d+)[\s]+(\d+)[\s]+(\S+)[\s]+(\S+)[\s]+(.+)", line)
             if match is not None:
-                print match.groups()
                 partitions.append({'start':int(match.group(2)), 'end':int(match.group(3)), 
                                    'system':match.group(6)})
         

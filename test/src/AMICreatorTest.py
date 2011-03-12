@@ -46,7 +46,7 @@ class AMICreatorTest(unittest.TestCase):
      
         jobDir = "/media/host/opt/d2c/job/1299685087.96/"
         partitionImg = jobDir + "worker.vdi.main"
-        #amiTools.ec2izeImage(partitionImg)
+        amiTools.ec2izeImage(partitionImg)
         
         
         
