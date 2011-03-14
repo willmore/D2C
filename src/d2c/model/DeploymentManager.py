@@ -36,3 +36,4 @@ class DeploymentManager:
             reservations.append(self.reserveInstance(ec2Conn, role, count))
             
         return Deployment(deploymentDesc, reservations)
+  

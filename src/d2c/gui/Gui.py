@@ -79,6 +79,9 @@ class Gui(wx.Frame):
     def getAMIPanel(self):
         return self._containerPanel.getPanel(self.LABEL_AMIS)
     
+    def getDeploymentDescPanel(self):
+        return self._containerPanel.getPanel(self.LABEL_DEPLOYMENT_DECS)
+    
     def OnQuit(self, event):
         self.Close()
 

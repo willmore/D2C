@@ -10,6 +10,9 @@ from d2c.model.EC2Cred import EC2Cred
 from d2c.model.AWSCred import AWSCred
 from d2c.model.Configuration import Configuration
 from d2c.model.AMI import AMI
+from d2c.model.DeploymentDescription import DeploymentDescription
+from d2c.model.DeploymentDescription import Role
+
 import sqlite3
 
 
@@ -45,7 +48,19 @@ class DAO:
         
         c.execute('''create table if not exists conf
                     (key text, value text)''')
+        
+        c.execute('''create table if not exists deploy_desc
+                    (name text primary key)''')
               
+              
+        c.execute('''create table if not exists deploy_desc_role
+                    (name text,
+                    deploy_desc text,
+                    ami text,
+                    count integer,
+                    foreign key(deploy_desc) references deploy_desc(name),
+                    foreign key(ami) references ami(id))''')
+    
         c.execute('''create table if not exists ami_creation_job
                     (id integer primary key, 
                     src_img text,
@@ -222,8 +237,29 @@ class DAO:
         self._conn.commit()
         c.close()  
     
-
-             
-
+    def getDeploymentDescriptions(self):
         
+        c = self._conn.cursor()
+        
+        c.execute("select * from deploy_desc")
+        
+        deploys = {}
+        
+        for row in c:
+            deploys[row['name']] = self.rowToDeploymentDescription(row)
+        
+        c.execute("select * from deploy_desc_role")
+         
+        for row in c:
+            deploys[row['deploy_desc']].addRole(self.rowToRole(row))
+        
+        c.close()
+    
+        return deploys.values()
+             
+    def rowToDeploymentDescription(self, row):
+        return DeploymentDescription(row['name'])
+        
+    def rowToRole(self, row):
+        return Role(row['name'], row['ami'], row['count'])
     
