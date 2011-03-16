@@ -10,8 +10,8 @@ from d2c.model.EC2Cred import EC2Cred
 from d2c.model.AWSCred import AWSCred
 from d2c.model.Configuration import Configuration
 from d2c.model.AMI import AMI
-from d2c.model.DeploymentDescription import DeploymentDescription
-from d2c.model.DeploymentDescription import Role
+from d2c.model.Deployment import Deployment
+from d2c.model.Deployment import Role
 
 import sqlite3
 
@@ -237,7 +237,10 @@ class DAO:
         self._conn.commit()
         c.close()  
     
-    def getDeploymentDescriptions(self):
+    def addDeployment(self, deployment):
+        pass
+    
+    def getDeployments(self):
         
         c = self._conn.cursor()
         

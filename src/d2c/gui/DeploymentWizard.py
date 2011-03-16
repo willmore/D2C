@@ -67,13 +67,14 @@ class RoleWizardContainer(ContainerPanel):
           
         self.addPanel("ROLES", RolePanel(self))  
         self.addPanel("ADD_ROLE", AddRolePanel(self))      
+        
         self.showPanel("ROLES")
 
 
 class SettingsPanel(wx.Panel):    
     
-    def __init__(self, parent, id=-1):
-        wx.Panel.__init__(self, parent, id)
+    def __init__(self, *args, **kwargs):
+        wx.Panel.__init__(self, *args, **kwargs)
       
         self.startScript = wx.TextCtrl(self);
         self.endCheck = wx.TextCtrl(self);
@@ -95,10 +96,24 @@ class SettingsPanel(wx.Panel):
         
         vbox.Add(fgs, 0, wx.ALL | wx.EXPAND)
         
-        self.nextButton = wx.Button(self, wx.ID_ANY, 'Finish', size=(110, -1))
-        vbox.Add(self.nextButton, 0, wx.ALIGN_RIGHT)
+        self.finishButton = wx.Button(self, wx.ID_ANY, 'Finish', size=(110, -1))
+        vbox.Add(self.finishButton, 0, wx.ALIGN_RIGHT)
         
         self.SetSizer(vbox)
+        
+class CompletionPanel(wx.Panel):
+    
+    def __init__(self, *args, **kwargs):
+        wx.Panel.__init__(self, *args, **kwargs)
+        
+        self.sizer = wx.BoxSizer(wx.VERTICAL)
+       
+        self.sizer.Add(wx.StaticText(self, -1, 'New completion created!'), 0)
+        
+        self.okButton = wx.Button(self, wx.ID_ANY, 'OK', size=(110, -1))
+        self.sizer.Add(self.okButton, 0, wx.ALIGN_RIGHT)
+        
+        self.SetSizer(self.sizer)
 
 class DeploymentWizard(wx.Dialog):
     
@@ -115,7 +130,10 @@ class DeploymentWizard(wx.Dialog):
         self.container.addPanel("ROLES", self.roleWizard)   
         
         self.settingsPanel = SettingsPanel(self.container)
-        self.container.addPanel("CONF", self.settingsPanel)          
+        self.container.addPanel("CONF", self.settingsPanel)    
+        
+        self.completionPanel = CompletionPanel(self.container)
+        self.container.addPanel("COMPLETION", self.completionPanel)        
         
 
     

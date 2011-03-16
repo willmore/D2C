@@ -15,12 +15,22 @@ class Role:
 
 
 class DeploymentState:
-    PENDING = 'PENDING'
+    NOT_RUN = 'NOT_RUN'
     RUNNING = 'RUNNING'
     FINALIZING = 'FINALIZING'
     COMPLETED = 'COMPLETED'
     
-
+class StartAction:
+    
+    def __init__(self, role, script):
+        self.role = role
+        self.script = script
+        
+class DataCollection:
+    
+    def __init__(self, role, directory):
+        self.role = role
+        self.directory = directory
 
 class Deployment:
     """
@@ -29,9 +39,14 @@ class Deployment:
     which may be in various states (requested, running, terminated, etc.)
     """
     
-    def __init__(self, id, reservations, deploymentDesc):
-        self.deploymentDesc = deploymentDesc
+    NEW_ID = -1
+    
+    def __init__(self, id, roles, startActions, dataCollections, reservations=(), state=DeploymentState.NOT_RUN):
+        self.id = id
+        self.roles = roles
         self.reservations = reservations
+        self.startActions = startActions
+        self.state = state
     
     def getState(self):
         pass

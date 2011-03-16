@@ -30,6 +30,9 @@ class RoleList(wx.ListCtrl):
         for role in roles:
             self.addRole(role)
             
+    def getRoles(self):
+        return self.roles
+    
     def getSelectedRoles(self):
         #TODO return more than one if selected
         i = self.GetFirstSelected();
