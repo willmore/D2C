@@ -5,14 +5,7 @@ Created on Feb 10, 2011
 '''
 
 
-class Role:
-    
-    def __init__(self, name, ami, count):
-        self.name = name
-        self.ami = ami
-        
-        assert count > 0
-        self.count = count
+
         
 class DeploymentDescription:
     """

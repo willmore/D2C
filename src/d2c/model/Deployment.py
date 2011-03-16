@@ -4,6 +4,15 @@ Created on Mar 14, 2011
 @author: willmore
 '''
 
+class Role:
+    
+    def __init__(self, name, ami, count):
+        self.name = name
+        self.ami = ami
+        
+        assert count > 0
+        self.count = count
+
 
 class DeploymentState:
     PENDING = 'PENDING'
