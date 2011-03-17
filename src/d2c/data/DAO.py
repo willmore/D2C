@@ -5,6 +5,7 @@ Created on Feb 10, 2011
 '''
 
 import time
+import os
 from d2c.model.SourceImage import SourceImage
 from d2c.model.EC2Cred import EC2Cred
 from d2c.model.AWSCred import AWSCred
@@ -15,12 +16,19 @@ from d2c.model.Deployment import Role
 
 import sqlite3
 
-
 class DAO:
     
+    _SQLITE_FILE = "~/.d2c/db.sqlite"
+    
     def __init__(self):
-        self._SQLITE_FILE = "/tmp/d2c_db.sqlite"
-        self._conn = sqlite3.connect(self._SQLITE_FILE)  
+        
+        baseDir = os.path.dirname(DAO._SQLITE_FILE)
+        print baseDir
+        if not os.path.isdir(baseDir):
+            os.makedirs(baseDir, mode=0700)
+        
+        
+        self._conn = sqlite3.connect(DAO._SQLITE_FILE)  
         self._conn.row_factory = sqlite3.Row
         self._init_db()
         
@@ -49,16 +57,18 @@ class DAO:
         c.execute('''create table if not exists conf
                     (key text, value text)''')
         
-        c.execute('''create table if not exists deploy_desc
-                    (name text primary key)''')
+        c.execute('''create table if not exists deploy
+                    (name text primary key,
+                    state text
+                    )''')
               
               
-        c.execute('''create table if not exists deploy_desc_role
+        c.execute('''create table if not exists deploy_role
                     (name text,
-                    deploy_desc text,
+                    deploy text,
                     ami text,
                     count integer,
-                    foreign key(deploy_desc) references deploy_desc(name),
+                    foreign key(deploy) references deploy(name),
                     foreign key(ami) references ami(id))''')
     
         c.execute('''create table if not exists ami_creation_job
@@ -86,7 +96,7 @@ class DAO:
     def createAmi(self, amiId, srcImg):
         
         c = self._conn.cursor()
-        c.execute("insert into ami_creation_job (id, src_img) values (?,?)", (id,srcImg))
+        c.execute("insert into ami (id, src_img) values (?,?)", (amiId,srcImg))
         self._conn.commit()
         c.close()
     
@@ -240,28 +250,31 @@ class DAO:
     def saveDeployment(self, deployment):
         print "Saving new deployment"
         c = self._conn.cursor()
-        c.execute("insert into deploy_desc (id, state) values (?, state)", 
-                      (deployment.name, deployment.state))
+        c.execute("insert into deploy (name, state) values (?, ?)", 
+                      (deployment.id, deployment.state))
     
         for role in deployment.roles:
-            c.execute("insert into deploy_desc_role (name, deploy_desc, ami, count", 
-                  (role.name, deployment.name, role.ami, role.count))
+            c.execute("insert into deploy_role (name, deploy, ami, count) values (?,?,?,?)", 
+                  (role.name, deployment.id, role.ami.amiId, role.count))
+            
+        self._conn.commit()
+        c.close()  
     
     def getDeployments(self):
         
         c = self._conn.cursor()
         
-        c.execute("select * from deploy_desc")
+        c.execute("select * from deploy")
         
         deploys = {}
         
         for row in c:
             deploys[row['name']] = self.rowToDeploymentDescription(row)
         
-        c.execute("select * from deploy_desc_role")
+        c.execute("select * from deploy_role")
          
         for row in c:
-            deploys[row['deploy_desc']].addRole(self.rowToRole(row))
+            deploys[row['deploy']].addRole(self.rowToRole(row))
         
         c.close()
     

@@ -31,7 +31,7 @@ class RoleList(wx.ListCtrl):
             self.addRole(role)
             
     def getRoles(self):
-        return self.roles
+        return self.roles.values()
     
     def getSelectedRoles(self):
         #TODO return more than one if selected

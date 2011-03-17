@@ -40,7 +40,7 @@ class Deployment:
     """
     
     
-    def __init__(self, id, roles, startActions, dataCollections, 
+    def __init__(self, id, roles, startActions=(), dataCollections=(), 
                  reservations=(), state=DeploymentState.NOT_RUN):
         self.id = id
         self.roles = roles

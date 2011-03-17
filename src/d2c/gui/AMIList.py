@@ -24,6 +24,9 @@ class AMIList(wx.ListCtrl):
         idx = self.Append((ami.amiId,ami.srcImg))
         self.amis[idx] = ami
     
+    def getAMIs(self):
+        return self.amis.values()
+    
     def setAMIs(self, amis): 
         self.DeleteAllItems()
         self.amis.clear()
