@@ -237,8 +237,15 @@ class DAO:
         self._conn.commit()
         c.close()  
     
-    def addDeployment(self, deployment):
-        pass
+    def saveDeployment(self, deployment):
+        print "Saving new deployment"
+        c = self._conn.cursor()
+        c.execute("insert into deploy_desc (id, state) values (?, state)", 
+                      (deployment.name, deployment.state))
+    
+        for role in deployment.roles:
+            c.execute("insert into deploy_desc_role (name, deploy_desc, ami, count", 
+                  (role.name, deployment.name, role.ami, role.count))
     
     def getDeployments(self):
         
@@ -260,8 +267,8 @@ class DAO:
     
         return deploys.values()
              
-    def rowToDeploymentDescription(self, row):
-        return DeploymentDescription(row['name'])
+    def rowToDeployment(self, row):
+        return Deployment(row['name'])
         
     def rowToRole(self, row):
         return Role(row['name'], row['ami'], row['count'])

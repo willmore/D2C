@@ -25,16 +25,21 @@ class DeploymentWizardController:
         
         self.wizard.container.getPanel("COMPLETION").okButton.Bind(wx.EVT_BUTTON, self.done)
         
-        self.wizard.container.showPanel("ROLES")   
+        self.wizard.namePanel.nextButton.Bind(wx.EVT_BUTTON, self.showRolesWizard)
+        
+        self.wizard.container.showPanel("NAME")   
     
-    
+    def showRolesWizard(self, event):
+        #TODO validation
+        self.newName = self.wizard.namePanel.name.GetValue()      
+        self.wizard.container.showPanel("ROLES")
+
     def done(self, event):
-        print "Done"
         self.wizard.EndModal(wx.ID_OK)
     
     def addDeployment(self, event):
         print "Saving Deployment"
-        roles = self.wizard.container.getPanel("ROLES").getPanel("ROLES").roleList.getRoles()
+        roles = self.wizard.roleWizard.getPanel("ROLES").roleList.getRoles()
         
         #TODO
         startActions = ()
@@ -42,7 +47,7 @@ class DeploymentWizardController:
         #TODO
         dataCollections = ()
         
-        deployment = Deployment(Deployment.NEW_ID, roles, 
+        deployment = Deployment(self.newName, roles, 
                                 startActions, dataCollections)
     
         self.dao.saveDeployment(deployment)
@@ -62,6 +67,13 @@ class DeploymentWizardController:
         self.wizard.container.getPanel("ROLES").showPanel("ROLES")
         
     def showDeplomentSettingsPanel(self, event):
+        
+        if len(self.wizard.roleWizard.getPanel("ROLES").roleList.getRoles()) <= 0:
+            dial = wx.MessageDialog(None, 'Must specify at least one role', 'Exclamation', wx.OK | 
+                                    wx.ICON_EXCLAMATION)
+            dial.ShowModal()
+            return
+        
         self.wizard.container.showPanel("CONF")
         
     def showAddRolePanel(self, event):
@@ -72,7 +84,7 @@ if __name__ == '__main__':
     app = wx.PySimpleApp()  # Start the application
 
     # Create wizard and add any kind pages you'd like
-    mywiz = DeploymentWizard(None, -1, 'Simple Wizard')
+    mywiz = DeploymentWizard(None, -1, 'Simple Wizard', size=(400,300))
     
     class DummyDao:
         def getAMIs(self):

@@ -34,14 +34,14 @@ class DataCollection:
 
 class Deployment:
     """
-    Represents an instance of a DeploymentDescription.
+    Represents an instance of a Deployment.
     A deployment consists of one or more reservations, 
-    which may be in various states (requested, running, terminated, etc.)
+        which may be in various states (requested, running, terminated, etc.)
     """
     
-    NEW_ID = -1
     
-    def __init__(self, id, roles, startActions, dataCollections, reservations=(), state=DeploymentState.NOT_RUN):
+    def __init__(self, id, roles, startActions, dataCollections, 
+                 reservations=(), state=DeploymentState.NOT_RUN):
         self.id = id
         self.roles = roles
         self.reservations = reservations

@@ -3,20 +3,11 @@ from .ContainerPanel import ContainerPanel
 from .AMIList import AMIList
 from .RoleList import RoleList
 
-class AMISelectorPanel(wx.Panel):
-    def __init__(self, parent, id=-1, size=wx.DefaultSize):
-        wx.Panel.__init__(self, parent, id=id, size=size)
-        self.sizer = wx.BoxSizer(wx.VERTICAL)
-        self.SetSizer(self.sizer)
-        
-        self.amiList = wx.ListBox(self, -1, wx.DefaultPosition, (170, 130), ("foo","bar","baz"), wx.LB_SINGLE)
-        self.sizer.Add(self.amiList, 0, wx.ALL|wx.EXPAND)
         
 class RolePanel(wx.Panel):
-    def __init__(self, parent, id=-1, size=wx.DefaultSize):
-        wx.Panel.__init__(self, parent, id=id, size=size)
+    def __init__(self, *args, **kwargs):
+        wx.Panel.__init__(self, *args, **kwargs)
         self.sizer = wx.BoxSizer(wx.VERTICAL)
-        self.SetSizer(self.sizer)
         
         self.roleList = RoleList(self, -1, style=wx.LC_REPORT)
 
@@ -27,6 +18,8 @@ class RolePanel(wx.Panel):
         
         self.nextButton = wx.Button(self, wx.ID_ANY, 'Next', size=(110, -1))
         self.sizer.Add(self.nextButton, 0, wx.ALIGN_RIGHT)
+        
+        self.SetSizer(self.sizer)
 
 class AddRolePanel(wx.Panel):
     
@@ -76,8 +69,8 @@ class SettingsPanel(wx.Panel):
     def __init__(self, *args, **kwargs):
         wx.Panel.__init__(self, *args, **kwargs)
       
-        self.startScript = wx.TextCtrl(self);
-        self.endCheck = wx.TextCtrl(self);
+        self.startScript = wx.TextCtrl(self)
+        self.endCheck = wx.TextCtrl(self)
         self.data = wx.TextCtrl(self);
         vbox = wx.BoxSizer(wx.VERTICAL)
         fgs = wx.FlexGridSizer(7,2,0,0)
@@ -109,23 +102,44 @@ class CompletionPanel(wx.Panel):
         self.sizer = wx.BoxSizer(wx.VERTICAL)
        
         self.sizer.Add(wx.StaticText(self, -1, 'New completion created!'), 0)
-        
-        self.okButton = wx.Button(self, wx.ID_ANY, 'OK', size=(110, -1))
+       
+        self.okButton = wx.Button(self, wx.ID_ANY, 'OK!', size=(110, -1))
         self.sizer.Add(self.okButton, 0, wx.ALIGN_RIGHT)
+        
+        self.SetSizer(self.sizer)
+        
+        
+class NamePanel(wx.Panel):
+    
+    def __init__(self, *args, **kwargs):
+        wx.Panel.__init__(self, *args, **kwargs)
+        
+        self.sizer = wx.BoxSizer(wx.VERTICAL)
+       
+        self.sizer.Add(wx.StaticText(self, -1, 'Please enter the name of the deployment'), 0)
+        
+        self.name = wx.TextCtrl(self)
+        self.sizer.Add(self.name)
+        
+        self.nextButton = wx.Button(self, wx.ID_ANY, 'Next', size=(110, -1))
+        self.sizer.Add(self.nextButton, 0, wx.ALIGN_RIGHT)
         
         self.SetSizer(self.sizer)
 
 class DeploymentWizard(wx.Dialog):
     
-    def __init__(self, parent, id, title):
-        wx.Dialog.__init__(self, parent, id, title)
+    def __init__(self, *args, **kwargs):
+        wx.Dialog.__init__(self, *args, **kwargs)
         
         self.vsizer = wx.BoxSizer(wx.VERTICAL)
         self.SetSizer(self.vsizer)
                 
-        self.container = ContainerPanel(self)
-        self.vsizer.Add(self.container, 0, wx.ALL|wx.EXPAND)
-           
+        self.container = ContainerPanel(self, size=self.GetSize())
+        self.vsizer.Add(self.container, 1, wx.ALL|wx.EXPAND)
+        
+        self.namePanel = NamePanel(self.container)
+        self.container.addPanel("NAME", self.namePanel)  
+         
         self.roleWizard = RoleWizardContainer(self.container)
         self.container.addPanel("ROLES", self.roleWizard)   
         
