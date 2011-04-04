@@ -8,6 +8,7 @@ from d2c.gui.DeploymentWizard import DeploymentWizard
 from d2c.model.AMI import AMI
 from d2c.model.Deployment import Role
 from d2c.model.Deployment import Deployment
+from wx.lib.pubsub import Publisher
 
 class DeploymentWizardController:
     
@@ -38,7 +39,7 @@ class DeploymentWizardController:
         self.wizard.EndModal(wx.ID_OK)
     
     def addDeployment(self, event):
-        print "Saving Deployment"
+        
         roles = self.wizard.roleWizard.getPanel("ROLES").roleList.getRoles()
         
         #TODO
@@ -52,6 +53,9 @@ class DeploymentWizardController:
     
         self.dao.saveDeployment(deployment)
         
+        wx.CallAfter(Publisher().sendMessage, "DEPLOYMENT CREATED", 
+                             {'deployment':deployment})
+        
         self.wizard.container.showPanel("COMPLETION")
     
     def addRole(self, event):
@@ -59,6 +63,8 @@ class DeploymentWizardController:
         roleName = p.roleName.GetValue()
         hostCount = int(p.hostCount.GetValue())
         amis = p.amiList.getSelectedAMIs()
+        
+        assert len(amis) == 1, "Only one AMI at a time supported"
         
         role = Role(roleName, amis[0], hostCount)
         

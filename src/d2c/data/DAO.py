@@ -269,7 +269,7 @@ class DAO:
         deploys = {}
         
         for row in c:
-            deploys[row['name']] = self.rowToDeploymentDescription(row)
+            deploys[row['name']] = self.rowToDeployment(row)
         
         c.execute("select * from deploy_role")
          

@@ -91,7 +91,7 @@ class AMIController:
         
         self.__amiView.addLogPanel(rawImg)
         self.__amiView.showLogPanel(rawImg)
-        print "Starting thread"
+
         amiThread = AMIThread(rawImg, 
                                      self.__dao.getConfiguration(),
                                      self.__amiToolsFactory,

@@ -72,6 +72,9 @@ class Gui(wx.Frame):
         #TODO move to controller
         pub.subscribe(self.__createAMI, "CREATE AMI")
         
+    def addPanel(self, label, panel):
+        self._items.Append(label)
+        self._containerPanel.addPanel(label, panel)
     
     def bindAddDeploymentTool(self, method):
         self.Bind(wx.EVT_TOOL, method, id=1) #TODO unhardcode id 
@@ -82,6 +85,10 @@ class Gui(wx.Frame):
     def __createAMI(self, msg):
         self._containerPanel.showPanel(self.LABEL_AMIS)
         self._items.SetSelection(2)
+        
+    def setSelection(self, label):
+        self._items.SetStringSelection(label)
+        self._containerPanel.showPanel(self._items.GetStringSelection())
         
     def getConfigurationPanel(self):
         return self._containerPanel.getPanel(self.LABEL_CONFIGURATION)

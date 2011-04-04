@@ -33,8 +33,9 @@ class AddRolePanel(wx.Panel):
         self.amiList = AMIList(self, -1, style=wx.LC_REPORT)
         self.sizer.Add(self.amiList, 1, wx.EXPAND)
         
-        self.roleName = wx.TextCtrl(self);
-        self.hostCount = wx.TextCtrl(self);
+        self.roleName = wx.TextCtrl(self)
+        self.hostCount = wx.SpinCtrl(self, size=(60, -1))
+        self.hostCount.SetRange(1, 1000)
         
         fgs = wx.FlexGridSizer(7,2,0,0)
         fgs.AddGrowableCol(1, 1)
