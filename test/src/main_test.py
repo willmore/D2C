@@ -17,8 +17,11 @@ def main(argv=None):
     dao = DAO()
     dao.addSourceImage("/foobar/vm.vdi")
     dao.createAmi("ami-xyz123", "/foobar/vm.vdi")
+    dao.createAmi("ami-abc789", "/bazbop.vdi")
     
-    dao.saveDeployment(Deployment("dummyDep", [Role("master", AMI("ami-xyz123", "/foobar/vm.vdi"), 1)]))
+    dao.saveDeployment(Deployment("dummyDep", [Role("loner", AMI("ami-xyz123", "/foobar/vm.vdi"), 1)]))
+    dao.saveDeployment(Deployment("dummyDep2", [Role("master", AMI("ami-xyz123", "/foobar/vm.vdi"), 1),
+                                                Role("dummy", AMI("ami-xyz123", "/foobar/vm.vdi"), 200)]))
     
     app = Application(AMIToolsFactoryStub())
     app.MainLoop()

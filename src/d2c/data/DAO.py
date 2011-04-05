@@ -262,6 +262,10 @@ class DAO:
     
     def getDeployments(self):
         
+        amis = {}
+        for a in self.getAMIs():
+            amis[a.amiId] = a
+        
         c = self._conn.cursor()
         
         c.execute("select * from deploy")
@@ -272,12 +276,18 @@ class DAO:
             deploys[row['name']] = self.rowToDeployment(row)
         
         c.execute("select * from deploy_role")
-         
+        
         for row in c:
-            deploys[row['deploy']].addRole(self.rowToRole(row))
+            role = self.rowToRole(row)
+            role.ami = amis[role.ami] #hack
+            assert deploys.has_key(row['deploy'])
+            print "Adding role to %s" %row['deploy']
+            deploys[row['deploy']].addRole(role)
         
         c.close()
-    
+      
+        for d in deploys.values():
+            print d
         return deploys.values()
              
     def rowToDeployment(self, row):

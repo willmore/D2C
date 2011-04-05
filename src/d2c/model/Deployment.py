@@ -12,6 +12,9 @@ class Role:
         
         assert count > 0
         self.count = count
+        
+    def __str__(self):
+        return "{name:%s, ami: %s}" % (self.name, self.ami)
 
 
 class DeploymentState:
@@ -37,19 +40,22 @@ class Deployment:
     Represents an instance of a Deployment.
     A deployment consists of one or more reservations, 
         which may be in various states (requested, running, terminated, etc.)
-    """
-    
+    """   
     
     def __init__(self, id, roles=[], startActions=(), dataCollections=(), 
                  reservations=(), state=DeploymentState.NOT_RUN):
         self.id = id
-        self.roles = roles
-        self.reservations = reservations
-        self.startActions = startActions
+        self.roles = list(roles)
+        self.reservations = list(reservations)
+        self.startActions = list(startActions)
         self.state = state
     
     def getState(self):
         pass
     
     def addRole(self, role):
+        print "Calling add role to " + str(self.roles)
         self.roles.append(role)
+        
+    def __str__(self):
+        return "{id:%s, roles:%s}" % (self.id,str(self.roles))
