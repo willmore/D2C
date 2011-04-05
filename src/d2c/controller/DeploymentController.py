@@ -11,3 +11,18 @@ class DeploymentController:
         
         self.dao = dao
         self.deploymentView = deploymentView
+        self.deploymentView.deployButton.Bind(wx.EVT_BUTTON, self.handleLaunch)
+        
+        self.deployment = deploymentView.deployment
+        
+        
+    def handleLaunch(self, evt):
+        print "Launching %s " % self.deployment
+    
+    def handleStart(self, evt):
+        pass
+        
+    def handleKill(self, evt):
+        pass
+    
+    

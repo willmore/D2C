@@ -52,8 +52,9 @@ class Application:
             self.loadDeploymentPanel(d)
             
     def loadDeploymentPanel(self, deployment):
-        self._frame.addPanel("[Deployment] " + deployment.id, DeploymentPanel(deployment, self._frame._containerPanel))
-        self.deplomentControllers[deployment.id] = DeploymentController(deployment, self._dao)
+        deployPanel = DeploymentPanel(deployment, self._frame._containerPanel)
+        self._frame.addPanel("[Deployment] " + deployment.id, deployPanel)
+        self.deplomentControllers[deployment.id] = DeploymentController(deployPanel, self._dao)
     
     def addDeployment(self, event):
         mywiz = DeploymentWizard(None, -1, 'Simple Wizard')
