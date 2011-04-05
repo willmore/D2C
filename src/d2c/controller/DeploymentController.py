@@ -17,7 +17,10 @@ class DeploymentController:
         
         
     def handleLaunch(self, evt):
-        print "Launching %s " % self.deployment
+        
+        ret = wx.MessageBox('Are you sure you want to start? AWS charges will start.', 'Question', wx.YES_NO)
+        if wx.YES == ret:
+            print "Launching %s " % self.deployment
     
     def handleStart(self, evt):
         pass
