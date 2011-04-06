@@ -4,6 +4,9 @@ Created on Mar 14, 2011
 @author: willmore
 '''
 
+from threading import Thread
+import time
+
 class Instance:
     '''
     Minimum storage of locally stored instance information. The rest of the instance attributes 
@@ -35,6 +38,7 @@ class Role:
 
 class DeploymentState:
     NOT_RUN = 'NOT_RUN'
+    PENDING = 'PENDING'
     RUNNING = 'RUNNING'
     FINALIZING = 'FINALIZING'
     COMPLETED = 'COMPLETED'
@@ -51,6 +55,61 @@ class DataCollection:
         self.role = role
         self.directory = directory
 
+class Monitor(Thread):
+    
+    def __init__(self, deployment, ec2ConnFactory, pollRate=15):
+        
+        Thread.__init__(self)
+        
+        self.listeners = {}
+        self.deployment = deployment
+        self.ec2ConnFactory = ec2ConnFactory
+        self.pollRate = pollRate
+        self.currState = self.deployment.state
+        self.monitor = True
+         
+    def addStateChangeListener(self, state, listener):
+        
+        if not self.listeners.has_key(state):
+            self.listeners[state] = []
+        
+        self.listeners[state].append(listener) 
+        
+    def stop(self):
+        self.monitor = False
+        
+    def run(self):
+        '''
+        Launches a poller which checks the remote state
+        of the deployment and notifies listeners of changes.
+        '''
+        self.ec2Conn = self.ec2ConnFactory.getConnection()
+        instanceIds = map(lambda i: i.id, self.deployment.getInstances())
+        self.instanceHandles = self.ec2Conn.get_all_instances(instanceIds)
+        
+        '''
+        Instance states = 
+        pending | running | shutting-down | terminated | stopping | stopped
+        '''
+
+        while self.monitor:
+            newState = DeploymentState.RUNNING
+
+            for instance in self.instanceHandles:
+                instance.update() # retrieve remote info
+                if 'pending' == instance.state:
+                    newState = DeploymentState.PENDING
+                    break
+        
+            if newState is not self.currState:
+                self.currState = newState
+                if self.listeners.has_key(self.currState):
+                    for l in self.listeners[self.currState]:
+                        l.notify()
+            
+            time.sleep(self.pollRate)
+        
+
 class Deployment:
     """
     Represents an instance of a Deployment.
@@ -65,6 +124,7 @@ class Deployment:
         self.reservations = list(reservations)
         self.startActions = list(startActions)
         self.state = state
+        self.monitor = None
     
     def getState(self):
         pass
@@ -82,6 +142,13 @@ class Deployment:
             out.extend(l)
             
         return out
+    
+    def getMonitor(self, ec2ConnFactory, pollRate):
+        
+        if self.monitor is None:
+            self.monitor = Monitor(self, ec2ConnFactory, pollRate)
+            
+        return self.monitor
         
     def __str__(self):
         return "{id:%s, roles:%s}" % (self.id,str(self.roles))

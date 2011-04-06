@@ -110,8 +110,4 @@ class AMIController:
     
     def __createLogger(self, img):
         return self.__CreationLogger(img)
-
-
-        
-                
         
