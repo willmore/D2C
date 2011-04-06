@@ -12,7 +12,7 @@ import shlex
 import re
 import shutil
 import logger
-import boto.ec2
+from .EC2ConnectionFactory import EC2ConnectionFactory
 
 class UnsupportedPlatformError(Exception):
     def __init__(self, value):
@@ -29,37 +29,25 @@ class UnsupportedImageError(Exception):
 class AMIToolsFactory:
     
     def __init__(self):
+        # TODO refactor when possible to inject ec2ConnFactory
+        #self.ec2ConnFactory = ec2ConnFactory
         pass
     
     def getAMITools(self, ec2_tools, accessKey, secretKey, logger):
-        return AMITools(ec2_tools, accessKey, secretKey, logger)
+        return AMITools(ec2_tools, accessKey, secretKey, 
+                        EC2ConnectionFactory(accessKey, secretKey, logger),
+                        logger)
 
 class AMITools:
 
-    def __init__(self, ec2_tools, accessKey, secretKey, logger):
+    def __init__(self, ec2_tools, accessKey, secretKey, ec2ConnFactory, logger):
         
         self.__logger = logger
         self.__EC2_TOOLS = ec2_tools   
         self.__accessKey = accessKey
         self.__secretKey = secretKey
-        self.__ec2Conn = None
-    
-    def __getEc2Conn(self):
-        
-        #TODO un-hardcode
-        region = "eu-west-1"
-         
-        if self.__ec2Conn is None:
-            #TODO: add timeout - if network connection fails, this will spin forever
-            #TODO: add configurable region
-            self.__logger.write("Initiating connection to ec2 region '%s'..." % region)
-            self.__ec2Conn = boto.ec2.connect_to_region(region, 
-                                                        aws_access_key_id=self.__accessKey, 
-                                                        aws_secret_access_key=self.__secretKey)
-            self.__logger.write("EC2 connection established")
-            
-        return self.__ec2Conn
-        
+        self.ec2ConnFactory = ec2ConnFactory
+   
     def __execCmd(self, cmd):
     
         self.__logger.write("Executing: " + cmd)    
@@ -80,7 +68,7 @@ class AMITools:
     
     def registerAMI(self, manifest):
        
-        return self.__getEc2Conn().register_image(image_location=manifest)
+        return self.ec2ConnFactory.getConnection().register_image(image_location=manifest)
     
     def uploadBundle(self, bucket, manifest):
         __UPLOAD_CMD = "export EC2_HOME=%s; %s/bin/ec2-upload-bundle -b %s -m %s -a %s -s %s"

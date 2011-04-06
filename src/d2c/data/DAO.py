@@ -239,7 +239,7 @@ class DAO:
     
         return out
     
-    def addAMI(self, amiid, srcImg):     
+    def addAMI(self, amiid, srcImg=None):     
         c = self._conn.cursor()
 
         c.execute("insert into ami(id, src_img) values (?,?)", (amiid, srcImg))

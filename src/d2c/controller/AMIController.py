@@ -56,7 +56,7 @@ class AMIThread(Thread):
 class AMIController:
     
     
-    def __init__(self, amiView, dao, amiToolsFactory=AMIToolsFactory()):
+    def __init__(self, amiView, dao, amiToolsFactory):
         self.__dao = dao
         self.__amiView = amiView
         self.__amiToolsFactory = amiToolsFactory

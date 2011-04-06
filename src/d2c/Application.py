@@ -21,9 +21,9 @@ from .controller.DeploymentController import DeploymentController
 
 class Application:
 
-    def __init__(self, amiToolsFactory=AMIToolsFactory()):
+    def __init__(self):
         
-        self._amiToolsFactory = amiToolsFactory
+        self._amiToolsFactory = AMIToolsFactory()
         self._dao = DAO()
         self._app = wx.App()
         

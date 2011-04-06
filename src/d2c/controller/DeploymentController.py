@@ -15,7 +15,6 @@ class DeploymentController:
         
         self.deployment = deploymentView.deployment
         
-        
     def handleLaunch(self, evt):
         
         ret = wx.MessageBox('Are you sure you want to start? AWS charges will start.', 'Question', wx.YES_NO)
