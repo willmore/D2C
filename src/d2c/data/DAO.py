@@ -61,15 +61,21 @@ class DAO:
                     (name text primary key,
                     state text
                     )''')
-              
-              
+                     
         c.execute('''create table if not exists deploy_role
                     (name text,
                     deploy text,
                     ami text,
                     count integer,
+                    primary key (name, deploy)
                     foreign key(deploy) references deploy(name),
                     foreign key(ami) references ami(id))''')
+        
+        c.execute('''create table if not exists deploy_role_instance
+                    (instance text primary key, -- AWS instance ID
+                    role_name text,
+                    role_deploy text,
+                    foreign key(role_name, role_deploy) references deploy_role(name, deploy))''')
     
         c.execute('''create table if not exists ami_creation_job
                     (id integer primary key, 
@@ -257,6 +263,14 @@ class DAO:
             c.execute("insert into deploy_role (name, deploy, ami, count) values (?,?,?,?)", 
                   (role.name, deployment.id, role.ami.amiId, role.count))
             
+        self._conn.commit()
+        c.close()  
+    
+    def addRoleInstance(self, roleDeployment, roleName, instanceId):
+        c = self._conn.cursor()
+
+        c.execute("insert into deploy_role_instance (instance, role_name, role_deploy) values (?,?,?)", 
+                      (instanceId, roleName, roleDeployment))
         self._conn.commit()
         c.close()  
     

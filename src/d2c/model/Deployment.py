@@ -4,17 +4,33 @@ Created on Mar 14, 2011
 @author: willmore
 '''
 
+class Instance:
+    '''
+    Minimum storage of locally stored instance information. The rest of the instance attributes 
+    should be fetched dynamically via boto.
+    '''
+    
+    def __init__(self, id):
+        self.id = id
+        
+    def __str__(self):
+        return "{id: %s}" % self.id
+
 class Role:
     
-    def __init__(self, name, ami, count):
+    def __init__(self, deploymentId, name, ami, count, instances=None):
+        
+        self.deploymentId = deploymentId
         self.name = name
         self.ami = ami
         
         assert count > 0
         self.count = count
         
+        self.instances = instances if instances is not None else ()
+        
     def __str__(self):
-        return "{name:%s, ami: %s}" % (self.name, self.ami)
+        return "{name:%s, ami: %s, instances: %s}" % (self.name, self.ami, str(self.instances))
 
 
 class DeploymentState:
@@ -56,6 +72,16 @@ class Deployment:
     def addRole(self, role):
         print "Calling add role to " + str(self.roles)
         self.roles.append(role)
+        
+    def getInstances(self):
+        '''
+        Return iterable all instances (if any) associated with this deployment
+        '''
+        out = []
+        for l in map(lambda role: role.instances, self.roles):
+            out.extend(l)
+            
+        return out
         
     def __str__(self):
         return "{id:%s, roles:%s}" % (self.id,str(self.roles))

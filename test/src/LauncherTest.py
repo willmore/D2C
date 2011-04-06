@@ -16,7 +16,36 @@ from d2c.model.Deployment import Deployment, Role
 from d2c.model.AMI import AMI
 from d2c.data.DAO import DAO
 import os
+import boto.ec2.instance
+from MicroMock import MicroMock
 
+class DummyConnFactory:
+    
+    def getConnection(self):
+        return DummyConn()
+    
+class DummyConn:
+    
+    def __init__(self):
+        self.num = 0
+    
+    def get_image(self, ami):
+        self.num += 1
+        return DummyImg(self.num)
+    
+class DummyImg():
+    
+    def __init__(self, ami):
+        self.ami = ami
+    
+    def run(self, min_count, max_count):
+        instances = []
+        
+        for i in range(max_count):
+            instances.append(MicroMock(id="i-%s.%d" % (self.ami, i)))
+        
+        return MicroMock(instances=instances)
+        
 class LauncherTest(unittest.TestCase):
 
 
@@ -39,7 +68,11 @@ class LauncherTest(unittest.TestCase):
         self.ec2Cred = EC2Cred(settings['cert'], settings['privateKey'])
     
         self.logger = StdOutLogger();
-        self.launcher = Launcher(EC2ConnectionFactory(settings['accessKey'], settings['secretKey'], StdOutLogger()))
+        
+        ec2ConnFactory = DummyConnFactory()
+        #ec2ConnFactory = EC2ConnectionFactory(settings['accessKey'], settings['secretKey'], StdOutLogger())
+        self.launcher = Launcher(ec2ConnFactory,
+                                 self.dao)
 
     def test_launch(self):
         
@@ -47,10 +80,14 @@ class LauncherTest(unittest.TestCase):
         self.dao.addAMI("ami-47cefa33")
         ami = self.dao.getAMIById("ami-47cefa33")
         
-        deployment = Deployment("dummyDep", [Role("loner", ami, 1)])
+        dName = "DummyDeployment"
+        deployment = Deployment(dName, [Role(dName, "loner", ami, 2), Role(dName, "loner2", ami, 2)])
         self.dao.saveDeployment(deployment)
         
         self.launcher.launch(deployment)
+            
+        self.assertEqual(len(deployment.getInstances()), 4)    
+
 
 if __name__ == '__main__':
     unittest.main()
