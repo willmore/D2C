@@ -11,10 +11,10 @@ from d2c.model.EC2Cred import EC2Cred
 from d2c.AMITools import AMITools
 #import d2c.AMICreator as AMICreator
 
-class AMICreatorTest(unittest.TestCase):
+class AMICreatorTest():
 
 
-    def test_full(self):
+    def main(self):
         print 
         
         settings = {}
@@ -65,7 +65,7 @@ class AMICreatorTest(unittest.TestCase):
         print "AMIID = " + amiId
 
 if __name__ == '__main__':
-    unittest.main()
+    main()
 
 
 
