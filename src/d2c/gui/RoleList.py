@@ -20,8 +20,9 @@ class RoleList(wx.ListCtrl):
         self.InsertColumn(0, 'Name', width=75)
         self.InsertColumn(1, 'AMI', width=75)
         self.InsertColumn(2, 'Count', width=75)
-        print "Adding roles: " + str(roles)
-        self.setRoles(roles) 
+        
+        if roles is not None:
+            self.setRoles(roles) 
                    
         
     def addRole(self, role):

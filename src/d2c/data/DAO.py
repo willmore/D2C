@@ -308,5 +308,5 @@ class DAO:
         return Deployment(row['name'])
         
     def rowToRole(self, row):
-        return Role(row['name'], row['ami'], row['count'])
+        return Role(row['deploy'], row['name'], row['ami'], row['count'])
     

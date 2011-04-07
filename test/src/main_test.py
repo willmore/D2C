@@ -19,9 +19,9 @@ def main(argv=None):
     dao.createAmi("ami-xyz123", "/foobar/vm.vdi")
     dao.createAmi("ami-abc789", "/bazbop.vdi")
     
-    dao.saveDeployment(Deployment("dummyDep", [Role("loner", AMI("ami-xyz123", "/foobar/vm.vdi"), 1)]))
-    dao.saveDeployment(Deployment("dummyDep2", [Role("master", AMI("ami-xyz123", "/foobar/vm.vdi"), 1),
-                                                Role("dummy", AMI("ami-xyz123", "/foobar/vm.vdi"), 200)]))
+    dao.saveDeployment(Deployment("dummyDep", [Role("dummyDep", "loner", AMI("ami-xyz123", "/foobar/vm.vdi"), 1)]))
+    dao.saveDeployment(Deployment("dummyDep2", [Role("dummyDep2", "master", AMI("ami-xyz123", "/foobar/vm.vdi"), 1),
+                                                Role("dummy", "dummy", AMI("ami-xyz123", "/foobar/vm.vdi"), 200)]))
     
     app = Application(AMIToolsFactoryStub())
     app.MainLoop()

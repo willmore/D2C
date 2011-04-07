@@ -66,7 +66,7 @@ class DeploymentWizardController:
         
         assert len(amis) == 1, "Only one AMI at a time supported"
         
-        role = Role(roleName, amis[0], hostCount)
+        role = Role(self.newName, roleName, amis[0], hostCount)
         
         self.wizard.container.getPanel("ROLES").getPanel("ROLES").roleList.addRole(role)
         
