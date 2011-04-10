@@ -10,18 +10,18 @@ from d2c.model.AMI import AMI
 
 def main(argv=None):
     
-    DAO._SQLITE_FILE = "%s/.d2c_test/d2c_db.sqlite" % os.path.expanduser('~') 
+    DAO._SQLITE_FILE = "%s/.d2c_test/main_test_stub.sqlite" % os.path.expanduser('~') 
     if os.path.exists(DAO._SQLITE_FILE):
         print "Deleting existing DB"
         os.unlink(DAO._SQLITE_FILE)
     dao = DAO()
     dao.addSourceImage("/foobar/vm.vdi")
-    dao.createAmi("ami-xyz123", "/foobar/vm.vdi")
-    dao.createAmi("ami-abc789", "/bazbop.vdi")
+    amiId = "ami-47cefa33"
+    dao.createAmi(amiId, "/foobar/vm.vdi")
+    ami = dao.getAMIById(amiId)
     
-    dao.saveDeployment(Deployment("dummyDep", [Role("dummyDep", "loner", AMI("ami-xyz123", "/foobar/vm.vdi"), 1)]))
-    dao.saveDeployment(Deployment("dummyDep2", [Role("dummyDep2", "master", AMI("ami-xyz123", "/foobar/vm.vdi"), 1),
-                                                Role("dummy", "dummy", AMI("ami-xyz123", "/foobar/vm.vdi"), 200)]))
+    deployment = Deployment("dummyDep", [Role("dummyDep", "loner", ami, 1)])
+    dao.saveDeployment(deployment)
     
     app = Application(AMIToolsFactoryStub())
     app.MainLoop()

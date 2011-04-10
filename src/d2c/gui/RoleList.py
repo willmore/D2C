@@ -9,6 +9,7 @@ class RoleList(wx.ListCtrl):
     
     def __init__(self, *args, **kwargs):
         
+        kwargs['style'] =wx.LC_REPORT
         self.roles = {}
         roles = None
         if kwargs.has_key('roles'):

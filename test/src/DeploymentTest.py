@@ -28,6 +28,9 @@ class DummyConn:
         self.instances = [DummyInstance(x) for x in range(len(ids))]
         return self.instances
     
+    def run_instances(self, *args, **kwargs):
+        pass
+    
     def setState(self, state):
         print "Ack %s" % str(self.instances)
         for i in self.instances:
@@ -48,7 +51,7 @@ class DeploymentTest(unittest.TestCase):
     def setUp(self):
         dName = "Dummy"
         ami = AMI("ami-123", "foobar.vdi")
-        self.dummy1 = Deployment(dName, [Role(dName, "loner", ami, 2, 
+        self.deployment = Deployment(dName, roles = [Role(dName, "loner", ami, 2, 
                                              instances=(Instance(1), Instance(2))), 
                                         Role(dName, "loner2", ami, 2,
                                              instances=(Instance(3), Instance(4)))])
@@ -56,30 +59,32 @@ class DeploymentTest(unittest.TestCase):
     def tearDown(self):
         if hasattr(self, 'mon'):
             self.mon.stop()
-   
+    
     def test_getInstances(self):
         
-        instances = self.dummy1.getInstances()
-        self.assertEquals(4, len(instances))
+        self.assertEquals(4, len(self.deployment.getInstances()))
+    
         
-    def test_monitor(self):
-
+    def testNotRunToRun(self):
+        '''
+        Test listeners are properly notified when deployment goes to running state.
+        '''
         connFactory = DummyConnFactory()
-
-        pollRate = 1
-        self.mon = self.dummy1.getMonitor(connFactory, pollRate)
-        self.assertNotEqual(None, self.mon)
-        
+        pollRate = 2
         hits = {}
+            
+        self.deployment.setEC2ConnFactory(connFactory)
+        self.deployment.setMonitorPollRate(pollRate)
+        self.deployment.addStateChangeListener(DeploymentState.RUNNING, MicroMock(notify=lambda evt:hits.__setitem__('RUNNING', True)))
         
-        self.mon.addStateChangeListener(DeploymentState.RUNNING, MicroMock(notify=lambda:hits.__setitem__('RUNNING', True)))
-        
-        self.mon.start()
+        self.deployment.run()
         
         time.sleep(2 * pollRate)
         connFactory.setState('running')
         time.sleep(2 * pollRate)
         self.assertTrue(hits.has_key('RUNNING'))
+        
+        self.deployment.stopMonitoring()
         
 if __name__ == '__main__':
     unittest.main()

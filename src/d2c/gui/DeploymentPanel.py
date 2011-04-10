@@ -34,7 +34,7 @@ class DeploymentPanel(wx.Panel):
         label.SetFont(wx.Font(wx.DEFAULT, wx.DEFAULT, wx.DEFAULT, wx.BOLD))
         self.GetSizer().Add(label, 0, wx.BOTTOM, 5)
         self.roles = RoleList(self, -1, roles=deployment.roles)
-        self.GetSizer().Add(self.roles, 0, wx.BOTTOM, 5)
+        self.GetSizer().Add(self.roles, 0, wx.BOTTOM | wx.EXPAND, 5)
         
         self.deployButton = wx.Button(self, wx.ID_ANY, 'Deploy', size=(110, -1))
         self.GetSizer().Add(self.deployButton)
