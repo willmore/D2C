@@ -23,7 +23,7 @@ class Instance:
 class Role:
     
     def __init__(self, deploymentId, 
-                 name, ami, count, instances=None,
+                 name, ami, count, instances=[],
                  startActions = [], 
                  logger=StdOutLogger(), ec2ConnFactory=None):
         
@@ -37,21 +37,20 @@ class Role:
         
         self.startActions = list(startActions)
         self.ec2ConnFactory = ec2ConnFactory
+        self.instances = list(instances)
       
     def setEC2ConnFactory(self, ec2ConnFactory):
-        self.ec2ConnFactory = ec2ConnFactory
-        
-    def update(self):
-        if self.reservation is not None:
-            self.reservation.update()
+        self.ec2ConnFactory = ec2ConnFactory  
         
     def launch(self):
         
         self.logger.write("Reserving %d instance(s) of %s" % (self.count, self.ami.amiId))
        
         ec2Conn = self.ec2ConnFactory.getConnection()
-        self.reservation = ec2Conn.run_instances(self.ami.amiId, min_count=self.count, 
+        reservation = ec2Conn.run_instances(self.ami.amiId, min_count=self.count, 
                                       max_count=self.count, instance_type='t1.micro') #TODO unhardcode instance type
+        
+        self.instances = reservation.instances
         
         self.logger.write("Instance(s) reserved")    
         
@@ -59,7 +58,7 @@ class Role:
         '''
         Execute the start action(s) on each instance within the role.
         '''
-        for instance in self.reservation.instances:
+        for instance in self.instances:
             print "Action!"
         
     def __str__(self):
@@ -136,13 +135,9 @@ class Monitor(Thread):
             newState = DeploymentState.RUNNING
 
             instanceHandles = []
-
+            
             for role in self.deployment.roles:
-                role.setEC2ConnFactory(self.ec2ConnFactory)
-                role.update()
-                if role.reservation is not None:
-                    print "Adding instance handles"
-                    instanceHandles.extend(role.reservation.instances)
+                instanceHandles.extend(role.instances)
 
             for instance in instanceHandles:
                 instance.update() # retrieve remote info
