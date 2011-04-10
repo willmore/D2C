@@ -19,23 +19,52 @@ class Instance:
         
     def __str__(self):
         return "{id: %s}" % self.id
-
+    
 class Role:
     
-    def __init__(self, deploymentId, name, ami, count, instances=None):
+    def __init__(self, deploymentId, 
+                 name, ami, count, instances=None,
+                 startActions = [], 
+                 logger=StdOutLogger(), ec2ConnFactory=None):
         
         self.deploymentId = deploymentId
         self.name = name
         self.ami = ami
+        self.logger = logger
         
         assert count > 0
         self.count = count
         
-        self.instances = instances if instances is not None else ()
+        self.startActions = list(startActions)
+        self.ec2ConnFactory = ec2ConnFactory
+      
+    def setEC2ConnFactory(self, ec2ConnFactory):
+        self.ec2ConnFactory = ec2ConnFactory
+        
+    def update(self):
+        if self.reservation is not None:
+            self.reservation.update()
+        
+    def launch(self):
+        
+        self.logger.write("Reserving %d instance(s) of %s" % (self.count, self.ami.amiId))
+       
+        ec2Conn = self.ec2ConnFactory.getConnection()
+        self.reservation = ec2Conn.run_instances(self.ami.amiId, min_count=self.count, 
+                                      max_count=self.count, instance_type='t1.micro') #TODO unhardcode instance type
+        
+        self.logger.write("Instance(s) reserved")    
+        
+    def start(self):
+        '''
+        Execute the start action(s) on each instance within the role.
+        '''
+        for instance in self.reservation.instances:
+            print "Action!"
         
     def __str__(self):
         return "{name:%s, ami: %s, instances: %s}" % (self.name, self.ami, str(self.instances))
-    
+        
 class StartAction:
     
     def __init__(self, role, script):
@@ -90,9 +119,13 @@ class Monitor(Thread):
         Launches a poller which checks the remote state
         of the deployment and notifies listeners of changes.
         '''
+        '''
         self.ec2Conn = self.ec2ConnFactory.getConnection()
         instanceIds = map(lambda i: i.id, self.deployment.getInstances())
         self.instanceHandles = self.ec2Conn.get_all_instances(instanceIds)
+        '''
+            
+        
         
         '''
         Instance states = 
@@ -102,7 +135,16 @@ class Monitor(Thread):
         while self.monitor:
             newState = DeploymentState.RUNNING
 
-            for instance in self.instanceHandles:
+            instanceHandles = []
+
+            for role in self.deployment.roles:
+                role.setEC2ConnFactory(self.ec2ConnFactory)
+                role.update()
+                if role.reservation is not None:
+                    print "Adding instance handles"
+                    instanceHandles.extend(role.reservation.instances)
+
+            for instance in instanceHandles:
                 instance.update() # retrieve remote info
                 if 'pending' == instance.state:
                     newState = DeploymentState.PENDING
@@ -135,14 +177,13 @@ class Deployment:
         which may be in various states (requested, running, terminated, etc.)
     """   
     
-    def __init__(self, id, ec2ConnFactory=None, roles=[], startActions=(), dataCollections=(), 
+    def __init__(self, id, ec2ConnFactory=None, roles=[],
                  reservations=(), state=DeploymentState.NOT_RUN, logger=StdOutLogger()):
         
         self.id = id
         self.ec2ConnFactory = ec2ConnFactory
         self.roles = list(roles)
-        self.reservations = list(reservations)
-        self.startActions = list(startActions)
+        
         self.state = state
         self.monitor = Monitor(self, self.ec2ConnFactory) if self.ec2ConnFactory is not None else None
         self.logger = logger
@@ -168,41 +209,30 @@ class Deployment:
         
         self.monitor.start()
         
-        self.logger.write("Getting EC2Connection")
-        ec2Conn = self.ec2ConnFactory.getConnection()
-        self.logger.write("Got EC2Connection")
-        
-        self.reservations = []
+        self.logger.write("Launching instances")
         
         for role in self.roles:
-            self.reservations.append(self.__reserveInstance(ec2Conn, role))    
+            role.setEC2ConnFactory(self.ec2ConnFactory)
+            role.launch()    
+            
+        self.logger.write("Instances Launched")
+        self.logger.write("Running start actions")
+        
+        for role in self.roles:
+            role.start()
+            
+        self.logger.write("Start actions run")
+        
+        
+    def __executeAction(self, action):
+        #TODO
+        pass
 
-    def __reserveInstance(self, ec2Conn, role):
-        
-        self.logger.write("Reserving %d instance(s) of %s" % (role.count, role.ami.amiId))
-       
-        r = ec2Conn.run_instances(role.ami.amiId, min_count=role.count, 
-                                      max_count=role.count, instance_type='t1.micro') #TODO unhardcode instance type
-        
-        self.logger.write("Instance(s) reserved")
-        
-        return r
-    
     def stopMonitoring(self):
         '''
-        Does not end the deployment, but detaches monitoring (stops monitoring thread)
+        Does not end the deployment lifecycle, but detaches monitoring (stops monitoring thread)
         '''
         self.monitor.stop()
-
-    def getInstances(self):
-        '''
-        Return iterable all instances (if any) associated with this deployment
-        '''
-        out = []
-        for l in map(lambda role: role.instances, self.roles):
-            out.extend(l)
-            
-        return out
     
     def addAnyStateChangeListener(self, listener):
         self.monitor.addStateAnyChangeListener(listener)
@@ -212,5 +242,6 @@ class Deployment:
      
     def setMonitorPollRate(self, pollRate): 
         self.monitor.pollRate = pollRate
+        
     def __str__(self):
         return "{id:%s, roles:%s}" % (self.id,str(self.roles))

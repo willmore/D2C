@@ -12,7 +12,6 @@ class DummyConnFactory:
         self.conn = DummyConn()
     
     def setState(self, state):
-        print "Fack"
         self.conn.setState(state)
     
     def getConnection(self):
@@ -23,20 +22,38 @@ class DummyConn:
     def __init__(self):
         self.num = 0
         self.instances = []
+        self.reservations = []
     
     def get_all_instances(self, ids):
         self.instances = [DummyInstance(x) for x in range(len(ids))]
         return self.instances
     
     def run_instances(self, *args, **kwargs):
-        pass
+        r = DummyReservation(kwargs['min_count'])
+        self.reservations.append(r)
+        return r
     
     def setState(self, state):
-        print "Ack %s" % str(self.instances)
         for i in self.instances:
             print "Setting state"
             i.state = state 
+        
+        for r in self.reservations:
+            r.setState(state)
+            
+class DummyReservation:
     
+    def __init__(self, count):
+        self.instances = [DummyInstance(None) for _ in range(count)]
+    
+    def setState(self, state):
+        for i in self.instances:
+            print "Setting state"
+            i.state = state 
+        
+    def update(self):
+        pass
+
 class DummyInstance():
     
     def __init__(self, ami):
@@ -59,11 +76,11 @@ class DeploymentTest(unittest.TestCase):
     def tearDown(self):
         if hasattr(self, 'mon'):
             self.mon.stop()
-    
+    '''
     def test_getInstances(self):
         
         self.assertEquals(4, len(self.deployment.getInstances()))
-    
+    '''
         
     def testNotRunToRun(self):
         '''
