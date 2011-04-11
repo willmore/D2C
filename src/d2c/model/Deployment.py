@@ -81,15 +81,14 @@ class Monitor(Thread):
         def __init__(self, newState, deployment):
             self.newState = newState
             self.deployment = deployment
+            
     
-    
-    def __init__(self, deployment, ec2ConnFactory, pollRate=15):
+    def __init__(self, deployment, pollRate=15):
         
         Thread.__init__(self)
         
         self.listeners = {}
         self.deployment = deployment
-        self.ec2ConnFactory = ec2ConnFactory
         self.pollRate = pollRate
         self.currState = self.deployment.state
         self.monitor = True
@@ -125,24 +124,29 @@ class Monitor(Thread):
                 
                 self.currState = dState
                 
-                evt = Monitor.Event(self.currState, self.deployment)    
-                
-                if self.listeners.has_key(self.currState):
-                    for l in self.listeners[self.currState]:
-                        l.notify(evt)
-                
-                for l in self.allStateListeners:
-                    l.notify(evt)
+                self.notify(dState)
                 
             time.sleep(self.pollRate)
+            
+    def notify(self, state):
+        evt = Monitor.Event(state, self.deployment)    
+                
+        if self.listeners.has_key(state):
+            for l in self.listeners[state]:
+                l.notify(evt)
+                
+            for l in self.allStateListeners:
+                l.notify(evt)
 
 class DeploymentState:
     NOT_RUN = 'NOT_RUN'
     INSTANCES_LAUNCHED = 'INSTANCES_LAUNCHED'
     ROLES_STARTED = 'ROLES_STARTED'
     JOB_COMPLETED = 'JOB_COMPLETED'
+    COLLECTING_DATA = 'COLLECTING_DATA'
+    DATA_COLLECTED = 'DATA_COLLECTED'
     SHUTTING_DOWN = 'SHUTTING_DOWN'
-    COMPLTED = 'COMPLETED'
+    COMPLETED = 'COMPLETED'
     
 def mapStates(instanceStates):
     '''
@@ -178,16 +182,14 @@ class Deployment(Thread):
         self.roles = list(roles)
         
         self.state = state
-        self.monitor = Monitor(self, self.ec2ConnFactory) if self.ec2ConnFactory is not None else None
+        self.monitor = Monitor(self, pollRate)
         self.logger = logger
         self.pollRate = pollRate
     
     def setEC2ConnFactory(self, ec2ConnFactory):
         assert self.ec2ConnFactory is None
-        assert self.monitor is None
-        
+                
         self.ec2ConnFactory = ec2ConnFactory
-        self.monitor = Monitor(self, self.ec2ConnFactory, pollRate=self.pollRate)
     
     def getState(self):
         pass
@@ -201,7 +203,7 @@ class Deployment(Thread):
         
         # Allow the monitor to catch any changes in cleanup phase.
         self.join()
-        self.monitor.stop()
+        #self.monitor.stop()
         
     def run(self):
         '''
@@ -213,7 +215,7 @@ class Deployment(Thread):
         '''
         self.runLifecycle = True
         
-        self.monitor.start()
+        #self.monitor.start()
         
         if not self.runLifecycle:
             return
@@ -260,9 +262,13 @@ class Deployment(Thread):
                     allRunning = False
                     break
         
-        self.state = DeploymentState.INSTANCES_LAUNCHED    
+        self.__setState(DeploymentState.INSTANCES_LAUNCHED)   
         self.logger.write("Instances Launched")
         self.logger.write("Running start actions")
+    
+    def __setState(self, state):
+        self.state = state
+        self.monitor.notify(state)
         
     def __getInstanceStates(self, reservationIds):
         '''
@@ -286,14 +292,20 @@ class Deployment(Thread):
         for role in self.roles:
             role.start()
             
+        self.__setState(DeploymentState.ROLES_STARTED)
+            
         self.logger.write("Roles started")
         
     
     def __collectData(self):  
-        pass
+        self.__setState(DeploymentState.COLLECTING_DATA)
+        
+        self.__setState(DeploymentState.DATA_COLLECTED)
         
     def __shutdown(self): 
-        pass 
+        self.__setState(DeploymentState.SHUTTING_DOWN)
+        
+        self.__setState(DeploymentState.COMPLETED)
     
 
     def stopMonitoring(self):

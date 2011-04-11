@@ -95,6 +95,9 @@ class DeploymentTest(unittest.TestCase):
         self.deployment.setEC2ConnFactory(connFactory)
         self.deployment.addStateChangeListener(DeploymentState.INSTANCES_LAUNCHED, 
                                                MicroMock(notify=lambda evt:hits.__setitem__('INSTANCES_LAUNCHED', True)))
+        self.deployment.addStateChangeListener(DeploymentState.ROLES_STARTED, 
+                                               MicroMock(notify=lambda evt:hits.__setitem__('ROLES_STARTED', True)))
+        
         self.deployment.setPollRate(pollRate)
         
         self.deployment.start()
@@ -103,6 +106,9 @@ class DeploymentTest(unittest.TestCase):
         connFactory.setState('running')
         time.sleep(2 * pollRate)
         self.assertTrue(hits.has_key('INSTANCES_LAUNCHED'))
+        
+        time.sleep(2 * pollRate)
+        self.assertTrue(hits.has_key('ROLES_STARTED'))
         
         self.deployment.stop()
         
