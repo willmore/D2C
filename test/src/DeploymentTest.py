@@ -84,7 +84,7 @@ class DeploymentTest(unittest.TestCase):
         self.assertEquals(4, len(self.deployment.getInstances()))
     '''
         
-    def testNotRunToRun(self):
+    def testLifecycle(self):
         '''
         Test listeners are properly notified when deployment goes to running state.
         '''
@@ -93,24 +93,41 @@ class DeploymentTest(unittest.TestCase):
         hits = {}
             
         self.deployment.setEC2ConnFactory(connFactory)
-        self.deployment.addStateChangeListener(DeploymentState.INSTANCES_LAUNCHED, 
-                                               MicroMock(notify=lambda evt:hits.__setitem__('INSTANCES_LAUNCHED', True)))
-        self.deployment.addStateChangeListener(DeploymentState.ROLES_STARTED, 
-                                               MicroMock(notify=lambda evt:hits.__setitem__('ROLES_STARTED', True)))
+         
+        class Listener:
+            
+            def __init__(self, state):
+                self.state = state
+            
+            def notify(self, evt):
+                hits[self.state] = True
+          
+        for state in (DeploymentState.INSTANCES_LAUNCHED, 
+                      DeploymentState.ROLES_STARTED,
+                      DeploymentState.JOB_COMPLETED,
+                      DeploymentState.COLLECTING_DATA,
+                      DeploymentState.DATA_COLLECTED,
+                      DeploymentState.SHUTTING_DOWN,
+                      DeploymentState.COMPLETED):
+            self.deployment.addStateChangeListener(state, 
+                                   Listener(state)) #MicroMock(notify=lambda evt:hits.__setitem__(state, True)))
         
         self.deployment.setPollRate(pollRate)
         
         self.deployment.start()
         
         time.sleep(2 * pollRate)
-        connFactory.setState('running')
-        time.sleep(2 * pollRate)
-        self.assertTrue(hits.has_key('INSTANCES_LAUNCHED'))
+        #Manually set mock instances to running
+        connFactory.setState('running')    
+        self.deployment.join(15)
         
-        time.sleep(2 * pollRate)
-        self.assertTrue(hits.has_key('ROLES_STARTED'))
-        
-        self.deployment.stop()
+        self.assertTrue(hits.has_key(DeploymentState.INSTANCES_LAUNCHED))   
+        self.assertTrue(hits.has_key(DeploymentState.ROLES_STARTED))
+        self.assertTrue(hits.has_key(DeploymentState.JOB_COMPLETED))
+        self.assertTrue(hits.has_key(DeploymentState.COLLECTING_DATA))
+        self.assertTrue(hits.has_key(DeploymentState.DATA_COLLECTED))
+        self.assertTrue(hits.has_key(DeploymentState.SHUTTING_DOWN))
+        self.assertTrue(hits.has_key(DeploymentState.COMPLETED))
         
 if __name__ == '__main__':
     unittest.main()

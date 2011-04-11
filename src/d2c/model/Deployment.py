@@ -122,8 +122,7 @@ class Monitor(Thread):
         
             if dState is not self.currState:
                 
-                self.currState = dState
-                
+                self.currState = dState  
                 self.notify(dState)
                 
             time.sleep(self.pollRate)
@@ -139,6 +138,7 @@ class Monitor(Thread):
                 l.notify(evt)
 
 class DeploymentState:
+    
     NOT_RUN = 'NOT_RUN'
     INSTANCES_LAUNCHED = 'INSTANCES_LAUNCHED'
     ROLES_STARTED = 'ROLES_STARTED'
@@ -147,23 +147,7 @@ class DeploymentState:
     DATA_COLLECTED = 'DATA_COLLECTED'
     SHUTTING_DOWN = 'SHUTTING_DOWN'
     COMPLETED = 'COMPLETED'
-    
-def mapStates(instanceStates):
-    '''
-    Given the list of all instances states within a deployment,
-    return the associated single DeploymentState.
-    '''
-    
-    '''
-    Instance states = 
-    pending | running | shutting-down | terminated | stopping | stopped
-    '''
-    
-    if 'shutting-down' in instanceStates:
-        return DeploymentState.SHUTTING_DOWN
-    
-    if 'pending' in instanceStates:
-        return DeploymentState.PENDING           
+          
 
 class Deployment(Thread):
     """
@@ -217,25 +201,16 @@ class Deployment(Thread):
         
         #self.monitor.start()
         
-        if not self.runLifecycle:
-            return
-        
-        self.__launchInstances()
-        
-        if not self.runLifecycle:
-            return
-        
-        self.__startRoles()
-        
-        if not self.runLifecycle:
-            return
-        
-        self.__collectData()
-        
-        if not self.runLifecycle:
-            return
-        
-        self.__shutdown()
+        for step in (self.__launchInstances,
+                     self.__startRoles,
+                     self.__monitorForDone,
+                     self.__collectData,
+                     self.__shutdown):
+            
+            if not self.runLifecycle:
+                return
+            
+            step()
     
     def __launchInstances(self):
         if self.state != DeploymentState.NOT_RUN:
@@ -296,6 +271,9 @@ class Deployment(Thread):
             
         self.logger.write("Roles started")
         
+    def __monitorForDone(self):
+        
+        self.__setState(DeploymentState.JOB_COMPLETED)
     
     def __collectData(self):  
         self.__setState(DeploymentState.COLLECTING_DATA)
