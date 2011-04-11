@@ -13,6 +13,7 @@ from d2c.model.Configuration import Configuration
 from d2c.model.AMI import AMI
 from d2c.model.Deployment import Deployment
 from d2c.model.Deployment import Role
+import threading
 
 import sqlite3
 
@@ -27,14 +28,20 @@ class DAO:
         if not os.path.isdir(baseDir):
             os.makedirs(baseDir, mode=0700)
         
+        self.__conn = None
         
-        self._conn = sqlite3.connect(DAO._SQLITE_FILE)  
-        self._conn.row_factory = sqlite3.Row
         self._init_db()
+        
+    def __getConn(self):
+        if self.__conn is None:
+            self.__conn = sqlite3.connect(DAO._SQLITE_FILE, check_same_thread=False)
+            self.__conn.row_factory = sqlite3.Row
+
+        return self.__conn
         
     def _init_db(self):
         
-        c = self._conn.cursor()
+        c = self.__getConn().cursor()
         
         c.execute('''create table if not exists aws_cred
                     (id integer primary key, 
@@ -86,48 +93,48 @@ class DAO:
                     return_code integer,
                     foreign key(src_img) references src_img(path))''')
         
-        self._conn.commit()
+        self.__getConn().commit()
         c.close()
           
     def createAmiJob(self, srcImg, startTime=time.time()):
-        c = self._conn.cursor()
+        c = self.__getConn().cursor()
 
         c.execute("insert into ami_creation_job (src_img, start_time) values (?,?)", (srcImg,startTime))
         newId = c.lastrowid
-        self._conn.commit()
+        self.__getConn().commit()
         c.close()
         
         return newId
     
     def createAmi(self, amiId, srcImg):
         
-        c = self._conn.cursor()
+        c = self.__getConn().cursor()
         c.execute("insert into ami (id, src_img) values (?,?)", (amiId,srcImg))
-        self._conn.commit()
+        self.__getConn().commit()
         c.close()
     
     def setAmiJobFinishTime(self, jobId, endTime):        
-        c = self._conn.cursor()
+        c = self.__getConn().cursor()
 
         c.execute("update ami_creation_job set end_time=? where id=?", (endTime,jobId))
         newId = c.lastrowid
-        self._conn.commit()
+        self.__getConn().commit()
         c.close()
         
         return newId
     
     def setAmiJobLog(self, jobId, log):        
-        c = self._conn.cursor()
+        c = self.__getConn().cursor()
 
         c.execute("update ami_creation_job set log=? where id=?", (log,jobId))
         newId = c.lastrowid
-        self._conn.commit()
+        self.__getConn().commit()
         c.close()
         
         return newId
     
     def getSourceImages(self):
-        c = self._conn.cursor()
+        c = self.__getConn().cursor()
 
         out = []
 
@@ -140,15 +147,15 @@ class DAO:
     
     def addSourceImage(self, srcImgPath):
                 
-        c = self._conn.cursor()
+        c = self.__getConn().cursor()
 
         c.execute("insert into src_img values (?)", (srcImgPath,))
         
-        self._conn.commit()
+        self.__getConn().commit()
         c.close()
         
     def saveConfiguration(self, conf):
-        c = self._conn.cursor()
+        c = self.__getConn().cursor()
         
         self.__saveConfigurationValue(c, 'ec2ToolHome', conf.ec2ToolHome)
         self.__saveConfigurationValue(c, 'awsUserId', conf.awsUserId)
@@ -161,11 +168,11 @@ class DAO:
             self.__saveConfigurationValue(c, 'awsAccessKeyId', conf.awsCred.access_key_id)
             self.__saveConfigurationValue(c, 'awsSecretAccessKey', conf.awsCred.secret_access_key)
         
-        self._conn.commit()
+        self.__getConn().commit()
         c.close()
         
     def getConfiguration(self):
-        c = self._conn.cursor()
+        c = self.__getConn().cursor()
         
         ec2ToolHome = self.__getConfigurationValue(c, 'ec2ToolHome')
         awsUserId = self.__getConfigurationValue(c, 'awsUserId')
@@ -175,7 +182,7 @@ class DAO:
         
         defEC2Cred = self.__getConfigurationValue(c, 'defaultEC2Cred')
         
-        self._conn.commit()
+        self.__getConn().commit()
         c.close()
         
         ec2Cred = self.getEC2Cred(defEC2Cred) if defEC2Cred is not None else None
@@ -209,7 +216,7 @@ class DAO:
         return AMI(amiId=row['id'], srcImg=row['src_img'])
     
     def getAMIBySrcImg(self, srcImg):
-        c = self._conn.cursor()
+        c = self.__getConn().cursor()
         
         h = c.execute("select * from ami where src_img=? limit 1", (srcImg,))
         
@@ -220,7 +227,7 @@ class DAO:
         return self.__rowToAMI(row) if row is not None else None
     
     def getAMIById(self, id):
-        c = self._conn.cursor()
+        c = self.__getConn().cursor()
         
         h = c.execute("select * from ami where id=? limit 1", (id,))
         
@@ -231,7 +238,7 @@ class DAO:
         return self.__rowToAMI(row) if row is not None else None
     
     def getAMIs(self):
-        c = self._conn.cursor()
+        c = self.__getConn().cursor()
         
         c.execute("select * from ami")
         
@@ -245,16 +252,16 @@ class DAO:
         return out
     
     def addAMI(self, amiid, srcImg=None):     
-        c = self._conn.cursor()
+        c = self.__getConn().cursor()
 
         c.execute("insert into ami(id, src_img) values (?,?)", (amiid, srcImg))
         
-        self._conn.commit()
+        self.__getConn().commit()
         c.close()  
     
     def saveDeployment(self, deployment):
         print "Saving new deployment"
-        c = self._conn.cursor()
+        c = self.__getConn().cursor()
         c.execute("insert into deploy (name, state) values (?, ?)", 
                       (deployment.id, deployment.state))
     
@@ -262,15 +269,15 @@ class DAO:
             c.execute("insert into deploy_role (name, deploy, ami, count) values (?,?,?,?)", 
                   (role.name, deployment.id, role.ami.amiId, role.count))
             
-        self._conn.commit()
+        self.__getConn().commit()
         c.close()  
     
     def addRoleInstance(self, roleDeployment, roleName, instanceId):
-        c = self._conn.cursor()
+        c = self.__getConn().cursor()
 
         c.execute("insert into deploy_role_instance (instance, role_name, role_deploy) values (?,?,?)", 
                       (instanceId, roleName, roleDeployment))
-        self._conn.commit()
+        self.__getConn().commit()
         c.close()  
     
     def getDeployments(self):
@@ -279,7 +286,7 @@ class DAO:
         for a in self.getAMIs():
             amis[a.amiId] = a
         
-        c = self._conn.cursor()
+        c = self.__getConn().cursor()
         
         c.execute("select * from deploy")
         
@@ -311,7 +318,7 @@ class DAO:
     
     def getEC2Cred(self, id):
         
-        c = self._conn.cursor()
+        c = self.__getConn().cursor()
         
         c.execute("select * from ec2_cred where id = ? limit 1", (id,))
         
@@ -323,7 +330,7 @@ class DAO:
     
     def saveEC2Cred(self, ec2Cred):
         
-        c = self._conn.cursor()
+        c = self.__getConn().cursor()
         c.execute("insert into ec2_cred (id, cert, private_key) values (?,?,?)",
                  (ec2Cred.id, ec2Cred.cert, ec2Cred.private_key))
         c.close()

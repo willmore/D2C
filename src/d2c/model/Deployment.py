@@ -51,8 +51,12 @@ class Role:
         self.logger.write("Reserving %d instance(s) of %s" % (self.count, self.ami.amiId))
        
         ec2Conn = self.ec2ConnFactory.getConnection()
-        self.reservation = ec2Conn.run_instances(self.ami.amiId, min_count=self.count, 
-                                            max_count=self.count, instance_type='t1.micro') #TODO unhardcode instance type
+        keyName = self.dao.getConfiguration().ec2Cred.id
+        self.reservation = ec2Conn.run_instances(self.ami.amiId, 
+                                                 key_name = keyName,
+                                                 min_count=self.count, 
+                                                 max_count=self.count, 
+                                                 instance_type='t1.micro') #TODO unhardcode instance type
         
         self.logger.write("Instance(s) reserved")    
         
@@ -65,15 +69,19 @@ class Role:
             self.reservation = self.__getReservation()
         
         for instance in self.reservation.instances: 
+            self.logger.write("Accessing instace %s with key id %s" % (instance.id, instance.key_name))
+            instance.update()
+            self.logger.write("Accessing instace %s with key id %s" % (instance.id, instance.key_name))
+            self.logger.write("Instance is %s " % str(instance))
             key = self.dao.getEC2Cred(instance.key_name)
-            
             for action in self.startActions:
 
                 addr = 'ec2-user@%s' % instance.public_dns_name
                 #ssh -i cloudeco.pem ec2-user@ec2-46-51-147-10.eu-west-1.compute.amazonaws.com 
                 key = '/home/willmore/cert/cloudeco.pem'
-                popenCmd = ['rsh', '-i', key, addr]
+                popenCmd = ['rsh', '-i', key, addr, '-o', 'StrictHostKeyChecking=no']
                 popenCmd.extend(action.command.split(" "))
+                self.logger.write("Executing %s" % str(popenCmd))
                 proc = subprocess.Popen(popenCmd)
                 proc.communicate()
                 if proc.returncode != 0:

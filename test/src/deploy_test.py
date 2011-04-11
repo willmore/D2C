@@ -6,14 +6,10 @@ from AMIToolsStub import AMIToolsFactoryStub
 from d2c.data.DAO import DAO
 from d2c.model.Deployment import Role
 from d2c.model.Deployment import Deployment
-from d2c.model.AMI import AMI
-from d2c.model.EC2Cred import EC2Cred
-from d2c.model.Configuration import Configuration
-from d2c.model.AWSCred import AWSCred
-from d2c.AMITools import AMIToolsFactory
+from d2c.model.Action import Action
 from d2c.EC2ConnectionFactory import EC2ConnectionFactory
 from d2c.logger import StdOutLogger
-import string
+from TestConfig import TestConfig
 
 def main(argv=None):
     
@@ -23,22 +19,7 @@ def main(argv=None):
         os.unlink(DAO._SQLITE_FILE)
     dao = DAO()
     
-    settings = {}
-    for l in open("/home/willmore/test.conf", "r"):
-        (k, v) = string.split(l.strip(), "=")
-        settings[k] = v
-    
-    print str(settings)
- 
-    ec2Cred = EC2Cred(settings['cert'], settings['privateKey'])
-    
-    awsCred = AWSCred(settings['accessKey'],
-                      settings['secretKey'])
-        
-    conf = Configuration(ec2ToolHome='/opt/EC2_TOOLS',
-                             awsUserId=settings['userid'],
-                             ec2Cred=ec2Cred,
-                             awsCred=awsCred)
+    conf = TestConfig("/home/willmore/test.conf")
         
     dao.saveConfiguration(conf)
     
@@ -46,8 +27,14 @@ def main(argv=None):
     amiId = "ami-47cefa33"
     dao.createAmi(amiId, "/foobar/vm.vdi")
     ami = dao.getAMIById(amiId)
-    ec2ConnFactory = EC2ConnectionFactory(settings['accessKey'], settings['secretKey'], StdOutLogger())
-    deployment = Deployment("dummyDep", ec2ConnFactory, [Role("dummyDep", "loner", ami, 1)])
+    ec2ConnFactory = EC2ConnectionFactory(conf.awsCred.access_key_id, 
+                                          conf.awsCred.secret_access_key, 
+                                          StdOutLogger())
+    
+    deployment = Deployment("dummyDep", ec2ConnFactory, 
+                            [Role("dummyDep", "loner", ami, 1, 
+                                  startActions = [Action('echo howdy > /tmp/howdy.txt')],
+                                  dao=dao)])
     dao.saveDeployment(deployment)
     
     class Listener:
