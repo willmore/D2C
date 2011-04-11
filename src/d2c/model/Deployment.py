@@ -23,7 +23,7 @@ class Instance:
 class Role:
     
     def __init__(self, deploymentId, 
-                 name, ami, count, instances=[],
+                 name, ami, count, reservation=None,
                  startActions = [], 
                  logger=StdOutLogger(), ec2ConnFactory=None):
         
@@ -37,7 +37,7 @@ class Role:
         
         self.startActions = list(startActions)
         self.ec2ConnFactory = ec2ConnFactory
-        self.instances = list(instances)
+        self.reservation=None
       
     def setEC2ConnFactory(self, ec2ConnFactory):
         self.ec2ConnFactory = ec2ConnFactory  
@@ -47,10 +47,8 @@ class Role:
         self.logger.write("Reserving %d instance(s) of %s" % (self.count, self.ami.amiId))
        
         ec2Conn = self.ec2ConnFactory.getConnection()
-        reservation = ec2Conn.run_instances(self.ami.amiId, min_count=self.count, 
-                                      max_count=self.count, instance_type='t1.micro') #TODO unhardcode instance type
-        
-        self.instances = reservation.instances
+        self.reservation = ec2Conn.run_instances(self.ami.amiId, min_count=self.count, 
+                                            max_count=self.count, instance_type='t1.micro') #TODO unhardcode instance type
         
         self.logger.write("Instance(s) reserved")    
         
@@ -58,7 +56,7 @@ class Role:
         '''
         Execute the start action(s) on each instance within the role.
         '''
-        for instance in self.instances:
+        for instance in self.reservation.instances:
             print "Action!"
         
     def __str__(self):
@@ -115,40 +113,20 @@ class Monitor(Thread):
         
     def run(self):
         '''
-        Launches a poller which checks the remote state
+        Launches a poller which detects state changes
         of the deployment and notifies listeners of changes.
-        '''
-        '''
-        self.ec2Conn = self.ec2ConnFactory.getConnection()
-        instanceIds = map(lambda i: i.id, self.deployment.getInstances())
-        self.instanceHandles = self.ec2Conn.get_all_instances(instanceIds)
-        '''
-            
-        
-        
-        '''
-        Instance states = 
-        pending | running | shutting-down | terminated | stopping | stopped
-        '''
-
+        ''' 
+    
         while self.monitor:
-            newState = DeploymentState.RUNNING
-
-            instanceHandles = []
-            
-            for role in self.deployment.roles:
-                instanceHandles.extend(role.instances)
-
-            for instance in instanceHandles:
-                instance.update() # retrieve remote info
-                if 'pending' == instance.state:
-                    newState = DeploymentState.PENDING
-                    break
         
-            if newState is not self.currState:
-                evt = Monitor.Event(self.currState, self.deployment)
+            dState = self.deployment.state
+        
+            if dState is not self.currState:
                 
-                self.currState = newState
+                self.currState = dState
+                
+                evt = Monitor.Event(self.currState, self.deployment)    
+                
                 if self.listeners.has_key(self.currState):
                     for l in self.listeners[self.currState]:
                         l.notify(evt)
@@ -160,12 +138,30 @@ class Monitor(Thread):
 
 class DeploymentState:
     NOT_RUN = 'NOT_RUN'
-    PENDING = 'PENDING'
-    RUNNING = 'RUNNING'
-    FINALIZING = 'FINALIZING'
-    COMPLETED = 'COMPLETED'       
+    INSTANCES_LAUNCHED = 'INSTANCES_LAUNCHED'
+    ROLES_STARTED = 'ROLES_STARTED'
+    JOB_COMPLETED = 'JOB_COMPLETED'
+    SHUTTING_DOWN = 'SHUTTING_DOWN'
+    COMPLTED = 'COMPLETED'
+    
+def mapStates(instanceStates):
+    '''
+    Given the list of all instances states within a deployment,
+    return the associated single DeploymentState.
+    '''
+    
+    '''
+    Instance states = 
+    pending | running | shutting-down | terminated | stopping | stopped
+    '''
+    
+    if 'shutting-down' in instanceStates:
+        return DeploymentState.SHUTTING_DOWN
+    
+    if 'pending' in instanceStates:
+        return DeploymentState.PENDING           
 
-class Deployment:
+class Deployment(Thread):
     """
     Represents an instance of a Deployment.
     A deployment consists of one or more reservations, 
@@ -173,7 +169,9 @@ class Deployment:
     """   
     
     def __init__(self, id, ec2ConnFactory=None, roles=[],
-                 reservations=(), state=DeploymentState.NOT_RUN, logger=StdOutLogger()):
+                 reservations=(), state=DeploymentState.NOT_RUN, logger=StdOutLogger(), pollRate=30):
+        
+        Thread.__init__(self)
         
         self.id = id
         self.ec2ConnFactory = ec2ConnFactory
@@ -182,13 +180,14 @@ class Deployment:
         self.state = state
         self.monitor = Monitor(self, self.ec2ConnFactory) if self.ec2ConnFactory is not None else None
         self.logger = logger
+        self.pollRate = pollRate
     
     def setEC2ConnFactory(self, ec2ConnFactory):
         assert self.ec2ConnFactory is None
         assert self.monitor is None
         
         self.ec2ConnFactory = ec2ConnFactory
-        self.monitor = Monitor(self, self.ec2ConnFactory)
+        self.monitor = Monitor(self, self.ec2ConnFactory, pollRate=self.pollRate)
     
     def getState(self):
         pass
@@ -197,31 +196,105 @@ class Deployment:
         print "Calling add role to " + str(self.roles)
         self.roles.append(role)
         
-    def run(self):
+    def stop(self):
+        self.runLifecycle = False
         
-        if self.state != DeploymentState.NOT_RUN:
-            raise Exception("Can not start deployment in state: " + self.state) 
+        # Allow the monitor to catch any changes in cleanup phase.
+        self.join()
+        self.monitor.stop()
+        
+    def run(self):
+        '''
+        Run through the lifecycle of the deployment.
+        Each stage transition (method) is responsible for
+        any cleanup of failures that may occur. Additionally, each stage must monitor
+        runLifecycle flag which indicates is the process must stop.
+        Each stage must throw an exception if a failure occurs.
+        '''
+        self.runLifecycle = True
         
         self.monitor.start()
+        
+        if not self.runLifecycle:
+            return
+        
+        self.__launchInstances()
+        
+        if not self.runLifecycle:
+            return
+        
+        self.__startRoles()
+        
+        if not self.runLifecycle:
+            return
+        
+        self.__collectData()
+        
+        if not self.runLifecycle:
+            return
+        
+        self.__shutdown()
+    
+    def __launchInstances(self):
+        if self.state != DeploymentState.NOT_RUN:
+            raise Exception("Can not start deployment in state: " + self.state)
         
         self.logger.write("Launching instances")
         
         for role in self.roles:
             role.setEC2ConnFactory(self.ec2ConnFactory)
             role.launch()    
+        
+        reservationIds = [r.reservation.id for r in self.roles]
+    
+        allRunning = False
+        
+        while self.runLifecycle and not allRunning:
+            time.sleep(self.pollRate)
             
+            instStates = self.__getInstanceStates(reservationIds)
+            
+            allRunning = True
+            for state in instStates:
+                if state is not 'running':
+                    allRunning = False
+                    break
+        
+        self.state = DeploymentState.INSTANCES_LAUNCHED    
         self.logger.write("Instances Launched")
         self.logger.write("Running start actions")
+        
+    def __getInstanceStates(self, reservationIds):
+        '''
+        Return a iterable of string states for all instances
+        for the reservation ids.
+        '''  
+        
+        res = self.ec2ConnFactory.getConnection().get_all_instances(filters={'reservation-id':reservationIds})
+        
+        states = []
+        for r in res:
+            for i in r.instances:
+                states.append(i.state)
+                
+        return states
+        
+        
+    def __startRoles(self):
+        self.logger.write("Starting roles")
         
         for role in self.roles:
             role.start()
             
-        self.logger.write("Start actions run")
+        self.logger.write("Roles started")
         
-        
-    def __executeAction(self, action):
-        #TODO
+    
+    def __collectData(self):  
         pass
+        
+    def __shutdown(self): 
+        pass 
+    
 
     def stopMonitoring(self):
         '''
@@ -235,7 +308,8 @@ class Deployment:
     def addStateChangeListener(self, state, listener):
         self.monitor.addStateChangeListener(state, listener)
      
-    def setMonitorPollRate(self, pollRate): 
+    def setPollRate(self, pollRate): 
+        self.pollRate = pollRate
         self.monitor.pollRate = pollRate
         
     def __str__(self):

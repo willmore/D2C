@@ -42,7 +42,6 @@ def main(argv=None):
         
     dao.saveConfiguration(conf)
     
-    
     dao.addSourceImage("/foobar/vm.vdi")
     amiId = "ami-47cefa33"
     dao.createAmi(amiId, "/foobar/vm.vdi")
@@ -59,6 +58,8 @@ def main(argv=None):
     deployment.addAnyStateChangeListener(Listener())
         
     deployment.run()
+    
+    
 
 if __name__ == "__main__":
     sys.exit(main())

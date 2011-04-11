@@ -5,7 +5,6 @@ from d2c.model.Deployment import *
 from d2c.model.AMI import AMI
 from MicroMock import MicroMock
 
-
 class DummyConnFactory:
     
     def __init__(self):
@@ -22,15 +21,16 @@ class DummyConn:
     def __init__(self):
         self.num = 0
         self.instances = []
-        self.reservations = []
+        self.reservations = {}
     
-    def get_all_instances(self, ids):
-        self.instances = [DummyInstance(x) for x in range(len(ids))]
-        return self.instances
+    def get_all_instances(self, ids = None, filters={}):
+
+        return filter(lambda r: r.id in filters['reservation-id'], 
+                      self.reservations.values())
     
     def run_instances(self, *args, **kwargs):
         r = DummyReservation(kwargs['min_count'])
-        self.reservations.append(r)
+        self.reservations[r.id] = r
         return r
     
     def setState(self, state):
@@ -38,13 +38,17 @@ class DummyConn:
             print "Setting state"
             i.state = state 
         
-        for r in self.reservations:
+        for r in self.reservations.values():
             r.setState(state)
             
 class DummyReservation:
     
+    ctr = 0
+    
     def __init__(self, count):
         self.instances = [DummyInstance(None) for _ in range(count)]
+        self.id = 'r-dummy_%d' % self.ctr 
+        self.ctr += self.ctr
     
     def setState(self, state):
         for i in self.instances:
@@ -68,10 +72,8 @@ class DeploymentTest(unittest.TestCase):
     def setUp(self):
         dName = "Dummy"
         ami = AMI("ami-123", "foobar.vdi")
-        self.deployment = Deployment(dName, roles = [Role(dName, "loner", ami, 2, 
-                                             instances=(Instance(1), Instance(2))), 
-                                        Role(dName, "loner2", ami, 2,
-                                             instances=(Instance(3), Instance(4)))])
+        self.deployment = Deployment(dName, roles = [Role(dName, "loner", ami, 2), 
+                                        Role(dName, "loner2", ami, 2)])
         
     def tearDown(self):
         if hasattr(self, 'mon'):
@@ -91,17 +93,18 @@ class DeploymentTest(unittest.TestCase):
         hits = {}
             
         self.deployment.setEC2ConnFactory(connFactory)
-        self.deployment.setMonitorPollRate(pollRate)
-        self.deployment.addStateChangeListener(DeploymentState.RUNNING, MicroMock(notify=lambda evt:hits.__setitem__('RUNNING', True)))
+        self.deployment.addStateChangeListener(DeploymentState.INSTANCES_LAUNCHED, 
+                                               MicroMock(notify=lambda evt:hits.__setitem__('INSTANCES_LAUNCHED', True)))
+        self.deployment.setPollRate(pollRate)
         
-        self.deployment.run()
+        self.deployment.start()
         
         time.sleep(2 * pollRate)
         connFactory.setState('running')
         time.sleep(2 * pollRate)
-        self.assertTrue(hits.has_key('RUNNING'))
+        self.assertTrue(hits.has_key('INSTANCES_LAUNCHED'))
         
-        self.deployment.stopMonitoring()
+        self.deployment.stop()
         
 if __name__ == '__main__':
     unittest.main()
