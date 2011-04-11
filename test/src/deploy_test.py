@@ -57,7 +57,11 @@ def main(argv=None):
     
     deployment.addAnyStateChangeListener(Listener())
         
-    deployment.run()
+    deployment.start()
+    
+    deployment.join()
+    
+    
     
     
 

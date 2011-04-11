@@ -233,9 +233,12 @@ class Deployment(Thread):
             
             allRunning = True
             for state in instStates:
-                if state is not 'running':
+                if state != 'running':
+                    self.logger.write('All instances not running; continue polling.')
                     allRunning = False
                     break
+                
+            self.logger.write("All instances now running")
         
         self.__setState(DeploymentState.INSTANCES_LAUNCHED)   
         self.logger.write("Instances Launched")
@@ -250,14 +253,19 @@ class Deployment(Thread):
         Return a iterable of string states for all instances
         for the reservation ids.
         '''  
+        self.logger.write("Getting instances states for reservation-id(s): %s" % str(reservationIds))
         
         res = self.ec2ConnFactory.getConnection().get_all_instances(filters={'reservation-id':reservationIds})
+        
+        self.logger.write("Got reservations: %s" % str(res))
         
         states = []
         for r in res:
             for i in r.instances:
                 states.append(i.state)
-                
+        
+        self.logger.write("Instance states for reservations %s are %s" % (str(reservationIds), str(states)))
+        
         return states
         
         
