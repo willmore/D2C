@@ -63,17 +63,25 @@ class DummyInstance():
     def __init__(self, ami):
         self.ami = ami
         self.state = 'pending'
+        self.key_name = 'dummy_key_name'
         
     def update(self):
         pass
+    
+    
+class DummyDao:
+    
+    def getEC2Cred(self, id):
+        return MicroMock(id=id, cert="dummy_cert", private_key="dummy_private_key")
 
 class DeploymentTest(unittest.TestCase):
    
     def setUp(self):
         dName = "Dummy"
         ami = AMI("ami-123", "foobar.vdi")
-        self.deployment = Deployment(dName, roles = [Role(dName, "loner", ami, 2), 
-                                        Role(dName, "loner2", ami, 2)])
+        dao = DummyDao()
+        self.deployment = Deployment(dName, roles = [Role(dName, "loner", ami, 2, dao=dao), 
+                                        Role(dName, "loner2", ami, 2, dao=dao)])
         
     def tearDown(self):
         if hasattr(self, 'mon'):

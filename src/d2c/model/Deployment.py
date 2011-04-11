@@ -303,7 +303,7 @@ class Deployment(Thread):
         self.logger.write("Starting roles")
         
         for role in self.roles:
-            role.start()
+            role.executeStartCommands()
             
         self.__setState(DeploymentState.ROLES_STARTED)
             
