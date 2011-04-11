@@ -26,7 +26,8 @@ class Role:
     def __init__(self, deploymentId, 
                  name, ami, count, reservationId=None,
                  startActions = [], 
-                 logger=StdOutLogger(), ec2ConnFactory=None):
+                 logger=StdOutLogger(), ec2ConnFactory=None,
+                 dao=None):
         
         self.deploymentId = deploymentId
         self.name = name
@@ -40,6 +41,7 @@ class Role:
         self.ec2ConnFactory = ec2ConnFactory
         self.reservationId = reservationId
         self.reservation = None
+        self.dao = dao
       
     def setEC2ConnFactory(self, ec2ConnFactory):
         self.ec2ConnFactory = ec2ConnFactory  
@@ -63,6 +65,8 @@ class Role:
             self.reservation = self.__getReservation()
         
         for instance in self.reservation.instances: 
+            key = self.dao.getEC2Cred(instance.key_name)
+            
             for action in self.startActions:
 
                 addr = 'ec2-user@%s' % instance.public_dns_name

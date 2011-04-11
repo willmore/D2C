@@ -33,7 +33,7 @@ def main(argv=None):
     
     print str(settings)
  
-    ec2Cred = EC2Cred(settings['cert'], settings['privateKey'])
+    ec2Cred = EC2Cred(settings['ec2CredId'], settings['cert'], settings['privateKey'])
     
     awsCred = AWSCred(settings['accessKey'],
                       settings['secretKey'])
@@ -50,7 +50,7 @@ def main(argv=None):
     
     role = Role("dummyDep", "loner", AMI('dummy'), 1, reservationId='r-91b74ee7',
                  startActions = [Action('echo howdy > /tmp/howdy.txt')], 
-                 logger=StdOutLogger(), ec2ConnFactory=ec2ConnFactory)
+                 logger=StdOutLogger(), ec2ConnFactory=ec2ConnFactory, dao=dao)
     
     role.executeStartCommands()
     

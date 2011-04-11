@@ -50,7 +50,7 @@ class DAO:
                     foreign key(src_img) REFERENCES src_img(path))''')
         
         c.execute('''create table if not exists ec2_cred
-                    (id integer primary key, 
+                    (id string primary key, 
                     cert text, 
                     private_key text)''')
         
@@ -154,8 +154,8 @@ class DAO:
         self.__saveConfigurationValue(c, 'awsUserId', conf.awsUserId)
         
         if conf.ec2Cred is not None:
-            self.__saveConfigurationValue(c, 'ec2Cert', conf.ec2Cred.cert)
-            self.__saveConfigurationValue(c, 'ec2PrivateKey', conf.ec2Cred.private_key)
+            self.__saveConfigurationValue(c, 'defaultEC2Cred', conf.ec2Cred.id)
+            self.saveEC2Cred(conf.ec2Cred)
   
         if conf.awsCred is not None:
             self.__saveConfigurationValue(c, 'awsAccessKeyId', conf.awsCred.access_key_id)
@@ -169,17 +169,16 @@ class DAO:
         
         ec2ToolHome = self.__getConfigurationValue(c, 'ec2ToolHome')
         awsUserId = self.__getConfigurationValue(c, 'awsUserId')
-                    
-        ec2Cert = self.__getConfigurationValue(c, 'ec2Cert')
-        ec2PrivateKey = self.__getConfigurationValue(c, 'ec2PrivateKey')
               
         awsAccessKeyId = self.__getConfigurationValue(c, 'awsAccessKeyId')
         awsSecretAccessKey = self.__getConfigurationValue(c, 'awsSecretAccessKey')
         
+        defEC2Cred = self.__getConfigurationValue(c, 'defaultEC2Cred')
+        
         self._conn.commit()
         c.close()
         
-        ec2Cred = EC2Cred(ec2Cert, ec2PrivateKey) if (ec2Cert is not None and ec2PrivateKey is not None) else None
+        ec2Cred = self.getEC2Cred(defEC2Cred) if defEC2Cred is not None else None
         awsCred = AWSCred(awsAccessKeyId, awsSecretAccessKey) if (awsAccessKeyId is not None and awsSecretAccessKey is not None) else None
             
         return Configuration(ec2ToolHome=ec2ToolHome,
@@ -309,4 +308,24 @@ class DAO:
         
     def rowToRole(self, row):
         return Role(row['deploy'], row['name'], row['ami'], row['count'])
+    
+    def getEC2Cred(self, id):
+        
+        c = self._conn.cursor()
+        
+        c.execute("select * from ec2_cred where id = ? limit 1", (id,))
+        
+        row = c.fetchone()
+        
+        c.close()
+        
+        return EC2Cred(row['id'], row['cert'], row['private_key'])
+    
+    def saveEC2Cred(self, ec2Cred):
+        
+        c = self._conn.cursor()
+        c.execute("insert into ec2_cred (id, cert, private_key) values (?,?,?)",
+                 (ec2Cred.id, ec2Cred.cert, ec2Cred.private_key))
+        c.close()
+    
     
