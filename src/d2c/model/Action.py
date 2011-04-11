@@ -2,9 +2,6 @@
 
 class Action():
 
-
-    def __init__(self):
-        '''
-        Constructor
-        '''
+    def __init__(self, command):
+        self.command = command
         

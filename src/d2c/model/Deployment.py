@@ -7,6 +7,7 @@ Created on Mar 14, 2011
 from threading import Thread
 from d2c.logger import StdOutLogger
 import time
+import subprocess
 
 class Instance:
     '''
@@ -23,7 +24,7 @@ class Instance:
 class Role:
     
     def __init__(self, deploymentId, 
-                 name, ami, count, reservation=None,
+                 name, ami, count, reservationId=None,
                  startActions = [], 
                  logger=StdOutLogger(), ec2ConnFactory=None):
         
@@ -32,12 +33,13 @@ class Role:
         self.ami = ami
         self.logger = logger
         
-        assert count > 0
+        assert count > 0, "Count must be int > 0"
         self.count = count
         
         self.startActions = list(startActions)
         self.ec2ConnFactory = ec2ConnFactory
-        self.reservation=None
+        self.reservationId = reservationId
+        self.reservation = None
       
     def setEC2ConnFactory(self, ec2ConnFactory):
         self.ec2ConnFactory = ec2ConnFactory  
@@ -52,12 +54,36 @@ class Role:
         
         self.logger.write("Instance(s) reserved")    
         
-    def start(self):
+    def executeStartCommands(self):
         '''
         Execute the start action(s) on each instance within the role.
         '''
-        for instance in self.reservation.instances:
-            print "Action!"
+        
+        if self.reservation is None:
+            self.reservation = self.__getReservation()
+        
+        for instance in self.reservation.instances: 
+            for action in self.startActions:
+
+                addr = 'ec2-user@%s' % instance.public_dns_name
+                #ssh -i cloudeco.pem ec2-user@ec2-46-51-147-10.eu-west-1.compute.amazonaws.com 
+                key = '/home/willmore/cert/cloudeco.pem'
+                popenCmd = ['rsh', '-i', key, addr]
+                popenCmd.extend(action.command.split(" "))
+                proc = subprocess.Popen(popenCmd)
+                proc.communicate()
+                if proc.returncode != 0:
+                    raise Exception("Exception exec'ing rsh")
+        
+    def __getReservation(self):
+        '''
+        Update the reservation field with current information from AWS.
+        '''    
+        
+        reservations = self.ec2ConnFactory.getConnection().get_all_instances(filters={'reservation-id':[self.reservationId]})
+        
+        assert len(reservations) == 1, "Unable to retrieve reservation %s" % self.reservationId
+        return reservations[0] 
         
     def __str__(self):
         return "{name:%s, ami: %s, instances: %s}" % (self.name, self.ami, str(self.instances))

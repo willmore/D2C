@@ -30,3 +30,4 @@ class EC2ConnectionFactory:
             self.__logger.write("EC2 connection established")
             
         return self.__ec2Conn
+    
