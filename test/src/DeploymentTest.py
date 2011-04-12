@@ -83,6 +83,16 @@ class DummyAction:
     
     def execute(self, instance):
         self.called = True
+        
+class DummyFinishedTest:
+    
+    def __init__(self):
+        self.times = 0
+        
+    def check(self, instance):
+        
+        assert instance is not None
+        return True
 
 class DeploymentTest(unittest.TestCase):
    
@@ -90,8 +100,12 @@ class DeploymentTest(unittest.TestCase):
         dName = "Dummy"
         ami = AMI("ami-123", "foobar.vdi")
         dao = DummyDao()
-        self.deployment = Deployment(dName, roles = [Role(dName, "loner", ami, 2, dao=dao, startActions = [DummyAction()]), 
-                                                     Role(dName, "loner2", ami, 2, dao=dao, startActions = [DummyAction()])])
+        self.deployment = Deployment(dName, roles = [Role(dName, "loner", ami, 2, dao=dao, 
+                                                          startActions=[DummyAction(), DummyAction()],
+                                                          finishedChecks=[DummyFinishedTest(), DummyFinishedTest()]), 
+                                                     Role(dName, "loner2", ami, 2, dao=dao, 
+                                                          startActions=[DummyAction(), DummyAction()],
+                                                          finishedChecks=[DummyFinishedTest(), DummyFinishedTest()])])
         
     def tearDown(self):
         if hasattr(self, 'mon'):
@@ -144,7 +158,7 @@ class DeploymentTest(unittest.TestCase):
         time.sleep(2 * pollRate)
         #Manually set mock instances to running
         connFactory.setState('running')    
-        self.deployment.join(15)
+        self.deployment.join(30)
         
         self.assertTrue(hits.has_key(DeploymentState.INSTANCES_LAUNCHED))   
         self.assertTrue(hits.has_key(DeploymentState.ROLES_STARTED))

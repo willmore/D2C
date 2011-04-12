@@ -91,8 +91,11 @@ class Role:
         for instance in self.reservation.instances:
             for check in self.finishedChecks:
                 if not check.check(instance):
+                    self.logger.write("Returning False for finished test")
                     return False
                 
+        self.logger.write("Returning true for finished test")        
+        
         return True
         
     def __getReservation(self):
@@ -358,6 +361,7 @@ class Deployment(Thread):
         
         while len(monitorRoles) > 0:
             monitorRoles = [role for role in monitorRoles if not role.checkFinished()]
+            self.logger.write("Monitor role len is %d" % len(monitorRoles))
             time.sleep(self.pollRate)
                 
         self.__setState(DeploymentState.JOB_COMPLETED)
