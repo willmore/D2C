@@ -6,7 +6,6 @@ Created on Mar 14, 2011
 
 from threading import Thread
 from d2c.logger import StdOutLogger
-from d2c.ShellExecutor import ShellExecutor
 import time
 
 class Instance:
@@ -90,6 +89,7 @@ class Role:
             
         for instance in self.reservation.instances:
             for check in self.finishedChecks:
+                check.dao = self.dao
                 if not check.check(instance):
                     self.logger.write("Returning False for finished test")
                     return False
@@ -306,6 +306,11 @@ class Deployment(Thread):
                     break
                 
             self.logger.write("All instances now running")
+            '''
+            Wait a bit for the systems to really boot up.
+            TODO: replace hardcoded wait time with a valid test, perhaps ping.
+            '''
+            time.sleep(30)
         
         self.__setState(DeploymentState.INSTANCES_LAUNCHED)   
         self.logger.write("Instances Launched")

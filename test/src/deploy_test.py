@@ -7,6 +7,7 @@ from d2c.data.DAO import DAO
 from d2c.model.Deployment import Role
 from d2c.model.Deployment import Deployment
 from d2c.model.Action import Action
+from d2c.model.FileExistsFinishedCheck import FileExistsFinishedCheck
 from d2c.EC2ConnectionFactory import EC2ConnectionFactory
 from d2c.logger import StdOutLogger
 from TestConfig import TestConfig
@@ -33,7 +34,8 @@ def main(argv=None):
     
     deployment = Deployment("dummyDep", ec2ConnFactory, 
                             [Role("dummyDep", "loner", ami, 1, 
-                                  #startActions = [Action('echo howdy > /tmp/howdy.txt')],
+                                  startActions = [Action('echo howdy > /tmp/howdy.txt')],
+                                  finishedChecks = [FileExistsFinishedCheck("/tmp/howdy.txt")],
                                   dao=dao)])
     dao.saveDeployment(deployment)
     
