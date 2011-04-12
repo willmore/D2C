@@ -4,8 +4,10 @@ import subprocess
 
 class ShellExecutor:
 
-    def __init__(self, logger=StdOutLogger()):
+    def __init__(self, outputLogger=StdOutLogger(),
+                       logger=StdOutLogger()):
         self.__logger = logger
+        self.outputLogger = outputLogger
        
     def run(self, cmd):
         
@@ -19,7 +21,7 @@ class ShellExecutor:
         while True:
             line = p.stdout.readline()
             if not line: break
-            self.__logger.write(line)
+            self.outputLogger.write(line)
     
         # This call will block until process finishes and p.returncode is set.
         p.wait()
