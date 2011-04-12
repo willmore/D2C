@@ -137,7 +137,7 @@ class DeploymentTest(unittest.TestCase):
         self.assertTrue(hits.has_key(DeploymentState.COMPLETED))
         
         
-    def testReAttachInstancesLaunch(self):
+    def testReAttachInstancesLaunched(self):
         '''
         Simulate re-attaching to an already started deployment, which is at stage INSTANCES_LAUNCHED.
         Assert that the lifecycle properly continues after re-attaching.
@@ -185,6 +185,61 @@ class DeploymentTest(unittest.TestCase):
         
         self.assertFalse(hits.has_key(DeploymentState.INSTANCES_LAUNCHED)) #Should only hit new stages after this one
         self.assertTrue(hits.has_key(DeploymentState.ROLES_STARTED))
+        self.assertTrue(hits.has_key(DeploymentState.JOB_COMPLETED))
+        self.assertTrue(hits.has_key(DeploymentState.COLLECTING_DATA))
+        self.assertTrue(hits.has_key(DeploymentState.DATA_COLLECTED))
+        self.assertTrue(hits.has_key(DeploymentState.SHUTTING_DOWN))
+        self.assertTrue(hits.has_key(DeploymentState.COMPLETED))
+        
+        
+    def testReAttachRoleStarted(self):
+        '''
+        Simulate re-attaching to an already started deployment, which is at stage ROLES_STARTED.
+        Assert that the lifecycle properly continues after re-attaching.
+        '''
+        connFactory = DummyConnFactory()
+        self.deployment.setEC2ConnFactory(connFactory)
+        
+        
+        for role in self.deployment.roles:
+            reservationId = 'r-%s' % role.name 
+            role.reservationId = reservationId
+            connFactory.conn.reservations[reservationId] = DummyReservation(count=role.count, id=reservationId)
+        
+        connFactory.setState('running')
+        pollRate = 2
+        hits = {}
+                     
+        class Listener:
+            
+            def __init__(self, state):
+                self.state = state
+            
+            def notify(self, evt):
+                hits[self.state] = True
+          
+        for state in (DeploymentState.INSTANCES_LAUNCHED, 
+                      DeploymentState.ROLES_STARTED,
+                      DeploymentState.JOB_COMPLETED,
+                      DeploymentState.COLLECTING_DATA,
+                      DeploymentState.DATA_COLLECTED,
+                      DeploymentState.SHUTTING_DOWN,
+                      DeploymentState.COMPLETED):
+            self.deployment.addStateChangeListener(state, 
+                                   Listener(state)) #MicroMock(notify=lambda evt:hits.__setitem__(state, True)))
+        
+        self.deployment.state = DeploymentState.ROLES_STARTED
+        self.deployment.setPollRate(pollRate)
+        
+        self.deployment.start()
+        
+        time.sleep(2 * pollRate)
+        #Manually set mock instances to running
+        connFactory.setState('running')    
+        self.deployment.join(15)
+        
+        self.assertFalse(hits.has_key(DeploymentState.INSTANCES_LAUNCHED)) #Should only hit new stages after this one
+        self.assertFalse(hits.has_key(DeploymentState.ROLES_STARTED))
         self.assertTrue(hits.has_key(DeploymentState.JOB_COMPLETED))
         self.assertTrue(hits.has_key(DeploymentState.COLLECTING_DATA))
         self.assertTrue(hits.has_key(DeploymentState.DATA_COLLECTED))
