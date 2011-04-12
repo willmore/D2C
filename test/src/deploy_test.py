@@ -33,7 +33,7 @@ def main(argv=None):
     
     deployment = Deployment("dummyDep", ec2ConnFactory, 
                             [Role("dummyDep", "loner", ami, 1, 
-                                  startActions = [Action('echo howdy > /tmp/howdy.txt')],
+                                  #startActions = [Action('echo howdy > /tmp/howdy.txt')],
                                   dao=dao)])
     dao.saveDeployment(deployment)
     
@@ -49,8 +49,5 @@ def main(argv=None):
     deployment.join()
     
     
-    
-    
-
 if __name__ == "__main__":
     sys.exit(main())

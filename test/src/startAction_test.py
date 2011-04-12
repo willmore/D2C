@@ -48,7 +48,7 @@ def main(argv=None):
   
     ec2ConnFactory = EC2ConnectionFactory(settings['accessKey'], settings['secretKey'], StdOutLogger())
     
-    role = Role("dummyDep", "loner", AMI('dummy'), 1, reservationId='r-91b74ee7',
+    role = Role("dummyDep", "loner", AMI('dummy'), 1, reservationId='r-f3639a85',
                  startActions = [Action('echo howdy > /tmp/howdy.txt')], 
                  logger=StdOutLogger(), ec2ConnFactory=ec2ConnFactory, dao=dao)
     

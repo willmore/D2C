@@ -40,7 +40,7 @@ class Role:
         self.startActions = list(startActions)
         self.ec2ConnFactory = ec2ConnFactory
         self.reservationId = reservationId
-        self.reservation = None
+        self.reservation = None #lazy loaded
         self.dao = dao
       
     def setEC2ConnFactory(self, ec2ConnFactory):
@@ -76,17 +76,21 @@ class Role:
             self.logger.write("Accessing instace %s with key id %s" % (instance.id, instance.key_name))
             self.logger.write("Instance is %s " % str(instance))
             
-            key = self.dao.getEC2Cred(instance.key_name)
+            cred = self.dao.getEC2Cred(instance.key_name)
             
             for action in self.startActions:
                 
-                cmd = "rsh -i %s ec2-user%s -o StrictHostKeyChecking=no %s" % (key, instance.public_dns_name, action.cmd)
+                cmd = "rsh -i %s -o StrictHostKeyChecking=no ec2-user@%s '%s'" % (cred.private_key, 
+                                                                               instance.public_dns_name, 
+                                                                               action.command)
                 ShellExecutor(self.logger).run(cmd)
         
     def __getReservation(self):
         '''
         Update the reservation field with current information from AWS.
         '''    
+        
+        assert hasattr(self, 'reservationId') and self.reservationId is not None
         
         reservations = self.ec2ConnFactory.getConnection().get_all_instances(filters={'reservation-id':[self.reservationId]})
         
@@ -190,9 +194,13 @@ class Deployment(Thread):
         which may be in various states (requested, running, terminated, etc.)
     """   
     
-    def __init__(self, id, ec2ConnFactory=None, roles=[],
-                 reservations=(), state=DeploymentState.NOT_RUN, 
-                 logger=StdOutLogger(), pollRate=30):
+    def __init__(self, id, 
+                 ec2ConnFactory=None, 
+                 roles=[],
+                 reservations=(), 
+                 state=DeploymentState.NOT_RUN, 
+                 logger=StdOutLogger(), 
+                 pollRate=30):
         
         Thread.__init__(self)
         
@@ -206,8 +214,7 @@ class Deployment(Thread):
         self.pollRate = pollRate
     
     def setEC2ConnFactory(self, ec2ConnFactory):
-        assert self.ec2ConnFactory is None
-                
+        assert self.ec2ConnFactory is None  
         self.ec2ConnFactory = ec2ConnFactory
     
     def getState(self):
@@ -230,22 +237,40 @@ class Deployment(Thread):
         
         self.runLifecycle = True
         
-        for step in (self.__launchInstances,
-                     self.__startRoles,
-                     self.__monitorForDone,
-                     self.__collectData,
-                     self.__shutdown):
-            
-            if not self.runLifecycle:
+        #Ordered mapping of existing stage to transition.
+        #Used for restarting an already running deployment.
+    
+        stageList = ((DeploymentState.NOT_RUN, self.__launchInstances),
+                     (DeploymentState.INSTANCES_LAUNCHED, self.__startRoles),
+                     (DeploymentState.ROLES_STARTED, self.__monitorForDone),
+                     (DeploymentState.JOB_COMPLETED, self.__collectData),
+                     (DeploymentState.COLLECTING_DATA, self.__collectData),
+                     (DeploymentState.DATA_COLLECTED, self.__shutdown),
+                     (DeploymentState.SHUTTING_DOWN, self.__shutdown),
+                     (DeploymentState.COMPLETED, None))
+        
+        startIdx = 0
+        for (state, _) in stageList:
+            if self.state == state:
+                break
+            startIdx += 1 
+        
+        for (_, transition) in stageList[startIdx:]:
+            if not self.runLifecycle: # Extra check to see we are still alive.
                 return
             
-            step()
+            if transition is None:
+                continue
+            
+            transition()
     
     def __launchInstances(self):
         if self.state != DeploymentState.NOT_RUN:
             raise Exception("Can not start deployment in state: " + self.state)
         
         self.logger.write("Launching instances")
+        
+        assert self.ec2ConnFactory is not None
         
         for role in self.roles:
             role.setEC2ConnFactory(self.ec2ConnFactory)
@@ -301,7 +326,10 @@ class Deployment(Thread):
     def __startRoles(self):
         self.logger.write("Starting roles")
         
+        assert self.ec2ConnFactory is not None
+        
         for role in self.roles:
+            role.setEC2ConnFactory(self.ec2ConnFactory)
             role.executeStartCommands()
             
         self.__setState(DeploymentState.ROLES_STARTED)

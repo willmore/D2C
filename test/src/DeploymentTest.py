@@ -35,7 +35,6 @@ class DummyConn:
     
     def setState(self, state):
         for i in self.instances:
-            print "Setting state"
             i.state = state 
         
         for r in self.reservations.values():
@@ -45,9 +44,9 @@ class DummyReservation:
     
     ctr = 0
     
-    def __init__(self, count):
+    def __init__(self, count, id=None):
         self.instances = [DummyInstance(None) for _ in range(count)]
-        self.id = 'r-dummy_%d' % self.ctr 
+        self.id = id if id is not None else 'r-dummy_%d' % self.ctr 
         self.ctr += self.ctr
     
     def setState(self, state):
@@ -89,21 +88,18 @@ class DeploymentTest(unittest.TestCase):
     def tearDown(self):
         if hasattr(self, 'mon'):
             self.mon.stop()
-    '''
-    def test_getInstances(self):
-        
-        self.assertEquals(4, len(self.deployment.getInstances()))
-    '''
         
     def testLifecycle(self):
         '''
         Test listeners are properly notified when deployment goes to running state.
         '''
-        connFactory = DummyConnFactory()
         pollRate = 2
         hits = {}
-            
+        connFactory = DummyConnFactory()
+        
+        
         self.deployment.setEC2ConnFactory(connFactory)
+       
          
         class Listener:
             
@@ -133,6 +129,61 @@ class DeploymentTest(unittest.TestCase):
         self.deployment.join(15)
         
         self.assertTrue(hits.has_key(DeploymentState.INSTANCES_LAUNCHED))   
+        self.assertTrue(hits.has_key(DeploymentState.ROLES_STARTED))
+        self.assertTrue(hits.has_key(DeploymentState.JOB_COMPLETED))
+        self.assertTrue(hits.has_key(DeploymentState.COLLECTING_DATA))
+        self.assertTrue(hits.has_key(DeploymentState.DATA_COLLECTED))
+        self.assertTrue(hits.has_key(DeploymentState.SHUTTING_DOWN))
+        self.assertTrue(hits.has_key(DeploymentState.COMPLETED))
+        
+        
+    def testReAttachInstancesLaunch(self):
+        '''
+        Simulate re-attaching to an already started deployment, which is at stage INSTANCES_LAUNCHED.
+        Assert that the lifecycle properly continues after re-attaching.
+        '''
+        connFactory = DummyConnFactory()
+        self.deployment.setEC2ConnFactory(connFactory)
+        
+        
+        for role in self.deployment.roles:
+            reservationId = 'r-%s' % role.name 
+            role.reservationId = reservationId
+            connFactory.conn.reservations[reservationId] = DummyReservation(count=role.count, id=reservationId)
+        
+        connFactory.setState('running')
+        pollRate = 2
+        hits = {}
+                     
+        class Listener:
+            
+            def __init__(self, state):
+                self.state = state
+            
+            def notify(self, evt):
+                hits[self.state] = True
+          
+        for state in (DeploymentState.INSTANCES_LAUNCHED, 
+                      DeploymentState.ROLES_STARTED,
+                      DeploymentState.JOB_COMPLETED,
+                      DeploymentState.COLLECTING_DATA,
+                      DeploymentState.DATA_COLLECTED,
+                      DeploymentState.SHUTTING_DOWN,
+                      DeploymentState.COMPLETED):
+            self.deployment.addStateChangeListener(state, 
+                                   Listener(state)) #MicroMock(notify=lambda evt:hits.__setitem__(state, True)))
+        
+        self.deployment.state = DeploymentState.INSTANCES_LAUNCHED
+        self.deployment.setPollRate(pollRate)
+        
+        self.deployment.start()
+        
+        time.sleep(2 * pollRate)
+        #Manually set mock instances to running
+        connFactory.setState('running')    
+        self.deployment.join(15)
+        
+        self.assertFalse(hits.has_key(DeploymentState.INSTANCES_LAUNCHED)) #Should only hit new stages after this one
         self.assertTrue(hits.has_key(DeploymentState.ROLES_STARTED))
         self.assertTrue(hits.has_key(DeploymentState.JOB_COMPLETED))
         self.assertTrue(hits.has_key(DeploymentState.COLLECTING_DATA))
