@@ -179,8 +179,7 @@ class DeploymentTest(unittest.TestCase):
         self.deployment.start()
         
         time.sleep(2 * pollRate)
-        #Manually set mock instances to running
-        connFactory.setState('running')    
+
         self.deployment.join(15)
         
         self.assertFalse(hits.has_key(DeploymentState.INSTANCES_LAUNCHED)) #Should only hit new stages after this one
@@ -230,12 +229,11 @@ class DeploymentTest(unittest.TestCase):
         
         self.deployment.state = DeploymentState.ROLES_STARTED
         self.deployment.setPollRate(pollRate)
-        
+    
         self.deployment.start()
         
         time.sleep(2 * pollRate)
-        #Manually set mock instances to running
-        connFactory.setState('running')    
+         
         self.deployment.join(15)
         
         self.assertFalse(hits.has_key(DeploymentState.INSTANCES_LAUNCHED)) #Should only hit new stages after this one
