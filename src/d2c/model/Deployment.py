@@ -26,7 +26,9 @@ class Role:
     def __init__(self, deploymentId, 
                  name, ami, count, reservationId=None,
                  startActions = [], 
-                 logger=StdOutLogger(), ec2ConnFactory=None,
+                 finishedChecks = [],
+                 logger=StdOutLogger(), 
+                 ec2ConnFactory=None,
                  dao=None):
         
         self.deploymentId = deploymentId
@@ -38,6 +40,7 @@ class Role:
         self.count = count
         
         self.startActions = list(startActions)
+        self.finishedChecks = list(finishedChecks)
         self.ec2ConnFactory = ec2ConnFactory
         self.reservationId = reservationId
         self.reservation = None #lazy loaded
@@ -90,6 +93,15 @@ class Role:
         Connect to remote instances associated with this role. If each instance satisfies the done condition,
         return True, else return False. 
         '''
+        
+        if self.reservation is None:
+            self.reservation = self.__getReservation()
+            
+        for instance in self.reservation.instances:
+            for check in self.finishedChecks:
+                if not check.check(instance):
+                    return False
+                
         return True
         
     def __getReservation(self):
@@ -343,7 +355,12 @@ class Deployment(Thread):
             
         self.logger.write("Roles started")
         
+    def __attachEC2ConnToRoles(self):
+        for r in self.roles: r.ec2ConnFactory = self.ec2ConnFactory
+        
     def __monitorForDone(self):
+        
+        self.__attachEC2ConnToRoles()
         
         monitorRoles = list(self.roles)
         
