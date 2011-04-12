@@ -76,18 +76,36 @@ class DummyDao:
     def getConfiguration(self):
         return MicroMock(ec2Cred=self.getEC2Cred('dummy_cred_id'))
 
+class DummyAction:
+    
+    def __init__(self):
+        self.called = False
+    
+    def execute(self, instance):
+        self.called = True
+
 class DeploymentTest(unittest.TestCase):
    
     def setUp(self):
         dName = "Dummy"
         ami = AMI("ami-123", "foobar.vdi")
         dao = DummyDao()
-        self.deployment = Deployment(dName, roles = [Role(dName, "loner", ami, 2, dao=dao), 
-                                        Role(dName, "loner2", ami, 2, dao=dao)])
+        self.deployment = Deployment(dName, roles = [Role(dName, "loner", ami, 2, dao=dao, startActions = [DummyAction()]), 
+                                                     Role(dName, "loner2", ami, 2, dao=dao, startActions = [DummyAction()])])
         
     def tearDown(self):
         if hasattr(self, 'mon'):
             self.mon.stop()
+        
+    def assertStartActionsCalled(self, deployment):
+        for role in deployment.roles:
+            for action in role.startActions:
+                self.assertTrue(action.called)
+                
+    def assertStartActionsNotCalled(self, deployment):
+        for role in deployment.roles:
+            for action in role.startActions:
+                self.assertFalse(action.called)
         
     def testLifecycle(self):
         '''
@@ -117,7 +135,7 @@ class DeploymentTest(unittest.TestCase):
                       DeploymentState.SHUTTING_DOWN,
                       DeploymentState.COMPLETED):
             self.deployment.addStateChangeListener(state, 
-                                   Listener(state)) #MicroMock(notify=lambda evt:hits.__setitem__(state, True)))
+                                   Listener(state))
         
         self.deployment.setPollRate(pollRate)
         
@@ -135,7 +153,7 @@ class DeploymentTest(unittest.TestCase):
         self.assertTrue(hits.has_key(DeploymentState.DATA_COLLECTED))
         self.assertTrue(hits.has_key(DeploymentState.SHUTTING_DOWN))
         self.assertTrue(hits.has_key(DeploymentState.COMPLETED))
-        
+        self.assertStartActionsCalled(self.deployment)
         
     def testReAttachInstancesLaunched(self):
         '''
@@ -189,6 +207,7 @@ class DeploymentTest(unittest.TestCase):
         self.assertTrue(hits.has_key(DeploymentState.DATA_COLLECTED))
         self.assertTrue(hits.has_key(DeploymentState.SHUTTING_DOWN))
         self.assertTrue(hits.has_key(DeploymentState.COMPLETED))
+        self.assertStartActionsCalled(self.deployment)
         
         
     def testReAttachRoleStarted(self):
@@ -243,6 +262,7 @@ class DeploymentTest(unittest.TestCase):
         self.assertTrue(hits.has_key(DeploymentState.DATA_COLLECTED))
         self.assertTrue(hits.has_key(DeploymentState.SHUTTING_DOWN))
         self.assertTrue(hits.has_key(DeploymentState.COMPLETED))
+        self.assertStartActionsNotCalled(self.deployment)
         
 if __name__ == '__main__':
     unittest.main()

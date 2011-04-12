@@ -72,21 +72,12 @@ class Role:
             self.reservation = self.__getReservation()
         
         for instance in self.reservation.instances: 
-            self.logger.write("Accessing instance %s with key id %s" % (instance.id, instance.key_name))
             
             instance.update()
             
-            self.logger.write("Accessing instance %s with key id %s" % (instance.id, instance.key_name))
-            self.logger.write("Instance is %s " % str(instance))
-            
-            cred = self.dao.getEC2Cred(instance.key_name)
-            
             for action in self.startActions:
-                
-                cmd = "rsh -i %s -o StrictHostKeyChecking=no ec2-user@%s '%s'" % (cred.private_key, 
-                                                                               instance.public_dns_name, 
-                                                                               action.command)
-                ShellExecutor(self.logger).run(cmd)
+                action.dao = self.dao
+                action.execute(instance)
                 
     def checkFinished(self):
         '''
@@ -345,10 +336,9 @@ class Deployment(Thread):
     def __startRoles(self):
         self.logger.write("Starting roles")
         
-        assert self.ec2ConnFactory is not None
+        self.__attachEC2ConnToRoles()
         
         for role in self.roles:
-            role.setEC2ConnFactory(self.ec2ConnFactory)
             role.executeStartCommands()
             
         self.__setState(DeploymentState.ROLES_STARTED)
@@ -356,7 +346,9 @@ class Deployment(Thread):
         self.logger.write("Roles started")
         
     def __attachEC2ConnToRoles(self):
-        for r in self.roles: r.ec2ConnFactory = self.ec2ConnFactory
+        assert self.ec2ConnFactory is not None
+        for r in self.roles: 
+            r.ec2ConnFactory = self.ec2ConnFactory
         
     def __monitorForDone(self):
         
