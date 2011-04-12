@@ -6,8 +6,8 @@ Created on Mar 14, 2011
 
 from threading import Thread
 from d2c.logger import StdOutLogger
+from d2c.ShellExecutor import ShellExecutor
 import time
-import subprocess
 
 class Instance:
     '''
@@ -70,22 +70,18 @@ class Role:
         
         for instance in self.reservation.instances: 
             self.logger.write("Accessing instace %s with key id %s" % (instance.id, instance.key_name))
+            
             instance.update()
+            
             self.logger.write("Accessing instace %s with key id %s" % (instance.id, instance.key_name))
             self.logger.write("Instance is %s " % str(instance))
+            
             key = self.dao.getEC2Cred(instance.key_name)
+            
             for action in self.startActions:
-
-                addr = 'ec2-user@%s' % instance.public_dns_name
-                #ssh -i cloudeco.pem ec2-user@ec2-46-51-147-10.eu-west-1.compute.amazonaws.com 
-                key = '/home/willmore/cert/cloudeco.pem'
-                popenCmd = ['rsh', '-i', key, addr, '-o', 'StrictHostKeyChecking=no']
-                popenCmd.extend(action.command.split(" "))
-                self.logger.write("Executing %s" % str(popenCmd))
-                proc = subprocess.Popen(popenCmd)
-                proc.communicate()
-                if proc.returncode != 0:
-                    raise Exception("Exception exec'ing rsh")
+                
+                cmd = "rsh -i %s ec2-user%s -o StrictHostKeyChecking=no %s" % (key, instance.public_dns_name, action.cmd)
+                ShellExecutor(self.logger).run(cmd)
         
     def __getReservation(self):
         '''
@@ -195,7 +191,8 @@ class Deployment(Thread):
     """   
     
     def __init__(self, id, ec2ConnFactory=None, roles=[],
-                 reservations=(), state=DeploymentState.NOT_RUN, logger=StdOutLogger(), pollRate=30):
+                 reservations=(), state=DeploymentState.NOT_RUN, 
+                 logger=StdOutLogger(), pollRate=30):
         
         Thread.__init__(self)
         
@@ -217,15 +214,10 @@ class Deployment(Thread):
         pass
     
     def addRole(self, role):
-        print "Calling add role to " + str(self.roles)
         self.roles.append(role)
         
     def stop(self):
         self.runLifecycle = False
-        
-        # Allow the monitor to catch any changes in cleanup phase.
-        self.join()
-        #self.monitor.stop()
         
     def run(self):
         '''
@@ -235,9 +227,8 @@ class Deployment(Thread):
         runLifecycle flag which indicates is the process must stop.
         Each stage must throw an exception if a failure occurs.
         '''
-        self.runLifecycle = True
         
-        #self.monitor.start()
+        self.runLifecycle = True
         
         for step in (self.__launchInstances,
                      self.__startRoles,

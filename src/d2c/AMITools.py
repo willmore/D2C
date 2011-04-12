@@ -60,7 +60,7 @@ class AMITools:
             if not line: break
             self.__logger.write(line)
     
-        # will block until process finishes and p.returncode is set
+        # This call will block until process finishes and p.returncode is set.
         p.wait()
         
         if 0 != p.returncode:

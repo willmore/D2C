@@ -1,9 +1,9 @@
 import unittest
-import string
-from d2c.logger import StdOutLogger
-from d2c.model.Deployment import *
+import time
+from d2c.model.Deployment import Deployment, DeploymentState, Role
 from d2c.model.AMI import AMI
 from MicroMock import MicroMock
+
 
 class DummyConnFactory:
     
@@ -60,8 +60,8 @@ class DummyReservation:
 
 class DummyInstance():
     
-    def __init__(self, ami):
-        self.ami = ami
+    def __init__(self, id):
+        self.id = id
         self.state = 'pending'
         self.key_name = 'dummy_key_name'
         
@@ -73,6 +73,9 @@ class DummyDao:
     
     def getEC2Cred(self, id):
         return MicroMock(id=id, cert="dummy_cert", private_key="dummy_private_key")
+
+    def getConfiguration(self):
+        return MicroMock(ec2Cred=self.getEC2Cred('dummy_cred_id'))
 
 class DeploymentTest(unittest.TestCase):
    
