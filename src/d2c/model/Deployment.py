@@ -69,11 +69,11 @@ class Role:
             self.reservation = self.__getReservation()
         
         for instance in self.reservation.instances: 
-            self.logger.write("Accessing instace %s with key id %s" % (instance.id, instance.key_name))
+            self.logger.write("Accessing instance %s with key id %s" % (instance.id, instance.key_name))
             
             instance.update()
             
-            self.logger.write("Accessing instace %s with key id %s" % (instance.id, instance.key_name))
+            self.logger.write("Accessing instance %s with key id %s" % (instance.id, instance.key_name))
             self.logger.write("Instance is %s " % str(instance))
             
             cred = self.dao.getEC2Cred(instance.key_name)
@@ -84,6 +84,13 @@ class Role:
                                                                                instance.public_dns_name, 
                                                                                action.command)
                 ShellExecutor(self.logger).run(cmd)
+                
+    def checkFinished(self):
+        '''
+        Connect to remote instances associated with this role. If each instance satisfies the done condition,
+        return True, else return False. 
+        '''
+        return True
         
     def __getReservation(self):
         '''
@@ -338,6 +345,12 @@ class Deployment(Thread):
         
     def __monitorForDone(self):
         
+        monitorRoles = list(self.roles)
+        
+        while len(monitorRoles) > 0:
+            monitorRoles = [role for role in monitorRoles if not role.checkFinished()]
+            time.sleep(self.pollRate)
+                
         self.__setState(DeploymentState.JOB_COMPLETED)
     
     def __collectData(self):  
