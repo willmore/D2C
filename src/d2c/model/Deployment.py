@@ -19,100 +19,7 @@ class Instance:
         
     def __str__(self):
         return "{id: %s}" % self.id
-    
-class Role:
-    
-    def __init__(self, deploymentId, 
-                 name, ami, count, reservationId=None,
-                 startActions = [], 
-                 finishedChecks = [],
-                 logger=StdOutLogger(), 
-                 ec2ConnFactory=None,
-                 dao=None):
-        
-        self.deploymentId = deploymentId
-        self.name = name
-        self.ami = ami
-        self.logger = logger
-        
-        assert count > 0, "Count must be int > 0"
-        self.count = count
-        
-        self.startActions = list(startActions)
-        self.finishedChecks = list(finishedChecks)
-        self.ec2ConnFactory = ec2ConnFactory
-        self.reservationId = reservationId
-        self.reservation = None #lazy loaded
-        self.dao = dao
-      
-    def setEC2ConnFactory(self, ec2ConnFactory):
-        self.ec2ConnFactory = ec2ConnFactory  
-        
-    def launch(self):
-        
-        self.logger.write("Reserving %d instance(s) of %s" % (self.count, self.ami.amiId))
-       
-        ec2Conn = self.ec2ConnFactory.getConnection()
-        keyName = self.dao.getConfiguration().ec2Cred.id
-        self.reservation = ec2Conn.run_instances(self.ami.amiId, 
-                                                 key_name = keyName,
-                                                 min_count=self.count, 
-                                                 max_count=self.count, 
-                                                 instance_type='t1.micro') #TODO unhardcode instance type
-        
-        self.logger.write("Instance(s) reserved")    
-        
-    def executeStartCommands(self):
-        '''
-        Execute the start action(s) on each instance within the role.
-        '''
-        
-        if self.reservation is None:
-            self.reservation = self.__getReservation()
-        
-        for instance in self.reservation.instances: 
-            
-            instance.update()
-            
-            for action in self.startActions:
-                action.dao = self.dao
-                action.execute(instance)
-                
-    def checkFinished(self):
-        '''
-        Connect to remote instances associated with this role. If each instance satisfies the done condition,
-        return True, else return False. 
-        '''
-        
-        if self.reservation is None:
-            self.reservation = self.__getReservation()
-            
-        for instance in self.reservation.instances:
-            for check in self.finishedChecks:
-                check.dao = self.dao
-                if not check.check(instance):
-                    self.logger.write("Returning False for finished test")
-                    return False
-                
-        self.logger.write("Returning true for finished test")        
-        
-        return True
-        
-    def __getReservation(self):
-        '''
-        Update the reservation field with current information from AWS.
-        '''    
-        
-        assert hasattr(self, 'reservationId') and self.reservationId is not None
-        
-        reservations = self.ec2ConnFactory.getConnection().get_all_instances(filters={'reservation-id':[self.reservationId]})
-        
-        assert len(reservations) == 1, "Unable to retrieve reservation %s" % self.reservationId
-        return reservations[0] 
-        
-    def __str__(self):
-        return "{name:%s, ami: %s, instances: %s}" % (self.name, self.ami, str(self.instances))
-        
+         
 class StartAction:
     
     def __init__(self, role, script):
@@ -126,7 +33,10 @@ class DataCollection:
         self.directory = directory
 
 class Monitor(Thread):
-    
+    '''
+    A passive monitor that is notified of deployment events.
+    '''
+     
     class Event:
         
         def __init__(self, newState, deployment):
@@ -157,26 +67,6 @@ class Monitor(Thread):
         Add a listener that will be notified of any state change.
         '''
         self.allStateListeners.append(listener)
-        
-    def stop(self):
-        self.monitor = False
-        
-    def run(self):
-        '''
-        Launches a poller which detects state changes
-        of the deployment and notifies listeners of changes.
-        ''' 
-    
-        while self.monitor:
-        
-            dState = self.deployment.state
-        
-            if dState is not self.currState:
-                
-                self.currState = dState  
-                self.notify(dState)
-                
-            time.sleep(self.pollRate)
             
     def notify(self, state):
         evt = Monitor.Event(state, self.deployment)    
@@ -200,7 +90,7 @@ class DeploymentState:
     COMPLETED = 'COMPLETED'
           
 
-class Deployment(Thread):
+class Deployment:
     """
     Represents an instance of a Deployment.
     A deployment consists of one or more reservations, 
@@ -209,14 +99,12 @@ class Deployment(Thread):
     
     def __init__(self, id, 
                  ec2ConnFactory=None, 
-                 roles=[],
+                 roles=(),
                  reservations=(), 
                  state=DeploymentState.NOT_RUN, 
                  logger=StdOutLogger(), 
                  pollRate=30):
-        
-        Thread.__init__(self)
-        
+                
         self.id = id
         self.ec2ConnFactory = ec2ConnFactory
         self.roles = list(roles)
@@ -257,9 +145,9 @@ class Deployment(Thread):
                      (DeploymentState.INSTANCES_LAUNCHED, self.__startRoles),
                      (DeploymentState.ROLES_STARTED, self.__monitorForDone),
                      (DeploymentState.JOB_COMPLETED, self.__collectData),
-                     (DeploymentState.COLLECTING_DATA, self.__collectData),
+                     (DeploymentState.COLLECTING_DATA, None),
                      (DeploymentState.DATA_COLLECTED, self.__shutdown),
-                     (DeploymentState.SHUTTING_DOWN, self.__shutdown),
+                     (DeploymentState.SHUTTING_DOWN, None),
                      (DeploymentState.COMPLETED, None))
         
         startIdx = 0
@@ -284,12 +172,12 @@ class Deployment(Thread):
         self.logger.write("Launching instances")
         
         assert self.ec2ConnFactory is not None
-        
+                
         for role in self.roles:
-            role.setEC2ConnFactory(self.ec2ConnFactory)
+            role.setEC2ConnFactory(self.ec2ConnFactory)  
             role.launch()    
         
-        reservationIds = [r.reservation.id for r in self.roles]
+        reservationIds = [r.getReservationId() for r in self.roles]
     
         allRunning = False
         
@@ -310,11 +198,10 @@ class Deployment(Thread):
             Wait a bit for the systems to really boot up.
             TODO: replace hardcoded wait time with a valid test, perhaps ping.
             '''
-            time.sleep(30)
+            #time.sleep(30)
         
         self.__setState(DeploymentState.INSTANCES_LAUNCHED)   
         self.logger.write("Instances Launched")
-        self.logger.write("Running start actions")
     
     def __setState(self, state):
         self.state = state
@@ -374,19 +261,18 @@ class Deployment(Thread):
     def __collectData(self):  
         self.__setState(DeploymentState.COLLECTING_DATA)
         
+        for role in self.roles:
+            role.collectData()
+                
         self.__setState(DeploymentState.DATA_COLLECTED)
         
     def __shutdown(self): 
         self.__setState(DeploymentState.SHUTTING_DOWN)
         
+        for role in self.roles:
+            role.shutdown()
+        
         self.__setState(DeploymentState.COMPLETED)
-    
-
-    def stopMonitoring(self):
-        '''
-        Does not end the deployment lifecycle, but detaches monitoring (stops monitoring thread)
-        '''
-        self.monitor.stop()
     
     def addAnyStateChangeListener(self, listener):
         self.monitor.addStateAnyChangeListener(listener)

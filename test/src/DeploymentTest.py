@@ -1,8 +1,15 @@
 import unittest
 import time
-from d2c.model.Deployment import Deployment, DeploymentState, Role
+from d2c.model.Deployment import Deployment, DeploymentState
+from d2c.model.Role import Role
 from d2c.model.AMI import AMI
+from d2c.EC2ConnectionFactory import EC2ConnectionFactory
+from d2c.model.DataCollector import DataCollector
 from MicroMock import MicroMock
+from threading import Thread
+from boto.ec2.instance import Reservation
+from boto.ec2.connection import EC2Connection
+from mockito import *
 
 
 class DummyConnFactory:
@@ -38,7 +45,7 @@ class DummyConn:
             i.state = state 
         
         for r in self.reservations.values():
-            r.setState(state)
+            r.state = state
             
 class DummyReservation:
     
@@ -51,7 +58,6 @@ class DummyReservation:
     
     def setState(self, state):
         for i in self.instances:
-            print "Setting state"
             i.state = state 
         
     def update(self):
@@ -100,12 +106,23 @@ class DeploymentTest(unittest.TestCase):
         dName = "Dummy"
         ami = AMI("ami-123", "foobar.vdi")
         dao = DummyDao()
+        '''
         self.deployment = Deployment(dName, roles = [Role(dName, "loner", ami, 2, dao=dao, 
                                                           startActions=[DummyAction(), DummyAction()],
                                                           finishedChecks=[DummyFinishedTest(), DummyFinishedTest()]), 
                                                      Role(dName, "loner2", ami, 2, dao=dao, 
                                                           startActions=[DummyAction(), DummyAction()],
-                                                          finishedChecks=[DummyFinishedTest(), DummyFinishedTest()])])
+                                                          finishedChecks=[DummyFinishedTest(), DummyFinishedTest()],
+                                                          dataCollectors=[Mock(DataCollector)])])
+        '''
+        
+        roles = []
+        for _ in range(3):
+            role = mock(Role)
+            when(role).checkFinished().thenReturn(True)
+            
+        self.deployment = Deployment(dName, roles=roles) 
+                                                     
         
     def tearDown(self):
         if hasattr(self, 'mon'):
@@ -113,34 +130,29 @@ class DeploymentTest(unittest.TestCase):
         
     def assertStartActionsCalled(self, deployment):
         for role in deployment.roles:
-            for action in role.startActions:
-                self.assertTrue(action.called)
+            self.assertTrue(role.executeStartCommands.call_count, 1)
                 
     def assertStartActionsNotCalled(self, deployment):
         for role in deployment.roles:
-            for action in role.startActions:
-                self.assertFalse(action.called)
+            self.assertFalse(role.executeStartCommands.called)
+                
+    def assertDataCollectorsCalled(self, deployment):
+        for role in deployment.roles:
+            self.assertTrue(role.collectData.call_count, 1)
         
     def testLifecycle(self):
         '''
         Test listeners are properly notified when deployment goes to running state.
         '''
         pollRate = 2
-        hits = {}
         connFactory = DummyConnFactory()
-        
-        
+            
         self.deployment.setEC2ConnFactory(connFactory)
-       
-         
-        class Listener:
-            
-            def __init__(self, state):
-                self.state = state
-            
-            def notify(self, evt):
-                hits[self.state] = True
-          
+        
+        
+             
+        listeners = {}
+        
         for state in (DeploymentState.INSTANCES_LAUNCHED, 
                       DeploymentState.ROLES_STARTED,
                       DeploymentState.JOB_COMPLETED,
@@ -148,26 +160,27 @@ class DeploymentTest(unittest.TestCase):
                       DeploymentState.DATA_COLLECTED,
                       DeploymentState.SHUTTING_DOWN,
                       DeploymentState.COMPLETED):
+            l = mock()
             self.deployment.addStateChangeListener(state, 
-                                   Listener(state))
+                                   l)
+            listeners[state] = l
         
         self.deployment.setPollRate(pollRate)
         
-        self.deployment.start()
+        thread = Thread(target=self.deployment.run)
+        thread.start()
         
         time.sleep(2 * pollRate)
         #Manually set mock instances to running
         connFactory.setState('running')    
-        self.deployment.join(30)
+        thread.join(30)
         
-        self.assertTrue(hits.has_key(DeploymentState.INSTANCES_LAUNCHED))   
-        self.assertTrue(hits.has_key(DeploymentState.ROLES_STARTED))
-        self.assertTrue(hits.has_key(DeploymentState.JOB_COMPLETED))
-        self.assertTrue(hits.has_key(DeploymentState.COLLECTING_DATA))
-        self.assertTrue(hits.has_key(DeploymentState.DATA_COLLECTED))
-        self.assertTrue(hits.has_key(DeploymentState.SHUTTING_DOWN))
-        self.assertTrue(hits.has_key(DeploymentState.COMPLETED))
+        for (s,l) in listeners.iteritems():
+            print "State is " + s
+            verify(l).notify(any())
+        
         self.assertStartActionsCalled(self.deployment)
+        self.assertDataCollectorsCalled(self.deployment)
         
     def testReAttachInstancesLaunched(self):
         '''
@@ -179,9 +192,9 @@ class DeploymentTest(unittest.TestCase):
         
         
         for role in self.deployment.roles:
-            reservationId = 'r-%s' % role.name 
-            role.reservationId = reservationId
-            connFactory.conn.reservations[reservationId] = DummyReservation(count=role.count, id=reservationId)
+            reservationId = 'r-%s' % role.getName()
+            role.setReservationId(reservationId)
+            connFactory.conn.reservations[reservationId] = DummyReservation(count=role.getCount(), id=reservationId)
         
         connFactory.setState('running')
         pollRate = 2
@@ -208,11 +221,12 @@ class DeploymentTest(unittest.TestCase):
         self.deployment.state = DeploymentState.INSTANCES_LAUNCHED
         self.deployment.setPollRate(pollRate)
         
-        self.deployment.start()
+        thread = Thread(target=self.deployment.run)
+        thread.start()
         
         time.sleep(2 * pollRate)
 
-        self.deployment.join(15)
+        thread.join(15)
         
         self.assertFalse(hits.has_key(DeploymentState.INSTANCES_LAUNCHED)) #Should only hit new stages after this one
         self.assertTrue(hits.has_key(DeploymentState.ROLES_STARTED))
@@ -234,9 +248,8 @@ class DeploymentTest(unittest.TestCase):
         
         
         for role in self.deployment.roles:
-            reservationId = 'r-%s' % role.name 
-            role.reservationId = reservationId
-            connFactory.conn.reservations[reservationId] = DummyReservation(count=role.count, id=reservationId)
+            reservationId = 'r-%s' % role.getName() 
+            connFactory.conn.reservations[reservationId] = mock(Reservation)
         
         connFactory.setState('running')
         pollRate = 2
@@ -263,11 +276,12 @@ class DeploymentTest(unittest.TestCase):
         self.deployment.state = DeploymentState.ROLES_STARTED
         self.deployment.setPollRate(pollRate)
     
-        self.deployment.start()
+        thread = Thread(target=self.deployment.run)
+        thread.start()
         
         time.sleep(2 * pollRate)
          
-        self.deployment.join(15)
+        thread.join(15)
         
         self.assertFalse(hits.has_key(DeploymentState.INSTANCES_LAUNCHED)) #Should only hit new stages after this one
         self.assertFalse(hits.has_key(DeploymentState.ROLES_STARTED))

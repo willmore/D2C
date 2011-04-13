@@ -1,0 +1,118 @@
+   
+from d2c.logger import StdOutLogger   
+   
+class Role:
+    
+    def __init__(self, deploymentId, 
+                 name, ami, count, 
+                 reservationId=None,
+                 startActions=(), 
+                 finishedChecks=(),
+                 dataCollectors=(),
+                 logger=StdOutLogger(), 
+                 ec2ConnFactory=None,
+                 dao=None):
+        
+        assert count > 0, "Count must be int > 0"
+        
+        self.deploymentId = deploymentId
+        self.name = name
+        self.ami = ami  
+        self.count = count
+        self.reservationId = reservationId
+        self.reservation = None #lazy loaded
+        
+        self.startActions = list(startActions)
+        self.finishedChecks = list(finishedChecks)
+        self.dataCollectors = list(dataCollectors)
+        
+        self.ec2ConnFactory = ec2ConnFactory
+        self.dao = dao
+          
+        self.logger = logger
+      
+    def getReservationId(self):  
+        return self.reservationId
+    
+    def setReservationId(self, id):
+        self.reservationId = id
+    
+    def getName(self):
+        return self.name
+    
+    def getCount(self):
+        return self.count
+    
+    def setEC2ConnFactory(self, ec2ConnFactory):
+        self.ec2ConnFactory = ec2ConnFactory  
+        
+    def launch(self):
+        
+        self.logger.write("Reserving %d instance(s) of %s" % (self.count, self.ami.amiId))
+       
+        ec2Conn = self.ec2ConnFactory.getConnection()
+        keyName = self.dao.getConfiguration().ec2Cred.id
+        self.reservation = ec2Conn.run_instances(self.ami.amiId, 
+                                                 key_name = keyName,
+                                                 min_count=self.count, 
+                                                 max_count=self.count, 
+                                                 instance_type='t1.micro') #TODO unhardcode instance type
+        
+        self.logger.write("Instance(s) reserved")    
+        
+    def executeStartCommands(self):
+        '''
+        Execute the start action(s) on each instance within the role.
+        '''
+        
+        if self.reservation is None:
+            self.reservation = self.__getReservation()
+        
+        for instance in self.reservation.instances: 
+            
+            instance.update()
+            
+            for action in self.startActions:
+                action.dao = self.dao
+                action.execute(instance)
+                
+    def checkFinished(self):
+        '''
+        Connect to remote instances associated with this role. If each instance satisfies the done condition,
+        return True, else return False. 
+        '''
+        
+        if self.reservation is None:
+            self.reservation = self.__getReservation()
+            
+        for instance in self.reservation.instances:
+            for check in self.finishedChecks:
+                check.dao = self.dao
+                if not check.check(instance):
+                    self.logger.write("Returning False for finished test")
+                    return False
+                
+        self.logger.write("Returning true for finished test")        
+        
+        return True
+        
+    def __getReservation(self):
+        '''
+        Update the reservation field with current information from AWS.
+        '''    
+        
+        assert hasattr(self, 'reservationId') and self.reservationId is not None
+        
+        reservations = self.ec2ConnFactory.getConnection().get_all_instances(filters={'reservation-id':[self.reservationId]})
+        
+        assert len(reservations) == 1, "Unable to retrieve reservation %s" % self.reservationId
+        return reservations[0] 
+        
+    def collectData(self):
+        pass
+    
+    def shutdown(self):
+        pass    
+        
+    def __str__(self):
+        return "{name:%s, ami: %s, instances: %s}" % (self.name, self.ami, str(self.instances))

@@ -5,7 +5,9 @@ Required libraries:
 wxPython
 http://wiki.wxpython.org/InstallingOnUbuntuOrDebian
 
-
+mockito-python
+http://code.google.com/p/mockito-python/
+easy_install mockito
 
 Required tools:
 VirtualBox

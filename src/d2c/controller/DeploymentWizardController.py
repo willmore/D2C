@@ -6,7 +6,7 @@ Created on Mar 16, 2011
 import wx
 from d2c.gui.DeploymentWizard import DeploymentWizard
 from d2c.model.AMI import AMI
-from d2c.model.Deployment import Role
+from d2c.model.Role import Role
 from d2c.model.Deployment import Deployment
 from wx.lib.pubsub import Publisher
 
