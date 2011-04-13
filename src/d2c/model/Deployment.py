@@ -32,7 +32,7 @@ class DataCollection:
         self.role = role
         self.directory = directory
 
-class Monitor(Thread):
+class Monitor:
     '''
     A passive monitor that is notified of deployment events.
     '''
@@ -44,15 +44,14 @@ class Monitor(Thread):
             self.deployment = deployment
             
     
-    def __init__(self, deployment, pollRate=15):
-        
-        Thread.__init__(self)
-        
-        self.listeners = {}
+    def __init__(self, deployment, listeners={}, pollRate=15):
+           
+        assert deployment is not None   
+                
+        self.listeners = dict(listeners)
         self.deployment = deployment
         self.pollRate = pollRate
         self.currState = self.deployment.state
-        self.monitor = True
         self.allStateListeners = []
          
     def addStateChangeListener(self, state, listener):
@@ -102,6 +101,7 @@ class Deployment:
                  roles=(),
                  reservations=(), 
                  state=DeploymentState.NOT_RUN, 
+                 listeners={},
                  logger=StdOutLogger(), 
                  pollRate=30):
                 
@@ -110,7 +110,7 @@ class Deployment:
         self.roles = list(roles)
         
         self.state = state
-        self.monitor = Monitor(self, pollRate)
+        self.monitor = Monitor(self, listeners, pollRate)
         self.logger = logger
         self.pollRate = pollRate
     
@@ -198,7 +198,7 @@ class Deployment:
             Wait a bit for the systems to really boot up.
             TODO: replace hardcoded wait time with a valid test, perhaps ping.
             '''
-            #time.sleep(30)
+            time.sleep(30)
         
         self.__setState(DeploymentState.INSTANCES_LAUNCHED)   
         self.logger.write("Instances Launched")

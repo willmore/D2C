@@ -1,24 +1,12 @@
 import sys
 import os
 
-from d2c.Application import Application
-from AMIToolsStub import AMIToolsFactoryStub
 from d2c.data.DAO import DAO
-from d2c.model.Deployment import Role
-from d2c.model.Deployment import Deployment
-from d2c.model.AMI import AMI
 from d2c.model.EC2Cred import EC2Cred
+from d2c.model.DataCollector import DataCollector
 from d2c.model.Configuration import Configuration
 from d2c.model.AWSCred import AWSCred
-from d2c.model.Action import Action
-from d2c.AMITools import AMIToolsFactory
-from d2c.model.DataCollector import DataCollector
-from d2c.EC2ConnectionFactory import EC2ConnectionFactory
-from d2c.logger import StdOutLogger
-from boto.ec2.instance import Reservation
 import random
-import os
-from MicroMock import MicroMock as mock
 
 import string
 

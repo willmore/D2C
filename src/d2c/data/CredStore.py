@@ -15,3 +15,6 @@ class CredStore:
     def getEC2Cred(self, id):
         return self.dao.getEC2Cred(id)
     
+    def getDefaultEC2Cred(self):
+        return self.dao.getConfiguration().ec2Cred
+    

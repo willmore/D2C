@@ -1,5 +1,7 @@
 from d2c.ShellExecutor import ShellExecutor
 from d2c.logger import StdOutLogger
+import os
+
 
 class DataCollector():
 
@@ -17,7 +19,11 @@ class DataCollector():
         self.credStore = credStore
         self.user = user
      
-    def collect(self, instance):   
+    def collect(self, instance): 
+        
+        if not os.path.exists(os.path.dirname(self.destination)):
+            os.makedirs(os.path.dirname(self.destination))
+          
         cred = self.credStore.getEC2Cred(instance.key_name)
             
         cmd = "scp -r -i %s -o StrictHostKeyChecking=no %s@%s:%s %s" % (cred.private_key, 
