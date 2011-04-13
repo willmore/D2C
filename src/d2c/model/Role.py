@@ -109,10 +109,28 @@ class Role:
         return reservations[0] 
         
     def collectData(self):
-        pass
+        
+        if self.reservation is None:
+            self.reservation = self.__getReservation()
+        
+        for collector in self.dataCollectors:
+            for instance in self.reservation.instances:
+                collector.collect(instance)
     
     def shutdown(self):
-        pass    
+        
+        if self.reservation is None:
+            self.reservation = self.__getReservation()
+          
+        #Request the instances be terminated  
+        for instance in self.reservation.instances:
+            instance.terminate
+        
+        #Monitor until all are terminated
+        monitorInstances = self.reservation.instances()
+       
+        while len(monitorInstances) > 0:
+            monitorInstances = filter(lambda inst: inst.state != 'terminated', monitorInstances) 
         
     def __str__(self):
         return "{name:%s, ami: %s, instances: %s}" % (self.name, self.ami, str(self.instances))

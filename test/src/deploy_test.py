@@ -1,10 +1,8 @@
 import sys
 import os
 
-from d2c.Application import Application
-from AMIToolsStub import AMIToolsFactoryStub
 from d2c.data.DAO import DAO
-from d2c.model.Deployment import Role
+from d2c.model.Role import Role
 from d2c.model.Deployment import Deployment
 from d2c.model.Action import Action
 from d2c.model.FileExistsFinishedCheck import FileExistsFinishedCheck
@@ -13,7 +11,11 @@ from d2c.logger import StdOutLogger
 from TestConfig import TestConfig
 
 def main(argv=None):
+    '''
+    End-to-End integration test of deployment lifecycle.
+    Uses one micro, EBS-backed instance,
     
+    '''
     DAO._SQLITE_FILE = "%s/.d2c_test/deploy_test.sqlite" % os.path.expanduser('~') 
     if os.path.exists(DAO._SQLITE_FILE):
         print "Deleting existing DB"

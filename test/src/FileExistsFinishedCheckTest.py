@@ -10,7 +10,7 @@ import pwd
 
 from d2c.model.FileExistsFinishedCheck import FileExistsFinishedCheck
 from boto.ec2.instance import Instance
-from d2c.data.DAO import DAO
+from d2c.data.CredStore import CredStore
 from d2c.model.EC2Cred import EC2Cred
 from mockito import *
 
@@ -30,12 +30,12 @@ class FileExistsFinishedCheckTest(unittest.TestCase):
         instance.key_name = "dummyKey"
         instance.public_dns_name = 'localhost'
         
-        dao = mock(DAO)
+        credStore = mock(CredStore)
         ec2Cred = mock(EC2Cred)
         ec2Cred.private_key = "/home/willmore/.ssh/id_rsa_nopw"
-        when(dao).getEC2Cred("dummyKey").thenReturn(ec2Cred)
+        when(credStore).getEC2Cred("dummyKey").thenReturn(ec2Cred)
         
-        checker = FileExistsFinishedCheck(fileName, dao, user='willmore')
+        checker = FileExistsFinishedCheck(fileName, credStore, user='willmore')
         
         self.assertTrue(checker.check(instance))
 
