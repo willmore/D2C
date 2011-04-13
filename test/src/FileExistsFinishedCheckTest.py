@@ -6,11 +6,13 @@ Created on Apr 12, 2011
 import unittest
 import os
 
-import os
 import pwd
 
-from MicroMock import MicroMock
 from d2c.model.FileExistsFinishedCheck import FileExistsFinishedCheck
+from boto.ec2.instance import Instance
+from d2c.data.DAO import DAO
+from d2c.model.EC2Cred import EC2Cred
+from mockito import *
 
 def get_username():
     return pwd.getpwuid( os.getuid() )[ 0 ]
@@ -20,8 +22,22 @@ class FileExistsFinishedCheckTest(unittest.TestCase):
 
 
     def testCanonical(self):
-        checker = FileExistsFinishedCheck('/tmp/foobar', get_username(), '/home/willmore/.ssh/id_rsa_nopw')
-        self.assertTrue(checker.check(MicroMock(public_dns_name='localhost')))
+        
+        fileName = '/tmp/foobar'
+        open(fileName, 'a').close()
+             
+        instance = mock(Instance)
+        instance.key_name = "dummyKey"
+        instance.public_dns_name = 'localhost'
+        
+        dao = mock(DAO)
+        ec2Cred = mock(EC2Cred)
+        ec2Cred.private_key = "/home/willmore/.ssh/id_rsa_nopw"
+        when(dao).getEC2Cred("dummyKey").thenReturn(ec2Cred)
+        
+        checker = FileExistsFinishedCheck(fileName, dao, user='willmore')
+        
+        self.assertTrue(checker.check(instance))
 
 
 if __name__ == "__main__":

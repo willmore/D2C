@@ -12,8 +12,7 @@ from d2c.model.AWSCred import AWSCred
 from d2c.model.Configuration import Configuration
 from d2c.model.AMI import AMI
 from d2c.model.Deployment import Deployment
-from d2c.model.Deployment import Role
-import threading
+from d2c.model.Role import Role
 
 import sqlite3
 

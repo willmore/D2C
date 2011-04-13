@@ -3,12 +3,11 @@ import time
 from d2c.model.Deployment import Deployment, DeploymentState
 from d2c.model.Role import Role
 from d2c.model.AMI import AMI
-from d2c.EC2ConnectionFactory import EC2ConnectionFactory
-from d2c.model.DataCollector import DataCollector
-from MicroMock import MicroMock
+from d2c.model.Configuration import Configuration
+from d2c.model.EC2Cred import EC2Cred
+from d2c.data.DAO import DAO
 from threading import Thread
 from boto.ec2.instance import Reservation
-from boto.ec2.connection import EC2Connection
 from mockito import *
 
 
@@ -72,15 +71,6 @@ class DummyInstance():
         
     def update(self):
         pass
-    
-    
-class DummyDao:
-    
-    def getEC2Cred(self, id):
-        return MicroMock(id=id, cert="dummy_cert", private_key="dummy_private_key")
-
-    def getConfiguration(self):
-        return MicroMock(ec2Cred=self.getEC2Cred('dummy_cred_id'))
 
 class DummyAction:
     
@@ -105,7 +95,13 @@ class DeploymentTest(unittest.TestCase):
     def setUp(self):
         dName = "Dummy"
         ami = AMI("ami-123", "foobar.vdi")
-        dao = DummyDao()
+        dao = mock(DAO)
+        conf = mock(Configuration)
+        cred = mock(EC2Cred)
+        conf.ec2Cred = cred
+        when(dao).getEC2Cred().thenReturn(cred)
+        when(dao).getConfiguration().thenReturn(conf)
+        
         '''
         self.deployment = Deployment(dName, roles = [Role(dName, "loner", ami, 2, dao=dao, 
                                                           startActions=[DummyAction(), DummyAction()],
