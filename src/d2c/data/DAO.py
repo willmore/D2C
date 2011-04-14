@@ -92,6 +92,19 @@ class DAO:
                     return_code integer,
                     foreign key(src_img) references src_img(path))''')
         
+        c.execute('''create table if not exists metric
+                    (name text primary key,
+                     unit text not null)''')
+        
+        c.execute('''
+                    create table if not exists instance_metric
+                    (instance_id text not null,
+                    metric text not null,
+                    time integer not null,
+                    primary key (instance_id, metric, time)
+                    foreign key(instance_id) references deploy_role_instance(instance))
+                ''')
+        
         self.__getConn().commit()
         c.close()
           
