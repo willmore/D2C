@@ -13,6 +13,7 @@ from d2c.model.Configuration import Configuration
 from d2c.model.AMI import AMI
 from d2c.model.Deployment import Deployment
 from d2c.model.Role import Role
+from d2c.data.InstanceMetrics import InstanceMetrics
 
 import sqlite3
 
@@ -65,8 +66,7 @@ class DAO:
         
         c.execute('''create table if not exists deploy
                     (name text primary key,
-                    state text
-                    )''')
+                    state text)''')
                      
         c.execute('''create table if not exists deploy_role
                     (name text,
@@ -101,9 +101,13 @@ class DAO:
                     (instance_id text not null,
                     metric text not null,
                     time integer not null,
+                    value float not null,
                     primary key (instance_id, metric, time)
-                    foreign key(instance_id) references deploy_role_instance(instance))
-                ''')
+                    foreign key(instance_id) references deploy_role_instance(instance))''')
+        
+        for name, unit in [('CPUUtilization', 'Percent')]:
+            c.execute("insert or replace into metric (name, unit) values (?,?)",
+                      (name, unit))
         
         self.__getConn().commit()
         c.close()
@@ -345,6 +349,26 @@ class DAO:
         c = self.__getConn().cursor()
         c.execute("insert into ec2_cred (id, cert, private_key) values (?,?,?)",
                  (ec2Cred.id, ec2Cred.cert, ec2Cred.private_key))
+        self.__getConn().commit()
         c.close()
-    
+        
+    def saveInstanceMetrics(self, instanceMetrics):
+        assert isinstance(instanceMetrics, InstanceMetrics)
+        
+        c = self.__getConn().cursor()
+        
+        
+        for mList in instanceMetrics.metricLists:
+            for v in mList.values:
+                c.execute("insert into instance_metric (instance_id, metric, time, value)" +
+                          "values (?,?,?,?)",
+                          (mList.instanceId, mList.metric.name,
+                          v.time, v.value))
+        
+        self.__getConn().commit()
+        
+        c.close()
+        
+    def getInstanceMetrics(self, instanceId):
+        pass
     

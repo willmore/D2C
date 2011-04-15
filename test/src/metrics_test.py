@@ -21,8 +21,10 @@ client = CloudWatchClient(CloudWatchConnectionFactory(CredStore(dao)))
 start = datetime.datetime(2011, 4, 13, 0, 0, 0)
 end = datetime.datetime(2011, 4, 13, 21, 35, 0)
 
-metrics = client.getInstanceMetrics('i-0351ff75', start, end)
-print str(metrics)
+iid = 'i-0351ff75'
+metrics = client.getInstanceMetrics(iid, start, end)
+dao.saveInstanceMetrics(metrics)
+dao.getInstanceMetrics(iid)
 
 '''
 obj = metrics[2]
