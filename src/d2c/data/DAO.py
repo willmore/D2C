@@ -13,7 +13,7 @@ from d2c.model.Configuration import Configuration
 from d2c.model.AMI import AMI
 from d2c.model.Deployment import Deployment
 from d2c.model.Role import Role
-from d2c.data.InstanceMetrics import InstanceMetrics
+from d2c.data.InstanceMetrics import InstanceMetrics, Metric, MetricList, MetricValue
 
 import sqlite3
 
@@ -104,8 +104,14 @@ class DAO:
                     value float not null,
                     primary key (instance_id, metric, time)
                     foreign key(instance_id) references deploy_role_instance(instance))''')
-        
-        for name, unit in [('CPUUtilization', 'Percent')]:
+    
+        for name, unit in [('CPUUtilization', 'Percent'),
+                           ("NetworkIn", "Bytes"),
+                           ("NetworkOut", "Bytes"),
+                           ("DiskWriteBytes", "Bytes"),
+                           ("DiskReadBytes", "Bytes"),
+                           ("DiskReadOps", "Count"),
+                           ("DiskWriteOps", "Count")]:
             c.execute("insert or replace into metric (name, unit) values (?,?)",
                       (name, unit))
         
@@ -356,8 +362,7 @@ class DAO:
         assert isinstance(instanceMetrics, InstanceMetrics)
         
         c = self.__getConn().cursor()
-        
-        
+                
         for mList in instanceMetrics.metricLists:
             for v in mList.values:
                 c.execute("insert into instance_metric (instance_id, metric, time, value)" +
@@ -368,7 +373,47 @@ class DAO:
         self.__getConn().commit()
         
         c.close()
+    
+    def getMetrics(self):
+        
+        c = self.__getConn().cursor()
+        
+        c.execute("select * from metric")
+        
+        out = []
+        
+        for row in c:
+            out.append(Metric(row['name'], row['unit']))
+        
+        c.close()
+        
+        return out
         
     def getInstanceMetrics(self, instanceId):
-        pass
+        
+        metrics = self.getMetrics()
+        
+        c = self.__getConn().cursor()
+        
+        c.execute('''select * from instance_metric
+                     where instance_id = ?''', 
+                           (instanceId,))
+        
+        mLists = {}
+        mMap = {}
+        
+        for m in metrics:
+            mLists[m.name] = []
+            mMap[m.name] = m
+        
+        for row in c:
+            mLists[row['metric']].append(MetricValue(row['value'], row['time']))
+            
+        c.close()
+        
+        lists = []
+        for mName, metrics in mLists.iteritems():
+            lists.append(MetricList(instanceId, mMap[mName], metrics))
+            
+        return InstanceMetrics(instanceId, lists)
     

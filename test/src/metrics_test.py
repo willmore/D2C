@@ -16,22 +16,18 @@ dao = DAO()
 conf = TestConfig("/home/willmore/test.conf")
 
 dao.saveConfiguration(conf)
-client = CloudWatchClient(CloudWatchConnectionFactory(CredStore(dao)))
+client = CloudWatchClient(CloudWatchConnectionFactory(CredStore(dao)), dao)
 
 start = datetime.datetime(2011, 4, 13, 0, 0, 0)
 end = datetime.datetime(2011, 4, 13, 21, 35, 0)
 
 iid = 'i-0351ff75'
+dao.getMetrics()
 metrics = client.getInstanceMetrics(iid, start, end)
-dao.saveInstanceMetrics(metrics)
-dao.getInstanceMetrics(iid)
 
-'''
-obj = metrics[2]
-for attr in dir(obj):
-    print "obj.%s = %s" % (attr, getattr(obj, attr))
-'''
-#instance = Instance('i-0351ff75')
-#out = cwConn.get_metric_statistics(300, start, end, "CPUUtilization", "AWS/EC2", 'SampleCount', dimensions={"InstanceId":'i-0351ff75'}, unit='Percent')
-#print "Got it: %s" % str(out)
-#sys.exit(0)
+print metrics 
+print "\n\n\n"
+import sys
+sys.exit()
+dao.saveInstanceMetrics(metrics)
+print dao.getInstanceMetrics(iid)
