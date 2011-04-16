@@ -1,9 +1,3 @@
-'''
-Created on Feb 10, 2011
-
-@author: willmore
-'''
-
 import time
 import os
 from d2c.model.SourceImage import SourceImage
@@ -14,7 +8,9 @@ from d2c.model.AMI import AMI
 from d2c.model.Deployment import Deployment
 from d2c.model.Role import Role
 from d2c.data.InstanceMetrics import InstanceMetrics, Metric, MetricList, MetricValue
+from d2c.model.InstanceType import InstanceType
 
+import string
 import sqlite3
 
 class DAO:
@@ -73,6 +69,7 @@ class DAO:
                     deploy text,
                     ami text,
                     count integer,
+                    instance_type text,
                     primary key (name, deploy)
                     foreign key(deploy) references deploy(name),
                     foreign key(ami) references ami(id))''')
@@ -288,8 +285,8 @@ class DAO:
                       (deployment.id, deployment.state))
     
         for role in deployment.roles:
-            c.execute("insert into deploy_role (name, deploy, ami, count) values (?,?,?,?)", 
-                  (role.name, deployment.id, role.ami.amiId, role.count))
+            c.execute("insert into deploy_role (name, deploy, ami, count, instance_type) values (?,?,?,?,?)", 
+                  (role.name, deployment.id, role.ami.amiId, role.count, role.instanceType.name))
             
         self.__getConn().commit()
         c.close()  
@@ -336,7 +333,9 @@ class DAO:
         return Deployment(row['name'])
         
     def rowToRole(self, row):
-        return Role(row['deploy'], row['name'], row['ami'], row['count'])
+        return Role(row['deploy'], row['name'], 
+                    row['ami'], row['count'], 
+                    self.__instanceType(row['instance_type']))
     
     def getEC2Cred(self, id):
         
@@ -416,4 +415,7 @@ class DAO:
             lists.append(MetricList(instanceId, mMap[mName], metrics))
             
         return InstanceMetrics(instanceId, lists)
+    
+    def __instanceType(self, name):
+        return getattr(InstanceType, string.replace(name.swapcase(), ".", "_"))
     

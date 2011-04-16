@@ -1,26 +1,31 @@
    
 from d2c.logger import StdOutLogger   
+from d2c.model.InstanceType import InstanceType
+
 import time   
 
 class Role:
     
     def __init__(self, deploymentId, 
-                 name, ami, count, 
+                 name, ami, count,
+                 instanceType, 
                  reservationId=None,
                  startActions=(), 
                  finishedChecks=(),
-                 dataCollectors=(),
-                 logger=StdOutLogger(), 
+                 dataCollectors=(), 
                  ec2ConnFactory=None,
                  credStore=None,
-                 pollRate=15):
+                 pollRate=15,
+                 logger=StdOutLogger()):
         
         assert count > 0, "Count must be int > 0"
+        assert isinstance(instanceType, InstanceType)
         
         self.deploymentId = deploymentId
         self.name = name
         self.ami = ami  
         self.count = count
+        self.instanceType = instanceType
         self.pollRate = pollRate
         self.reservationId = reservationId
         self.reservation = None #lazy loaded

@@ -25,9 +25,5 @@ iid = 'i-0351ff75'
 dao.getMetrics()
 metrics = client.getInstanceMetrics(iid, start, end)
 
-print metrics 
-print "\n\n\n"
-import sys
-sys.exit()
 dao.saveInstanceMetrics(metrics)
 print dao.getInstanceMetrics(iid)

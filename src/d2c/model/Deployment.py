@@ -1,11 +1,6 @@
-'''
-Created on Mar 14, 2011
 
-@author: willmore
-'''
-
-from threading import Thread
 from d2c.logger import StdOutLogger
+from d2c.EC2ConnectionFactory import EC2ConnectionFactory
 import time
 
 class Instance:
@@ -63,11 +58,15 @@ class Monitor:
         
     def addStateAnyChangeListener(self, listener):
         '''
-        Add a listener that will be notified of any state change.
+        Add a Listener that will be notified of any Deployment state change.
         '''
         self.allStateListeners.append(listener)
             
     def notify(self, state):
+        '''
+        Notify any registered listeners of the state change.
+        '''
+        
         evt = Monitor.Event(state, self.deployment)    
                 
         if self.listeners.has_key(state):
@@ -90,11 +89,11 @@ class DeploymentState:
           
 
 class Deployment:
-    """
+    '''
     Represents an instance of a Deployment.
     A deployment consists of one or more reservations, 
         which may be in various states (requested, running, terminated, etc.)
-    """   
+    '''  
     
     def __init__(self, id, 
                  ec2ConnFactory=None, 
@@ -104,6 +103,8 @@ class Deployment:
                  listeners={},
                  logger=StdOutLogger(), 
                  pollRate=30):
+        
+        assert ec2ConnFactory is None or isinstance(ec2ConnFactory, EC2ConnectionFactory) 
                 
         self.id = id
         self.ec2ConnFactory = ec2ConnFactory

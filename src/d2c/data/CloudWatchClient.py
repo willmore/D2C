@@ -24,7 +24,6 @@ class CloudWatchClient:
                                        statistics='Sum', 
                                        dimensions={"InstanceId":instanceId}, 
                                        unit=metric.unit)
-            print mResp
             mets.append(self.__map(instanceId, metric, mResp))
           
         return InstanceMetrics(instanceId, mets)
