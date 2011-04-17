@@ -9,20 +9,17 @@ from d2c.model.Deployment import Deployment
 from d2c.model.Role import Role
 from d2c.data.InstanceMetrics import InstanceMetrics, Metric, MetricList, MetricValue
 from d2c.model.InstanceType import InstanceType
-from d2c.data.CredStore import CredStore
-from d2c.EC2ConnectionFactory import EC2ConnectionFactory
 
 import string
 import sqlite3
 
 class DAO:
     
-    _SQLITE_FILE = "~/.d2c/db.sqlite"
+    def __init__(self, fileName="~/.d2c/db.sqlite"):
     
-    def __init__(self):
-        
-        baseDir = os.path.dirname(DAO._SQLITE_FILE)
-        print baseDir
+        self.fileName = fileName
+        baseDir = os.path.dirname(self.fileName)
+
         if not os.path.isdir(baseDir):
             os.makedirs(baseDir, mode=0700)
         
@@ -30,11 +27,15 @@ class DAO:
         
         self._init_db()
         
-        self.ec2ConnFactory = EC2ConnectionFactory(CredStore(self))
+    def setEC2ConnectionFactory(self, ec2ConnFactory):
+        self.__ec2ConnFactory = ec2ConnFactory
+        
+    def setCredStore(self, credStore):
+        self.__credStore = credStore
         
     def __getConn(self):
         if self.__conn is None:
-            self.__conn = sqlite3.connect(DAO._SQLITE_FILE, check_same_thread=False)
+            self.__conn = sqlite3.connect(self.fileName, check_same_thread=False)
             self.__conn.row_factory = sqlite3.Row
 
         return self.__conn
@@ -324,7 +325,6 @@ class DAO:
             role = self.rowToRole(row)
             role.ami = amis[role.ami] #hack
             assert deploys.has_key(row['deploy'])
-            print "Adding role to %s" %row['deploy']
             deploys[row['deploy']].addRole(role)
         
         c.close()
@@ -334,13 +334,16 @@ class DAO:
         return deploys.values()
              
     def rowToDeployment(self, row):
-        return Deployment(row['name'], ec2ConnFactory=self.ec2ConnFactory)
+        print self
+        return Deployment(row['name'], 
+                          ec2ConnFactory=self.__ec2ConnFactory)
         
     def rowToRole(self, row):
         return Role(row['deploy'], row['name'], 
                     row['ami'], row['count'], 
                     self.__instanceType(row['instance_type']),
-                    ec2ConnFactory=self.ec2ConnFactory)
+                    ec2ConnFactory=self.__ec2ConnFactory,
+                    credStore=self.__credStore)
     
     def getEC2Cred(self, id):
         

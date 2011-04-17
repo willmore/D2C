@@ -68,17 +68,17 @@ class Monitor:
         '''
         
         evt = Monitor.Event(state, self.deployment)    
-                
         if self.listeners.has_key(state):
             for l in self.listeners[state]:
                 l.notify(evt)
                 
-            for l in self.allStateListeners:
-                l.notify(evt)
+        for l in self.allStateListeners:
+            l.notify(evt)
 
 class DeploymentState:
     
     NOT_RUN = 'NOT_RUN'
+    LAUNCHING_INSTANCES = 'LAUNCHING_INSTANCES'
     INSTANCES_LAUNCHED = 'INSTANCES_LAUNCHED'
     ROLES_STARTED = 'ROLES_STARTED'
     JOB_COMPLETED = 'JOB_COMPLETED'
@@ -103,9 +103,7 @@ class Deployment:
                  listeners={},
                  logger=StdOutLogger(), 
                  pollRate=30):
-        
-        assert ec2ConnFactory is None or isinstance(ec2ConnFactory, EC2ConnectionFactory) 
-                
+                        
         self.id = id
         self.ec2ConnFactory = ec2ConnFactory
         self.roles = list(roles)
@@ -146,7 +144,8 @@ class Deployment:
         #Ordered mapping of existing stage to transition.
         #Used for restarting an already running deployment.
     
-        stageList = ((DeploymentState.NOT_RUN, self.__launchInstances),
+        stageList = ((DeploymentState.NOT_RUN, None),
+                     (DeploymentState.LAUNCHING_INSTANCES, self.__launchInstances),
                      (DeploymentState.INSTANCES_LAUNCHED, self.__startRoles),
                      (DeploymentState.ROLES_STARTED, self.__monitorForDone),
                      (DeploymentState.JOB_COMPLETED, self.__collectData),
@@ -173,6 +172,8 @@ class Deployment:
     def __launchInstances(self):
         if self.state != DeploymentState.NOT_RUN:
             raise Exception("Can not start deployment in state: " + self.state)
+        
+        self.__setState(DeploymentState.LAUNCHING_INSTANCES)
         
         self.logger.write("Launching instances")
         

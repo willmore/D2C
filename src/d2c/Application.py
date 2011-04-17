@@ -21,10 +21,10 @@ from .controller.DeploymentController import DeploymentController
 
 class Application:
 
-    def __init__(self, amiToolsFactory):
+    def __init__(self, dao, amiToolsFactory):
         
         self._amiToolsFactory = amiToolsFactory
-        self._dao = DAO()
+        self._dao = dao
         self._app = wx.App()
         
         self._frame = Gui()

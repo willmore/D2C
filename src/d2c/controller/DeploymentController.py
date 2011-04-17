@@ -25,7 +25,15 @@ class PersistenceListener:
 
     def notify(self, event):
         print "Deployment changed"
+        
+class ViewListener:
     
+    def __init__(self, deploymentView):
+        self.deploymentView = deploymentView
+        
+    def notify(self, event):
+        self.deploymentView.update()
+        
     
 class DeploymentController:
     
@@ -44,6 +52,7 @@ class DeploymentController:
         ret = wx.MessageBox('Are you sure you want to start? AWS charges will start.', 'Question', wx.YES_NO)
         if wx.YES == ret:
             self.deployment.addAnyStateChangeListener(PersistenceListener(self.dao))
+            self.deployment.addAnyStateChangeListener(ViewListener(self.deploymentView))
             self.deploymentThread = DeploymentThread(self.deployment)
             self.deploymentThread.start()
     
