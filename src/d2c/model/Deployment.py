@@ -125,7 +125,11 @@ class Deployment:
     def addRole(self, role):
         self.roles.append(role)
         
-    def stop(self):
+    def pause(self):
+        '''
+        Pauses lifecycle management.
+        This will NOT stop or terminate any running instances.
+        '''
         self.runLifecycle = False
         
     def run(self):

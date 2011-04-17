@@ -61,13 +61,12 @@ class Role:
         ec2Conn = self.ec2ConnFactory.getConnection()
         keyName = self.credStore.getDefaultEC2Cred().id
        
-        #TODO un-hardcode instance type
         #TODO catch exceptions
         self.reservation = ec2Conn.run_instances(self.ami.amiId, 
                                                  key_name = keyName,
                                                  min_count=self.count, 
                                                  max_count=self.count, 
-                                                 instance_type='t1.micro') 
+                                                 instance_type=self.instanceType.name) 
         
         #TODO introduce abstraction appropriate exception
         assert self.reservation is not None and self.reservation.id is not None

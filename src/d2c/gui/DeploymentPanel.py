@@ -39,3 +39,7 @@ class DeploymentPanel(wx.Panel):
         self.deployButton = wx.Button(self, wx.ID_ANY, 'Deploy', size=(110, -1))
         self.GetSizer().Add(self.deployButton)
         
+        self.logPanel = wx.TextCtrl(self, -1, size=(100,100), style=wx.TE_MULTILINE )
+        self.logPanel.Hide() # logPanel will be shown later on demand
+        self.GetSizer().Add(self.logPanel, 0, wx.BOTTOM | wx.EXPAND, 5)
+        

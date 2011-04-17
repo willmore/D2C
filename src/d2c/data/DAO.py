@@ -9,6 +9,8 @@ from d2c.model.Deployment import Deployment
 from d2c.model.Role import Role
 from d2c.data.InstanceMetrics import InstanceMetrics, Metric, MetricList, MetricValue
 from d2c.model.InstanceType import InstanceType
+from d2c.data.CredStore import CredStore
+from d2c.EC2ConnectionFactory import EC2ConnectionFactory
 
 import string
 import sqlite3
@@ -27,6 +29,8 @@ class DAO:
         self.__conn = None
         
         self._init_db()
+        
+        self.ec2ConnFactory = EC2ConnectionFactory(CredStore(self))
         
     def __getConn(self):
         if self.__conn is None:
@@ -330,12 +334,13 @@ class DAO:
         return deploys.values()
              
     def rowToDeployment(self, row):
-        return Deployment(row['name'])
+        return Deployment(row['name'], ec2ConnFactory=self.ec2ConnFactory)
         
     def rowToRole(self, row):
         return Role(row['deploy'], row['name'], 
                     row['ami'], row['count'], 
-                    self.__instanceType(row['instance_type']))
+                    self.__instanceType(row['instance_type']),
+                    ec2ConnFactory=self.ec2ConnFactory)
     
     def getEC2Cred(self, id):
         
@@ -417,5 +422,8 @@ class DAO:
         return InstanceMetrics(instanceId, lists)
     
     def __instanceType(self, name):
+        '''
+        Map string name to InstanceType enum.
+        '''
         return getattr(InstanceType, string.replace(name.swapcase(), ".", "_"))
     

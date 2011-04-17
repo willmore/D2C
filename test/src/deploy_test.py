@@ -13,6 +13,7 @@ from d2c.model.AMI import AMI
 from d2c.logger import StdOutLogger
 from TestConfig import TestConfig
 from threading import Thread
+from d2c.model.InstanceType import InstanceType
 import random
 
 def main(argv=None):
@@ -46,6 +47,7 @@ def main(argv=None):
                                         ami=AMI(amiId="ami-47cefa33"), 
                                         count=1, 
                                         credStore=credStore,
+                                        instanceType=InstanceType.T1_MICRO,
                                         startActions=[Action(command="echo howdy > /tmp/howdy.txt", 
                                                              credStore=credStore)],
                                         finishedChecks=[FileExistsFinishedCheck(fileName="/tmp/howdy.txt", 

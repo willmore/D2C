@@ -29,7 +29,8 @@ def main(argv=None):
     dao.createAmi(amiId, "/foobar/vm.vdi")
     ami = dao.getAMIById(amiId)
     
-    dao.saveDeployment(Deployment("dummyDep", roles=[Role("dummyDep", "loner", ami, 1, InstanceType.T1_MICRO)]))
+    dao.saveDeployment(Deployment("dummyDep", 
+                                  roles=[Role("dummyDep", "loner", ami, 1, InstanceType.T1_MICRO)]))
    
     app = Application(AMIToolsFactory())
     app.MainLoop()

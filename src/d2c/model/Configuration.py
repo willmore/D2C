@@ -31,3 +31,6 @@ class Configuration:
     
     def __validateAwsUserId(self):
         return self.awsUserId and re.match("\d{12}", self.awsUserId)
+    
+    def __str__(self):
+        return "awsCred: %s, ec2Cred: %s" % (str(self.awsCred), str(self.ec2Cred))

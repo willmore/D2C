@@ -19,4 +19,5 @@ class CredStore:
         return self.dao.getConfiguration().ec2Cred
     
     def getDefaultAWSCred(self):
+        print self.dao.getConfiguration()
         return self.dao.getConfiguration().awsCred

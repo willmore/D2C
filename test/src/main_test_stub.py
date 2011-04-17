@@ -4,9 +4,10 @@ import os
 from d2c.Application import Application
 from AMIToolsStub import AMIToolsFactoryStub
 from d2c.data.DAO import DAO
-from d2c.model.Deployment import Role
+from d2c.model.Role import Role
+from d2c.model.InstanceType import InstanceType
 from d2c.model.Deployment import Deployment
-from d2c.model.AMI import AMI
+from TestConfig import TestConfig
 
 def main(argv=None):
     
@@ -15,12 +16,17 @@ def main(argv=None):
         print "Deleting existing DB"
         os.unlink(DAO._SQLITE_FILE)
     dao = DAO()
+    
+    conf = TestConfig("/home/willmore/test.conf")   
+    dao.saveConfiguration(conf)
+    
     dao.addSourceImage("/foobar/vm.vdi")
     amiId = "ami-47cefa33"
     dao.createAmi(amiId, "/foobar/vm.vdi")
     ami = dao.getAMIById(amiId)
     
-    deployment = Deployment("dummyDep", [Role("dummyDep", "loner", ami, 1)])
+    deployment = Deployment("dummyDep", 
+                            roles=[Role("dummyDep", "loner", ami, 1, InstanceType.T1_MICRO)])
     dao.saveDeployment(deployment)
     
     app = Application(AMIToolsFactoryStub())
