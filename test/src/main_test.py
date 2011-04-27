@@ -7,17 +7,22 @@ from d2c.model.Role import Role
 from d2c.model.Deployment import Deployment
 from d2c.model.InstanceType import InstanceType
 from d2c.AMITools import AMIToolsFactory
+from d2c.EC2ConnectionFactory import EC2ConnectionFactory
+from d2c.data.CredStore import CredStore
 
 from TestConfig import TestConfig
 
 def main(argv=None):
     
-    DAO._SQLITE_FILE = "%s/.d2c_test/d2c_db.sqlite" % os.path.expanduser('~') 
-    if os.path.exists(DAO._SQLITE_FILE):
+    SQLITE_FILE = "%s/.d2c_test/d2c_db.sqlite" % os.path.expanduser('~') 
+    if os.path.exists(SQLITE_FILE):
         print "Deleting existing DB"
-        os.unlink(DAO._SQLITE_FILE)
+        os.unlink(SQLITE_FILE)
         
-    dao = DAO()
+    dao = DAO(SQLITE_FILE)
+    credStore = CredStore(dao)
+    dao.setEC2ConnectionFactory(EC2ConnectionFactory(credStore))
+    dao.setCredStore(credStore)
     
     conf = TestConfig("/home/willmore/test.conf")
         
@@ -32,7 +37,7 @@ def main(argv=None):
     dao.saveDeployment(Deployment("dummyDep", 
                                   roles=[Role("dummyDep", "loner", ami, 1, InstanceType.T1_MICRO)]))
    
-    app = Application(AMIToolsFactory())
+    app = Application(dao, AMIToolsFactory())
     app.MainLoop()
 
 if __name__ == "__main__":
