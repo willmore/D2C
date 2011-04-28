@@ -1,6 +1,5 @@
 
 from d2c.logger import StdOutLogger
-from d2c.EC2ConnectionFactory import EC2ConnectionFactory
 import time
 
 class Instance:
@@ -14,18 +13,14 @@ class Instance:
         
     def __str__(self):
         return "{id: %s}" % self.id
-         
-class StartAction:
     
-    def __init__(self, role, script):
-        self.role = role
-        self.script = script
         
 class DataCollection:
     
     def __init__(self, role, directory):
         self.role = role
         self.directory = directory
+        
 
 class Monitor:
     '''
@@ -82,6 +77,7 @@ class DeploymentState:
     INSTANCES_LAUNCHED = 'INSTANCES_LAUNCHED'
     ROLES_STARTED = 'ROLES_STARTED'
     JOB_COMPLETED = 'JOB_COMPLETED'
+    INSTANCES_STOPPED = 'INSTANCES_STOPPED'
     COLLECTING_DATA = 'COLLECTING_DATA'
     DATA_COLLECTED = 'DATA_COLLECTED'
     SHUTTING_DOWN = 'SHUTTING_DOWN'
@@ -132,7 +128,7 @@ class Deployment:
         
     def run(self):
         '''
-        Run through the lifecycle of the deployment.
+        Run through the life-cycle of the deployment.
         Each stage transition (method) is responsible for
         any cleanup of failures that may occur. Additionally, each stage must monitor
         runLifecycle flag which indicates is the process must stop.
@@ -144,11 +140,13 @@ class Deployment:
         #Ordered mapping of existing stage to transition.
         #Used for restarting an already running deployment.
     
+        #TODO Rework state model - make it more OO
         stageList = ((DeploymentState.NOT_RUN, None),
                      (DeploymentState.LAUNCHING_INSTANCES, self.__launchInstances),
                      (DeploymentState.INSTANCES_LAUNCHED, self.__startRoles),
                      (DeploymentState.ROLES_STARTED, self.__monitorForDone),
-                     (DeploymentState.JOB_COMPLETED, self.__collectData),
+                     (DeploymentState.JOB_COMPLETED, self.__stopRoles),
+                     (DeploymentState.INSTANCES_STOPPED, self.__collectData),
                      (DeploymentState.COLLECTING_DATA, None),
                      (DeploymentState.DATA_COLLECTED, self.__shutdown),
                      (DeploymentState.SHUTTING_DOWN, None),
@@ -179,6 +177,7 @@ class Deployment:
         
         assert self.ec2ConnFactory is not None
                 
+        print "Roles = %s" % str(self.roles)
         for role in self.roles:
             role.setEC2ConnFactory(self.ec2ConnFactory)  
             role.launch()    
@@ -245,6 +244,18 @@ class Deployment:
         self.__setState(DeploymentState.ROLES_STARTED)
             
         self.logger.write("Roles started")
+        
+    def __stopRoles(self):
+        self.logger.write("Stopping roles")
+        
+        self.__attachEC2ConnToRoles()
+        
+        for role in self.roles:
+            role.executeStopCommands()
+            
+        self.__setState(DeploymentState.INSTANCES_STOPPED)
+            
+        self.logger.write("Roles stopped")
         
     def __attachEC2ConnToRoles(self):
         assert self.ec2ConnFactory is not None

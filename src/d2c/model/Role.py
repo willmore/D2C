@@ -11,10 +11,12 @@ class Role:
                  instanceType, 
                  reservationId=None,
                  startActions=(), 
+                 stopActions=(),
                  finishedChecks=(),
                  dataCollectors=(), 
                  ec2ConnFactory=None,
-                 credStore=None,
+                 #credStore=None,
+                 launchCred=None,
                  pollRate=15,
                  logger=StdOutLogger()):
         
@@ -31,11 +33,12 @@ class Role:
         self.reservation = None #lazy loaded
         
         self.startActions = list(startActions)
+        self.stopActions = list(stopActions)
         self.finishedChecks = list(finishedChecks)
         self.dataCollectors = list(dataCollectors)
         
         self.ec2ConnFactory = ec2ConnFactory
-        self.credStore = credStore
+        self.launchCred = launchCred
           
         self.logger = logger
       
@@ -59,11 +62,12 @@ class Role:
         self.logger.write("Reserving %d instance(s) of %s" % (self.count, self.ami.amiId))
        
         ec2Conn = self.ec2ConnFactory.getConnection()
-        keyName = self.credStore.getDefaultEC2Cred().id
+       
+        launchKey = self.launchCred.id if self.launchCred is not None else None
        
         #TODO catch exceptions
         self.reservation = ec2Conn.run_instances(self.ami.amiId, 
-                                                 key_name = keyName,
+                                                 key_name = launchKey,
                                                  min_count=self.count, 
                                                  max_count=self.count, 
                                                  instance_type=self.instanceType.name) 
@@ -74,12 +78,11 @@ class Role:
         self.reservationId = self.reservation.id
         
         self.logger.write("Instance(s) reserved")    
-        
-    def executeStartCommands(self):
+     
+    def __executeActions(self, actions): 
         '''
-        Execute the start action(s) on each instance within the role.
+        Execute the actions on each instance within the role.
         '''
-        
         if self.reservation is None:
             self.reservation = self.__getReservation()
         
@@ -87,9 +90,22 @@ class Role:
             
             instance.update()
             
-            for action in self.startActions:
-                action.credStore = self.credStore
+            for action in actions:
                 action.execute(instance)
+        
+    def executeStartCommands(self):
+        '''
+        Execute the start action(s) on each instance within the role.
+        '''
+        
+        self.__executeActions(self.startActions)
+                
+    def executeStopCommands(self):
+        '''
+        Execute the end action(s) on each instance within the role.
+        '''
+          
+        self.__executeActions(self.stopActions) 
                 
     def checkFinished(self):
         '''

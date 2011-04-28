@@ -43,3 +43,6 @@ EC2 AMI Tools dependencies:
         - Ruby 1.8.2 or later
 			- Might need to explicitly install libopenssl-ruby
         - tee
+        
+ guestfish and python-guestfs
+ http://libguestfs.org/download/binaries/debian-packages/

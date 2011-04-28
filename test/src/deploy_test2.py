@@ -8,7 +8,6 @@ from d2c.model.Deployment import Deployment
 from d2c.model.Action import Action
 from d2c.model.DataCollector import DataCollector
 from d2c.model.FileExistsFinishedCheck import FileExistsFinishedCheck
-from d2c.model.SSHCred import SSHCred
 from d2c.EC2ConnectionFactory import EC2ConnectionFactory
 from d2c.model.AMI import AMI
 from d2c.logger import StdOutLogger
@@ -37,17 +36,11 @@ def main(argv=None):
                                           conf.awsCred.secret_access_key, 
                                           StdOutLogger())
     
-    credStore = CredStore(dao)
-    
-    ec2Cred = credStore.getDefaultEC2Cred()
+    #credStore = CredStore(dao)
     
     testDir = "/tmp/d2c/%s/" % random.randint(0, 1000)
     
-    sshCred = SSHCred('ec2-user', '/home/willmore/cert/cloudeco.pem')
-    
-    
-    howdyDest = testDir + "howdy.txt"
-    adiosDest = testDir + "adios.txt"
+    sshCred = SSHCred('dirac', '/home/willmore/dirac.id_rsa')
     
     deployment = Deployment("dummyDep", 
                             ec2ConnFactory, 
@@ -55,23 +48,16 @@ def main(argv=None):
                                    Role("dummyDep", "loner", 
                                         ami=AMI(amiId="ami-47cefa33"), 
                                         count=1, 
-                                        launchCred=ec2Cred,
+                                        credStore=credStore,
                                         instanceType=InstanceType.T1_MICRO,
-                                        
                                         startActions=[Action(command="echo howdy > /tmp/howdy.txt", 
                                                              sshCred=sshCred)],
-                                        
                                         finishedChecks=[FileExistsFinishedCheck(fileName="/tmp/howdy.txt", 
                                                                                 sshCred=sshCred)],
-                                        
-                                        stopActions=[Action(command="echo adios > /tmp/adios.txt", 
-                                                             sshCred=sshCred)],
-                                        
+                                        stopActions=[Action(command="sudo service collectd stop", 
+                                                            sshCred=sshCred)],
                                         dataCollectors=[DataCollector(source="/tmp/howdy.txt", 
-                                                                      destination=howdyDest,
-                                                                      sshCred=sshCred),
-                                                        DataCollector(source="/tmp/adios.txt", 
-                                                                      destination=adiosDest,
+                                                                      destination=testDir + "howdy.txt",
                                                                       sshCred=sshCred)])])
     
     class Listener:  
@@ -83,9 +69,6 @@ def main(argv=None):
     thread = Thread(target=deployment.run)
     thread.start()
     thread.join()
-    
-    print "howdy.txt fetch = %s" % str(os.path.exists(howdyDest))
-    print "adios.txt fetch = %s" % str(os.path.exists(adiosDest))
     
     
 if __name__ == "__main__":

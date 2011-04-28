@@ -13,6 +13,7 @@ import re
 import shutil
 import logger
 from .EC2ConnectionFactory import EC2ConnectionFactory
+import guestfs
 
 class UnsupportedPlatformError(Exception):
     def __init__(self, value):
@@ -101,6 +102,9 @@ class AMITools:
         self.__execCmd(bundleCmd)
         
         return destDir + "/" + os.path.basename(img) + ".manifest.xml"
+
+    def extractRawImageOld(self, srcImg, destImg, log=logger.DevNullLogger()):
+        self.__execCmd("VBoxManage clonehd -format RAW %s %s" % (srcImg, destImg))
 
     def extractRawImage(self, srcImg, destImg, log=logger.DevNullLogger()):
         self.__execCmd("VBoxManage clonehd -format RAW %s %s" % (srcImg, destImg))

@@ -27,4 +27,4 @@ class ShellExecutor:
         p.wait()
         
         if 0 != p.returncode:
-            raise Exception("Command failed with code %d '" % p.returncode)
+            raise Exception("Command \"%s\"failed with code %d '" % (cmd, p.returncode))

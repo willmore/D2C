@@ -2,12 +2,11 @@ from d2c.RemoteShellExecutor import RemoteShellExecutor
 
 class FileExistsFinishedCheck:
 
-    def __init__(self, fileName, credStore, user="ec2-user"):
+    def __init__(self, fileName, sshCred):
         
         self.fileName = fileName
         self.cmd = "[ -f %s ] && echo exists" % fileName
-        self.credStore = credStore
-        self.user = user
+        self.sshCred = sshCred
     
     class LineChecker:
         
@@ -27,11 +26,10 @@ class FileExistsFinishedCheck:
         '''    
         
         checker = self.LineChecker('exists')
-        cred = self.credStore.getEC2Cred(instance.key_name)
-        
-        RemoteShellExecutor(self.user, 
+
+        RemoteShellExecutor(self.sshCred.username, 
                             instance.public_dns_name, 
-						    cred.private_key, 
+						    self.sshCred.privateKey, 
                             outputLogger=checker).run(self.cmd)
         
         return checker.matchFound
