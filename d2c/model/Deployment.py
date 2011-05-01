@@ -217,9 +217,7 @@ class Deployment:
         ips = []
         for role in self.roles:
             ips.extend(role.getPrivateIPs())
-        
-        print "Ips are " + str(ips)
-            
+                    
         for role in self.roles:
             role.setIPContext(ips)
             

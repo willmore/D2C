@@ -1,7 +1,6 @@
 from d2c.logger import StdOutLogger   
 from d2c.model.InstanceType import InstanceType
 from d2c.model.Action import Action
-from d2c.model.SSHCred import SSHCred
 import string
 
 import time   
@@ -17,6 +16,7 @@ class Role:
                  finishedChecks=(),
                  dataCollectors=(), 
                  ec2ConnFactory=None,
+                 contextCred=None,
                  #credStore=None,
                  launchCred=None,
                  pollRate=15,
@@ -41,6 +41,7 @@ class Role:
         
         self.ec2ConnFactory = ec2ConnFactory
         self.launchCred = launchCred
+        self.contextCred = contextCred
           
         self.logger = logger
       
@@ -104,10 +105,10 @@ class Role:
         '''
         
         ctxt = string.join(ips, "\\\\n")
-        cmd = "echo \"%s\" > /tmp/d2c.context" % ctxt
+        cmd = "echo -e \"%s\" > /tmp/d2c.context" % ctxt
         
         action = Action(command=cmd, 
-                        sshCred=SSHCred('ec2-user', '/home/willmore/cert/cloudeco.pem'))
+                        sshCred=self.contextCred)
         
         for instance in self.reservation.instances:
             action.execute(instance)

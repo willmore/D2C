@@ -5,7 +5,7 @@ class FileExistsFinishedCheck:
     def __init__(self, fileName, sshCred):
         
         self.fileName = fileName
-        self.cmd = "[ -f %s ] && echo exists" % fileName
+        self.cmd = "if [ -f %s ]; then echo exists; fi" % fileName
         self.sshCred = sshCred
     
     class LineChecker:
