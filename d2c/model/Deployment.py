@@ -75,6 +75,7 @@ class DeploymentState:
     NOT_RUN = 'NOT_RUN'
     LAUNCHING_INSTANCES = 'LAUNCHING_INSTANCES'
     INSTANCES_LAUNCHED = 'INSTANCES_LAUNCHED'
+    ROLES_CONTEXTUALIZED = 'ROLES_CONTEXTUALIZED'
     ROLES_STARTED = 'ROLES_STARTED'
     JOB_COMPLETED = 'JOB_COMPLETED'
     INSTANCES_STOPPED = 'INSTANCES_STOPPED'
@@ -143,7 +144,8 @@ class Deployment:
         #TODO Rework state model - make it more OO
         stageList = ((DeploymentState.NOT_RUN, None),
                      (DeploymentState.LAUNCHING_INSTANCES, self.__launchInstances),
-                     (DeploymentState.INSTANCES_LAUNCHED, self.__startRoles),
+                     (DeploymentState.INSTANCES_LAUNCHED, self.__contextualize),
+                     (DeploymentState.ROLES_CONTEXTUALIZED, self.__startRoles),
                      (DeploymentState.ROLES_STARTED, self.__monitorForDone),
                      (DeploymentState.JOB_COMPLETED, self.__stopRoles),
                      (DeploymentState.INSTANCES_STOPPED, self.__collectData),
@@ -207,6 +209,23 @@ class Deployment:
         
         self.__setState(DeploymentState.INSTANCES_LAUNCHED)   
         self.logger.write("Instances Launched")
+    
+    def __contextualize(self):
+        
+        self.logger.write("Contextualizing Instances")
+        
+        ips = []
+        for role in self.roles:
+            ips.extend(role.getPrivateIPs())
+        
+        print "Ips are " + str(ips)
+            
+        for role in self.roles:
+            role.setIPContext(ips)
+            
+        self.__setState(DeploymentState.ROLES_CONTEXTUALIZED)
+            
+        self.logger.write("Instances Contextualized")
     
     def __setState(self, state):
         self.state = state

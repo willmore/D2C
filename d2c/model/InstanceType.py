@@ -24,4 +24,5 @@ class InstanceType:
         
 InstanceType.T1_MICRO = InstanceType('t1.micro', 2, 613, 0, (Architecture.X86, Architecture.X86_64))
 InstanceType.M1_SMALL = InstanceType('m1.small', 1, 1700, 160, (Architecture.X86))
+InstanceType.M1_LARGE = InstanceType('m1.large', 2, 7500, 850, (Architecture.X86_64))
     

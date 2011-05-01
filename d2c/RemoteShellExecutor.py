@@ -23,7 +23,7 @@ class RemoteShellExecutor(ShellExecutor):
         
         pKeyStr = "-i %s" % self.privateKey if self.privateKey else ""
         
-        cmd = "rsh %s -o StrictHostKeyChecking=no %s@%s '%s'" % (pKeyStr, 
+        cmd = "ssh %s -o StrictHostKeyChecking=no %s@%s '%s'" % (pKeyStr, 
                                                                  self.user,
                                                                  self.host,
                                                                  cmd)

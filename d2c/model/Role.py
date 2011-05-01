@@ -1,6 +1,8 @@
-   
 from d2c.logger import StdOutLogger   
 from d2c.model.InstanceType import InstanceType
+from d2c.model.Action import Action
+from d2c.model.SSHCred import SSHCred
+import string
 
 import time   
 
@@ -87,11 +89,41 @@ class Role:
             self.reservation = self.__getReservation()
         
         for instance in self.reservation.instances: 
-            
             instance.update()
             
             for action in actions:
                 action.execute(instance)
+                
+    def setIPContext(self, ips):
+        '''
+        In the current implementation, this method will create file 
+        /tmp/d2c.context
+        on all hosts with a '\n' delimited line of private IPs.
+        This will be reworked in the the future to create a more full-featured 
+        context scheme.
+        '''
+        
+        ctxt = string.join(ips, "\\\\n")
+        cmd = "echo \"%s\" > /tmp/d2c.context" % ctxt
+        
+        action = Action(command=cmd, 
+                        sshCred=SSHCred('ec2-user', '/home/willmore/cert/cloudeco.pem'))
+        
+        for instance in self.reservation.instances:
+            action.execute(instance)
+                
+    def getPrivateIPs(self):
+        '''
+        Return a collection of the Private IPs of the instances associated with the role.
+        '''
+        
+        if self.reservation is None:
+            self.reservation = self.__getReservation()
+        
+        for instance in self.reservation.instances: 
+            instance.update()
+        
+        return [str(i.private_ip_address) for i in self.reservation.instances]
         
     def executeStartCommands(self):
         '''

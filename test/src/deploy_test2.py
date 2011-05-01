@@ -10,6 +10,7 @@ from d2c.model.DataCollector import DataCollector
 from d2c.model.FileExistsFinishedCheck import FileExistsFinishedCheck
 from d2c.EC2ConnectionFactory import EC2ConnectionFactory
 from d2c.model.AMI import AMI
+from d2c.model.SSHCred import SSHCred
 from d2c.logger import StdOutLogger
 from TestConfig import TestConfig
 from threading import Thread
@@ -46,18 +47,20 @@ def main(argv=None):
                             ec2ConnFactory, 
                             roles=[
                                    Role("dummyDep", "loner", 
-                                        ami=AMI(amiId="ami-47cefa33"), 
+                                        ami=AMI(amiId="ami-1396a167"), 
                                         count=1, 
-                                        credStore=credStore,
-                                        instanceType=InstanceType.T1_MICRO,
+                                        instanceType=InstanceType.M1_LARGE,
                                         startActions=[Action(command="echo howdy > /tmp/howdy.txt", 
                                                              sshCred=sshCred)],
                                         finishedChecks=[FileExistsFinishedCheck(fileName="/tmp/howdy.txt", 
                                                                                 sshCred=sshCred)],
-                                        stopActions=[Action(command="sudo service collectd stop", 
-                                                            sshCred=sshCred)],
+                                        #stopActions=[Action(command="sudo service collectd stop", 
+                                        #                    sshCred=sshCred)],
                                         dataCollectors=[DataCollector(source="/tmp/howdy.txt", 
                                                                       destination=testDir + "howdy.txt",
+                                                                      sshCred=sshCred),
+                                                        DataCollector(source="/opt/collectd/var/lib/collectd", 
+                                                                      destination=testDir + "collectd_stats",
                                                                       sshCred=sshCred)])])
     
     class Listener:  

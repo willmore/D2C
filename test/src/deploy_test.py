@@ -41,13 +41,10 @@ def main(argv=None):
     
     ec2Cred = credStore.getDefaultEC2Cred()
     
-    testDir = "/tmp/d2c/%s/" % random.randint(0, 1000)
+    testDir = "/tmp/d2c/%s" % random.randint(0, 1000)
     
     sshCred = SSHCred('ec2-user', '/home/willmore/cert/cloudeco.pem')
     
-    
-    howdyDest = testDir + "howdy.txt"
-    adiosDest = testDir + "adios.txt"
     
     deployment = Deployment("dummyDep", 
                             ec2ConnFactory, 
@@ -68,10 +65,13 @@ def main(argv=None):
                                                              sshCred=sshCred)],
                                         
                                         dataCollectors=[DataCollector(source="/tmp/howdy.txt", 
-                                                                      destination=howdyDest,
+                                                                      destination=testDir,
                                                                       sshCred=sshCred),
                                                         DataCollector(source="/tmp/adios.txt", 
-                                                                      destination=adiosDest,
+                                                                      destination=testDir,
+                                                                      sshCred=sshCred),
+                                                        DataCollector(source="/tmp/d2c.context", 
+                                                                      destination=testDir,
                                                                       sshCred=sshCred)])])
     
     class Listener:  
@@ -84,8 +84,9 @@ def main(argv=None):
     thread.start()
     thread.join()
     
-    print "howdy.txt fetch = %s" % str(os.path.exists(howdyDest))
-    print "adios.txt fetch = %s" % str(os.path.exists(adiosDest))
+    print "howdy.txt fetch = %s" % str(os.path.exists(testDir + "/howdy.txt"))
+    print "adios.txt fetch = %s" % str(os.path.exists(testDir + "/adios.txt"))
+    print "d2c.context fetch = %s" % str(os.path.exists(testDir + "/d2c.context"))
     
     
 if __name__ == "__main__":
