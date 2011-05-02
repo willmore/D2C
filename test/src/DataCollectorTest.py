@@ -1,8 +1,3 @@
-'''
-Created on Apr 12, 2011
-
-@author: willmore
-'''
 import unittest
 import os
 
@@ -10,8 +5,7 @@ import pwd
 
 from d2c.model.DataCollector import DataCollector
 from boto.ec2.instance import Instance
-from d2c.data.CredStore import CredStore
-from d2c.model.EC2Cred import EC2Cred
+from d2c.model.SSHCred import SSHCred
 from mockito import *
 import random
 
@@ -37,12 +31,8 @@ class DataCollectorTest(unittest.TestCase):
         instance.key_name = "dummyKey"
         instance.public_dns_name = 'localhost'
         
-        credStore = mock(CredStore)
-        ec2Cred = mock(EC2Cred)
-        ec2Cred.private_key = "/home/willmore/.ssh/id_rsa_nopw"
-        when(credStore).getEC2Cred("dummyKey").thenReturn(ec2Cred)
-        
-        collector = DataCollector(src, dest, credStore=credStore, user='willmore')
+        sshCred = SSHCred("willmore", "/home/willmore/.ssh/id_rsa_nopw")
+        collector = DataCollector(src, dest, sshCred)
         collector.collect(instance)
         
         self.assertTrue(os.path.exists(dest))
