@@ -104,7 +104,7 @@ class Role:
         context scheme.
         '''
         
-        ctxt = string.join(ips, "\\\\n")
+        ctxt = string.join(ips, "\n")
         cmd = "echo -e \"%s\" > /tmp/d2c.context" % ctxt
         
         action = Action(command=cmd, 

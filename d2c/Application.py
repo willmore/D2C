@@ -7,16 +7,14 @@ Created on Feb 10, 2011
 import wx
 from wx.lib.pubsub import Publisher
 
-from d2c.data.DAO import DAO
 from d2c.gui.Gui import Gui
 from controller.ConfController import ConfController
 from controller.ImageController import ImageController
 from controller.AMIController import AMIController
-from d2c.AMITools import AMIToolsFactory
 from d2c.gui.DeploymentWizard import DeploymentWizard
 from d2c.controller.DeploymentWizardController import DeploymentWizardController
-from .gui.DeploymentPanel import DeploymentPanel
-from .controller.DeploymentController import DeploymentController
+from d2c.gui.DeploymentPanel import DeploymentPanel
+from d2c.controller.DeploymentController import DeploymentController
 
 
 class Application:
@@ -62,8 +60,6 @@ class Application:
         controller = DeploymentWizardController(mywiz, self._dao)
         mywiz.ShowModal()
         mywiz.Destroy()
-        
-    
         
     def MainLoop(self):
         self._app.MainLoop()

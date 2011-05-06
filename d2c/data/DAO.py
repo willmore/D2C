@@ -342,8 +342,7 @@ class DAO:
         return Role(row['deploy'], row['name'], 
                     row['ami'], row['count'], 
                     self.__instanceType(row['instance_type']),
-                    ec2ConnFactory=self.__ec2ConnFactory,
-                    credStore=self.__credStore)
+                    ec2ConnFactory=self.__ec2ConnFactory)
     
     def getEC2Cred(self, id):
         

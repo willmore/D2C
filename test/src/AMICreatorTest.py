@@ -9,10 +9,12 @@ print sys.path
 from d2c.logger import StdOutLogger
 from d2c.model.EC2Cred import EC2Cred
 from d2c.AMITools import AMITools
+from d2c.EC2ConnectionFactory import EC2ConnectionFactory
+from d2c.data.DAO import DAO
+from d2c.data.CredStore import CredStore
 #import d2c.AMICreator as AMICreator
 
 class AMICreatorTest():
-
 
     def main(self):
         print 
@@ -22,34 +24,21 @@ class AMICreatorTest():
             (k, v) = string.split(l.strip(), "=")
             settings[k] = v
         
- 
-        ec2Cred = EC2Cred(settings['cert'], settings['privateKey'])
-    
+        ec2Cred = EC2Cred("default", settings['cert'], settings['privateKey'])
+        
+        
         logger = StdOutLogger();
-    
-        #extractRawImage('/media/host/xyz.vdi', '/media/host/xyz-full.img', logger)
-        #extractMainPartition('/media/host/xyz-full.img', '/media/host/xyz-main-partition.img', logger)
-        #ec2izeImage("/media/host/xyz-main-partition.img", logger)
-        #amiTools = AMITools()
-    
-        #AMITools("/opt/EC2TOOLS").bundleImage("/media/host/xyz-main-partition.img", 
-        #                                      "/media/host/xyz-bundle/", 
-        #                                      ec2Cred, settings['userid'])
-    
-    
-        #AMITools("/opt/EC2TOOLS").uploadBundle("ee.ut.cs.cloud/testupload/" + str(time.time()), 
-        #                                       "/media/host/xyz-bundle/xyz-main-partition.img.manifest.xml", 
-        #                                       settings['accessKey'], 
-        #                                       settings['secretKey'])
         
-        amiTools = AMITools("/opt/EC2TOOLS", settings['accessKey'], settings['secretKey'], StdOutLogger())
-     
-        jobDir = "/media/host/opt/d2c/job/1299685087.96/"
-        partitionImg = jobDir + "worker.vdi.main"
+        amiTools = AMITools("/opt/EC2TOOLS", settings['accessKey'], 
+                            settings['secretKey'], EC2ConnectionFactory(settings['accessKey'], 
+                            settings['secretKey'], StdOutLogger()), 
+                            StdOutLogger(),
+                            kernelDir="../../data/kernels")
+        '''
+        jobDir = "/media/host/opt/d2c/job/1304594602.11/"
+        partitionImg = jobDir + "cloud-hpcc.vdi.main"
         amiTools.ec2izeImage(partitionImg)
-        
-        #AMICreator.ec2izeImage(outputImg, logger)       
-        
+                
         logger.write("Bundling AMI")
         bundleDir = jobDir + "/bundle"
         manifest = amiTools.bundleImage(partitionImg,
@@ -60,12 +49,14 @@ class AMICreatorTest():
         logger.write("Uploading bundle")
         s3ManifestPath = amiTools.uploadBundle("ee.ut.cs.cloud/testupload/" + str(time.time()),
                                                      manifest)
+        '''
+        s3ManifestPath="ee.ut.cs.cloud/testupload/hpcc/cloud-hpcc.vdi.main.manifest.xml"
         logger.write("Registering AMI: " + s3ManifestPath)
         amiId = amiTools.registerAMI(s3ManifestPath)       
         print "AMIID = " + amiId
 
 if __name__ == '__main__':
-    main()
+    AMICreatorTest().main()
 
 
 

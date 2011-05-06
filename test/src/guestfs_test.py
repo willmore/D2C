@@ -1,7 +1,8 @@
 #http://libguestfs.org/guestfs-python.3.html
 import guestfs
 
-disk = '/usr/lib/guestfs/supermin.d/base.img'
+#disk = '/usr/lib/guestfs/supermin.d/base.img'
+disk = '/home/willmore/Downloads/dsl-4.4.10-x86.vdi'
 
 g = guestfs.GuestFS ()
 g.set_qemu('/usr/local/bin/qemu-system-x86_64')
@@ -14,7 +15,7 @@ g.launch ()
 # Ask libguestfs to inspect for operating systems.
 roots = g.inspect_os ()
 if len (roots) == 0:
-    raise (Error ("inspect_vm: no operating systems found"))
+    raise (Exception ("inspect_vm: no operating systems found"))
  
 for root in roots:
     print "Root device: %s" % root
@@ -26,3 +27,8 @@ for root in roots:
           g.inspect_get_minor_version (root))
     print "  Type:         %s" % (g.inspect_get_type (root))
     print "  Distro:       %s" % (g.inspect_get_distro (root))
+    
+    
+for partition in g.list_partitions():
+    print "Partition: %s" % partition
+    

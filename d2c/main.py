@@ -1,7 +1,9 @@
 
 import sys
 import getopt
+import os
 import Application
+from .data.DAO import DAO
 
 class Usage(Exception):
     def __init__(self, msg):
@@ -22,7 +24,9 @@ def main(argv=None):
         print >>sys.stderr, "for help use --help"
         return 2
     
-    app = Application.Application()
+    SQLITE_FILE = "%s/.d2c_test/d2c_db.sqlite" % os.path.expanduser('~') 
+    
+    app = Application.Application(DAO(SQLITE_FILE))
     app.MainLoop()
 
 if __name__ == "__main__":

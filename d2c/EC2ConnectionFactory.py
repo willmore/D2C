@@ -12,10 +12,10 @@ class EC2ConnectionFactory:
         
         if isinstance(args[0], CredStore):
             self.newConstructor(args[0], StdOutLogger() if len(args) == 1 else args[1])
-        elif isinstance(args[0], str):
+        elif isinstance(args[0], basestring):
             self.oldConstructor(args)
         else:
-            raise Exception("Invalid arg type: " + type(args[0]))
+            raise Exception("Invalid arg type: %s" % type(args[0]))
     
     def newConstructor(self, credStore, logger):    
         self.credStore = credStore

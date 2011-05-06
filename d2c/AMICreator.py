@@ -59,7 +59,7 @@ class AMICreator:
         self.__amiTools.extractMainPartition(rawImg, outputImg)
         
         self.__logger.write("EC2izing image")
-        self.__amiTools.ec2izeImage(outputImg, self.__logger)       
+        self.__amiTools.ec2izeImage(outputImg)       
 
         self.__logger.write("Bundling AMI")
         bundleDir = jobDir + "/bundle"

@@ -8,6 +8,9 @@ from .RemoteShellExecutor import RemoteShellExecutor
 from .ShellExecutor import ShellExecutor
 from .logger import StdOutLogger
 
+import string
+import random
+
 class AsyncRemoteShellExecutor(RemoteShellExecutor):
     
     def __init__(self, user, host, 
@@ -25,16 +28,13 @@ class AsyncRemoteShellExecutor(RemoteShellExecutor):
         Executes remote commands in a nohup sh wrapper. The run method will not block, and cmd 
         will continue on the remote machine.
         '''
+                
+        cmd = string.replace(cmd, "\\", "\\\\")
+        cmd = string.replace(cmd, "\"", "\\\"")
         
+        CMD_WRAPPER = "nohup sh -c \"%s\" &>/tmp/hup.%d.out < /dev/null &"
         
-        pKeyStr = "-i %s" % self.privateKey if self.privateKey else ""
+        cmd = CMD_WRAPPER % (cmd, random.randint(1,10000))
         
-        CMD_WRAPPER = "nohup sh -c \\\"%s\\\" &>/dev/null < /dev/null &"
-        
-        cmd = "ssh %s -o StrictHostKeyChecking=no %s@%s \"%s\"" % (pKeyStr, 
-                                                                 self.user,
-                                                                 self.host,
-                                                                 CMD_WRAPPER % cmd)
-        
-        ShellExecutor.run(self, cmd)
-    
+        RemoteShellExecutor.run(self, cmd)
+       

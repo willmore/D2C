@@ -7,6 +7,8 @@ Created on Apr 12, 2011
 from .ShellExecutor import ShellExecutor
 from .logger import StdOutLogger
 
+import string
+
 class RemoteShellExecutor(ShellExecutor):
     
     def __init__(self, user, host, 
@@ -22,7 +24,8 @@ class RemoteShellExecutor(ShellExecutor):
     def run(self, cmd):
         
         pKeyStr = "-i %s" % self.privateKey if self.privateKey else ""
-        
+        cmd = string.replace(cmd, "\\", "\\\\")
+        cmd = string.replace(cmd, "\"", "\\\"")
         cmd = "ssh %s -o StrictHostKeyChecking=no %s@%s \"%s\"" % (pKeyStr, 
                                                                  self.user,
                                                                  self.host,

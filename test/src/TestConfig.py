@@ -9,6 +9,11 @@ from d2c.model.Configuration import Configuration
 import string
 
 class TestConfig(Configuration):
+    '''
+    Configuration settings that can be loaded from a simple 
+    file for testing purposes.
+    '''
+    
     
     def __init__(self, confFile):
         settings = {}
@@ -16,10 +21,12 @@ class TestConfig(Configuration):
             (k, v) = string.split(l.strip(), "=")
             settings[k] = v
      
-        ec2Cred = EC2Cred(settings['ec2CredId'], settings['cert'], settings['privateKey'])
+        ec2Cred = EC2Cred(settings['ec2CredId'], 
+                          settings['cert'], 
+                          settings['privateKey'])
     
         awsCred = AWSCred(settings['accessKey'],
-                      settings['secretKey'])
+                          settings['secretKey'])
         
         Configuration.__init__(self,
                                ec2ToolHome='/opt/EC2_TOOLS',

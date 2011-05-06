@@ -27,6 +27,7 @@ def main(argv=None):
     if os.path.exists(SQLITE_FILE):
         print "Deleting existing DB"
         os.unlink(SQLITE_FILE)
+        
     dao = DAO(SQLITE_FILE)
     
     conf = TestConfig("/home/willmore/test.conf")

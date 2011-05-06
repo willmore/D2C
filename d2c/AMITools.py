@@ -13,7 +13,8 @@ import re
 import shutil
 import logger
 from .EC2ConnectionFactory import EC2ConnectionFactory
-import guestfs
+
+from guestfs import GuestFS
 
 class UnsupportedPlatformError(Exception):
     def __init__(self, value):
@@ -39,14 +40,23 @@ class AMIToolsFactory:
                         EC2ConnectionFactory(accessKey, secretKey, logger),
                         logger)
 
+
 class AMITools:
 
-    def __init__(self, ec2_tools, accessKey, secretKey, ec2ConnFactory, logger):
+    ARCH_X86 = 'i386'
+    ARCH_X86_64 = 'x86_64'
+
+    def __init__(self, ec2_tools, accessKey, 
+                 secretKey, ec2ConnFactory, logger,
+                 kernelDir):
+        
+        os.path.isdir(kernelDir)
         
         self.__logger = logger
         self.__EC2_TOOLS = ec2_tools   
         self.__accessKey = accessKey
         self.__secretKey = secretKey
+        self.kernelDir = kernelDir
         self.ec2ConnFactory = ec2ConnFactory
    
     def __execCmd(self, cmd):
@@ -82,16 +92,15 @@ class AMITools:
         
         return bucket + "/" + os.path.basename(manifest)
 
-    def bundleImage(self, img, destDir, ec2Cred, userId):
+    def bundleImage(self, img, destDir, ec2Cred, userId, arch):
     
         if not os.path.exists(destDir):
             os.makedirs(destDir)
     
         __BUNDLE_CMD = "export EC2_HOME=%s; %s/bin/ec2-bundle-image -i %s -c %s -k %s -u %s -r %s -d %s --kernel %s"
     
-        arch = "x86_64"
-        kernelId = {'i386':"aki-4deec439", # eu west pygrub, i386
-                    'x86_64':'aki-4feec43b'} # eu west pygrub, x86_64
+        kernelId = {AMITools.ARCH_X86:"aki-4deec439", # eu west pygrub, i386
+                    AMITools.self.ARCH_X86_64:'aki-4feec43b'} # eu west pygrub, x86_64
         
         bundleCmd = __BUNDLE_CMD % (self.__EC2_TOOLS, self.__EC2_TOOLS, 
                                     img, ec2Cred.cert, ec2Cred.private_key, 
@@ -115,7 +124,7 @@ class AMITools:
         else:
             raise UnsupportedPlatformError(platform.system())
 
-    def ec2izeImage(self, partitionImg):
+    def Oldec2izeImageOld(self, partitionImg, arch):
             """
             Mounts an image and does the following:
             1. Writes new kernel and modules.
@@ -125,23 +134,20 @@ class AMITools:
             
             mntPoint = "/opt/d2c/mnt/"
             mntSrc = "/opt/d2c/mntsrc"
-            assert isinstance(partitionImg, basestring)
+            assert isinstance(partitionImg, GuestFS)
            
             fstab = None
            
             try:
                 #Step 1: mount
                 os.symlink(partitionImg, mntSrc)
-                cmd = "mount %s" % (partitionImg,)
+                cmd = "mount %s" % mntSrc
                 
                 self.__execCmd(cmd)
                 
                 #Step 2: copy kernel
-                
-                #TODO determine architecture
-                arch = 'x86_64'
-                kernelSrcTar = {'i386':"../data/kernels/2.6.35-24-virtual.tar",
-                                'x86_64':"../../data/kernels/2.6.35-24-virtual-x86_64.tar"}
+                kernelSrcTar = {AMITools.self.ARCH_X86_64:self.kernelDir + "/2.6.35-24-virtual.tar",
+                                AMITools.self.ARCH_X86_64:self.kernelDir + "/2.6.35-24-virtual-x86_64.tar"}
             
                 cmd = "tar -C %s -xf %s" % (mntPoint, kernelSrcTar[arch])
                 self.__execCmd(cmd)
@@ -163,7 +169,10 @@ class AMITools:
                 fstab.write("none\t/sys\tsysfs\tdefaults\t0\t0\n")
                 fstab.write("/dev/sda2\t/mnt\text3\tdefaults,nobootwait\t0\t0\n")
                 fstab.write("/dev/sda3\tswap\tswap\tdefaults,nobootwait\t0\t0\n")
-                
+            
+            except Exception as x:
+                self.__logger.write("Exception encountered: %s" % str(x))
+                raise
             
             finally:
                 if fstab is not None and not fstab.closed:
@@ -174,12 +183,78 @@ class AMITools:
                     #Step 5: unmount
                     self.__logger.write("Unmounting " + mntPoint)
                     self.__execCmd("umount /dev/loop0") #/dev/loop0 is temp hack
-                    self.__logger.write("Done EC2ing image")
+                    
                     
                 if os.path.exists(mntSrc):
                     os.unlink(mntSrc)
-      
+                    
+            self.__logger.write("Done EC2ing image") 
             
+    def ec2izeImage(self, partitionImg, arch):
+        """
+        Mounts an image and does the following:
+        1. Writes new kernel and modules.
+        2. Writes an /etc/fstab to it suitable for EC2.
+           The preexisting fstab will be preserved as /etc/fstab.save
+        """
+        
+        mntPoint = "/opt/d2c/mnt/"
+        mntSrc = "/opt/d2c/mntsrc"
+        assert isinstance(partitionImg, GuestFS)
+       
+        fstab = None
+       
+        try:
+            #Step 1: mount
+            os.symlink(partitionImg, mntSrc)
+            cmd = "mount %s" % mntSrc
+            
+            self.__execCmd(cmd)
+            
+            #Step 2: copy kernel
+            kernelSrcTar = {AMITools.self.ARCH_X86_64:self.kernelDir + "/2.6.35-24-virtual.tar",
+                            AMITools.self.ARCH_X86_64:self.kernelDir + "/2.6.35-24-virtual-x86_64.tar"}
+        
+            cmd = "tar -C %s -xf %s" % (mntPoint, kernelSrcTar[arch])
+            self.__execCmd(cmd)
+        
+            #Step 3: Save old fstab
+            fromFile = mntPoint + "/etc/fstab"
+            toFile = mntPoint + "/etc/fstab.save"
+            self.__logger.write("Saving image's old fstab")
+            self.__logger.write("Executing: mv /etc/fstab")
+            shutil.copyfile(fromFile, toFile)
+        
+            #Step 4: write out fstab
+            self.__logger.write("Writting out new EC2 /etc/fstab")
+            fstab = open(fromFile, 'w')
+            fstab.write("/dev/sda1\t/\text4\tdefaults\t1\t1\n")
+            fstab.write("none\t/dev/pts\tdevpts\tgid=5,mode=620\t0\t0\n")
+            fstab.write("none\t/dev/shm\ttmpfs\tdefaults\t0\t0\n")
+            fstab.write("none\t/proc\tproc\tdefaults\t0\t0\n")
+            fstab.write("none\t/sys\tsysfs\tdefaults\t0\t0\n")
+            fstab.write("/dev/sda2\t/mnt\text3\tdefaults,nobootwait\t0\t0\n")
+            fstab.write("/dev/sda3\tswap\tswap\tdefaults,nobootwait\t0\t0\n")
+        
+        except Exception as x:
+            self.__logger.write("Exception encountered: %s" % str(x))
+            raise
+        
+        finally:
+            if fstab is not None and not fstab.closed:
+                self.__logger.write("Closing image's /etc/fstab")
+                fstab.close()
+                
+            if os.path.ismount(mntPoint):
+                #Step 5: unmount
+                self.__logger.write("Unmounting " + mntPoint)
+                self.__execCmd("umount /dev/loop0") #/dev/loop0 is temp hack
+                
+                
+            if os.path.exists(mntSrc):
+                os.unlink(mntSrc)
+                
+        self.__logger.write("Done EC2ing image")         
             
     def __extractMainPartitionLinux(self, fullImg, outputImg):
         
