@@ -1,0 +1,192 @@
+/etc/gdm/Xsession: Beginning session setup...
+Setting IM through im-switch for locale=en_US.
+Start IM through /etc/X11/xinit/xinput.d/all_ALL linked to /etc/X11/xinit/xinput.d/default.
+GNOME_KEYRING_CONTROL=/tmp/keyring-3outoi
+GNOME_KEYRING_CONTROL=/tmp/keyring-3outoi
+SSH_AUTH_SOCK=/tmp/keyring-3outoi/ssh
+GNOME_KEYRING_CONTROL=/tmp/keyring-3outoi
+SSH_AUTH_SOCK=/tmp/keyring-3outoi/ssh
+
+(gnome-power-manager:1373): Gtk-WARNING **: A floating object was finalized. This means that someone
+called g_object_unref() on an object that had only a floating
+reference; the initial floating reference is not owned by anyone
+and must be removed with g_object_ref_sink().
+
+(gnome-power-manager:1373): Gtk-WARNING **: A floating object was finalized. This means that someone
+called g_object_unref() on an object that had only a floating
+reference; the initial floating reference is not owned by anyone
+and must be removed with g_object_ref_sink().
+
+(gnome-power-manager:1373): Gtk-WARNING **: A floating object was finalized. This means that someone
+called g_object_unref() on an object that had only a floating
+reference; the initial floating reference is not owned by anyone
+and must be removed with g_object_ref_sink().
+
+(polkit-gnome-authentication-agent-1:1389): GLib-GObject-WARNING **: cannot register existing type `_PolkitError'
+
+(polkit-gnome-authentication-agent-1:1389): GLib-CRITICAL **: g_once_init_leave: assertion `initialization_value != 0' failed
+** Message: applet now removed from the notification area
+Unable to find a synaptics device.
+Initializing nautilus-gdu extension
+
+(nautilus:1400): GConf-CRITICAL **: gconf_value_free: assertion `value != NULL' failed
+/usr/bin/compiz (core) - Fatal: Software rendering detected.
+/usr/bin/compiz (core) - Error: Failed to manage screen: 0
+/usr/bin/compiz (core) - Fatal: No manageable screens found on display :0.0
+** Message: applet now embedded in the notification area
+
+(gnome-power-manager:1373): Gtk-WARNING **: A floating object was finalized. This means that someone
+called g_object_unref() on an object that had only a floating
+reference; the initial floating reference is not owned by anyone
+and must be removed with g_object_ref_sink().
+
+(gnome-power-manager:1373): Gtk-WARNING **: A floating object was finalized. This means that someone
+called g_object_unref() on an object that had only a floating
+reference; the initial floating reference is not owned by anyone
+and must be removed with g_object_ref_sink().
+** (update-notifier:1590): DEBUG: aptdaemon on bus: 0
+** (update-notifier:1590): DEBUG: Skipping reboot required
+
+(gnome-power-manager:1373): Gtk-WARNING **: A floating object was finalized. This means that someone
+called g_object_unref() on an object that had only a floating
+reference; the initial floating reference is not owned by anyone
+and must be removed with g_object_ref_sink().
+
+(gnome-power-manager:1373): Gtk-WARNING **: A floating object was finalized. This means that someone
+called g_object_unref() on an object that had only a floating
+reference; the initial floating reference is not owned by anyone
+and must be removed with g_object_ref_sink().
+
+(gnome-power-manager:1373): Gtk-WARNING **: A floating object was finalized. This means that someone
+called g_object_unref() on an object that had only a floating
+reference; the initial floating reference is not owned by anyone
+and must be removed with g_object_ref_sink().
+
+(gnome-power-manager:1373): Gtk-WARNING **: A floating object was finalized. This means that someone
+called g_object_unref() on an object that had only a floating
+reference; the initial floating reference is not owned by anyone
+and must be removed with g_object_ref_sink().
+
+(gnome-power-manager:1373): Gtk-WARNING **: A floating object was finalized. This means that someone
+called g_object_unref() on an object that had only a floating
+reference; the initial floating reference is not owned by anyone
+and must be removed with g_object_ref_sink().
+
+(gnome-power-manager:1373): Gtk-WARNING **: A floating object was finalized. This means that someone
+called g_object_unref() on an object that had only a floating
+reference; the initial floating reference is not owned by anyone
+and must be removed with g_object_ref_sink().
+
+(gnome-power-manager:1373): Gtk-WARNING **: A floating object was finalized. This means that someone
+called g_object_unref() on an object that had only a floating
+reference; the initial floating reference is not owned by anyone
+and must be removed with g_object_ref_sink().
+
+(gnome-power-manager:1373): Gtk-WARNING **: A floating object was finalized. This means that someone
+called g_object_unref() on an object that had only a floating
+reference; the initial floating reference is not owned by anyone
+and must be removed with g_object_ref_sink().
+
+(gnome-power-manager:1373): Gtk-WARNING **: A floating object was finalized. This means that someone
+called g_object_unref() on an object that had only a floating
+reference; the initial floating reference is not owned by anyone
+and must be removed with g_object_ref_sink().
+
+(gnome-power-manager:1373): Gtk-WARNING **: A floating object was finalized. This means that someone
+called g_object_unref() on an object that had only a floating
+reference; the initial floating reference is not owned by anyone
+and must be removed with g_object_ref_sink().
+
+(gnome-power-manager:1373): Gtk-WARNING **: A floating object was finalized. This means that someone
+called g_object_unref() on an object that had only a floating
+reference; the initial floating reference is not owned by anyone
+and must be removed with g_object_ref_sink().
+
+(gnome-power-manager:1373): Gtk-WARNING **: A floating object was finalized. This means that someone
+called g_object_unref() on an object that had only a floating
+reference; the initial floating reference is not owned by anyone
+and must be removed with g_object_ref_sink().
+
+(gnome-power-manager:1373): Gtk-WARNING **: A floating object was finalized. This means that someone
+called g_object_unref() on an object that had only a floating
+reference; the initial floating reference is not owned by anyone
+and must be removed with g_object_ref_sink().
+
+(gnome-power-manager:1373): Gtk-WARNING **: A floating object was finalized. This means that someone
+called g_object_unref() on an object that had only a floating
+reference; the initial floating reference is not owned by anyone
+and must be removed with g_object_ref_sink().
+
+(gnome-power-manager:1373): Gtk-WARNING **: A floating object was finalized. This means that someone
+called g_object_unref() on an object that had only a floating
+reference; the initial floating reference is not owned by anyone
+and must be removed with g_object_ref_sink().
+
+(gnome-power-manager:1373): Gtk-WARNING **: A floating object was finalized. This means that someone
+called g_object_unref() on an object that had only a floating
+reference; the initial floating reference is not owned by anyone
+and must be removed with g_object_ref_sink().
+
+(gnome-power-manager:1373): Gtk-WARNING **: A floating object was finalized. This means that someone
+called g_object_unref() on an object that had only a floating
+reference; the initial floating reference is not owned by anyone
+and must be removed with g_object_ref_sink().
+
+(gnome-power-manager:1373): Gtk-WARNING **: A floating object was finalized. This means that someone
+called g_object_unref() on an object that had only a floating
+reference; the initial floating reference is not owned by anyone
+and must be removed with g_object_ref_sink().
+
+(gnome-power-manager:1373): Gtk-WARNING **: A floating object was finalized. This means that someone
+called g_object_unref() on an object that had only a floating
+reference; the initial floating reference is not owned by anyone
+and must be removed with g_object_ref_sink().
+
+(gnome-power-manager:1373): Gtk-WARNING **: A floating object was finalized. This means that someone
+called g_object_unref() on an object that had only a floating
+reference; the initial floating reference is not owned by anyone
+and must be removed with g_object_ref_sink().
+
+(gnome-power-manager:1373): Gtk-WARNING **: A floating object was finalized. This means that someone
+called g_object_unref() on an object that had only a floating
+reference; the initial floating reference is not owned by anyone
+and must be removed with g_object_ref_sink().
+
+(gnome-power-manager:1373): Gtk-WARNING **: A floating object was finalized. This means that someone
+called g_object_unref() on an object that had only a floating
+reference; the initial floating reference is not owned by anyone
+and must be removed with g_object_ref_sink().
+
+(gnome-power-manager:1373): Gtk-WARNING **: A floating object was finalized. This means that someone
+called g_object_unref() on an object that had only a floating
+reference; the initial floating reference is not owned by anyone
+and must be removed with g_object_ref_sink().
+
+(gnome-power-manager:1373): GLib-GObject-CRITICAL **: g_object_unref: assertion `G_IS_OBJECT (object)' failed
+
+(gnome-power-manager:1373): Gtk-WARNING **: A floating object was finalized. This means that someone
+called g_object_unref() on an object that had only a floating
+reference; the initial floating reference is not owned by anyone
+and must be removed with g_object_ref_sink().
+Window manager warning: CurrentTime used to choose focus window; focus window may not be correct.
+Window manager warning: Got a request to focus the no_focus_window with a timestamp of 0.  This shouldn't happen!
+Shutting down nautilus-gdu extension
+
+--- Hash table keys for warning below:
+--> hpcc-user
+--> inode/directory
+--> l2049
+
+(nautilus:1400): Eel-WARNING **: "unique eel_ref_str" hash table still has 3 elements at quit time (keys above)
+
+(nautilus:1400): Eel-WARNING **: "nautilus-directory.c: directories" hash table still has 3 elements at quit time
+** Message: applet now removed from the notification area
+** Message: NM disappeared
+gdu-notification-daemon: Fatal IO error 11 (Resource temporarily unavailable) on X server :0.0.
+update-notifier: Fatal IO error 11 (Resource temporarily unavailable) on X server :0.0.
+gnome-settings-daemon: Fatal IO error 11 (Resource temporarily unavailable) on X server :0.0.
+evolution-alarm-notify: Fatal IO error 11 (Resource temporarily unavailable) on X server :0.0.
+gnome-screensaver: Fatal IO error 11 (Resource temporarily unavailable) on X server :0.0.
+applet.py: Fatal IO error 11 (Resource temporarily unavailable) on X server :0.0.
+bluetooth-applet: Fatal IO error 11 (Resource temporarily unavailable) on X server :0.0.
+nm-applet: Fatal IO error 11 (Resource temporarily unavailable) on X server :0.0.

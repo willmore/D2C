@@ -1,0 +1,8 @@
+Looking at Module: libsession.so
+Using user icon for 'Guest Session' from file: (null)
+id_prop_update: assertion `priv->root != NULL' failed
+id_prop_update: assertion `priv->root != NULL' failed
+entry hint: Post message...
+Updating username label
+Username width 64px
+instance of invalid non-instantiatable type `(null)'

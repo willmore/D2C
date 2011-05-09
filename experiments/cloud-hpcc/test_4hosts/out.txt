@@ -164,3 +164,45 @@ Deployment state changed to: ROLES_STARTED
 [1304938652] Executing: ssh -i /home/willmore/.ssh/id_rsa_nopw -o StrictHostKeyChecking=no hpcc-user@ec2-46-137-44-72.eu-west-1.compute.amazonaws.com "if [ -f /tmp/done.txt ]; then echo exists; fi"
 [1304938655] Returning False for finished test
 [1304938655] Monitor role len is 1
+[1304938685] Executing: ssh -i /home/willmore/.ssh/id_rsa_nopw -o StrictHostKeyChecking=no hpcc-user@ec2-46-137-44-72.eu-west-1.compute.amazonaws.com "if [ -f /tmp/done.txt ]; then echo exists; fi"
+[1304938688] Returning False for finished test
+[1304938688] Monitor role len is 1
+[1304938718] Executing: ssh -i /home/willmore/.ssh/id_rsa_nopw -o StrictHostKeyChecking=no hpcc-user@ec2-46-137-44-72.eu-west-1.compute.amazonaws.com "if [ -f /tmp/done.txt ]; then echo exists; fi"
+[1304938721] Returning False for finished test
+[1304938721] Monitor role len is 1
+[1304938751] Executing: ssh -i /home/willmore/.ssh/id_rsa_nopw -o StrictHostKeyChecking=no hpcc-user@ec2-46-137-44-72.eu-west-1.compute.amazonaws.com "if [ -f /tmp/done.txt ]; then echo exists; fi"
+[1304938753] Returning False for finished test
+[1304938753] Monitor role len is 1
+[1304938783] Executing: ssh -i /home/willmore/.ssh/id_rsa_nopw -o StrictHostKeyChecking=no hpcc-user@ec2-46-137-44-72.eu-west-1.compute.amazonaws.com "if [ -f /tmp/done.txt ]; then echo exists; fi"
+[1304938786] Returning False for finished test
+[1304938786] Monitor role len is 1
+[1304938816] Executing: ssh -i /home/willmore/.ssh/id_rsa_nopw -o StrictHostKeyChecking=no hpcc-user@ec2-46-137-44-72.eu-west-1.compute.amazonaws.com "if [ -f /tmp/done.txt ]; then echo exists; fi"
+[1304938819] Returning False for finished test
+[1304938819] Monitor role len is 1
+[1304938849] Executing: ssh -i /home/willmore/.ssh/id_rsa_nopw -o StrictHostKeyChecking=no hpcc-user@ec2-46-137-44-72.eu-west-1.compute.amazonaws.com "if [ -f /tmp/done.txt ]; then echo exists; fi"
+[1304938851] Returning true for finished test
+[1304938851] Monitor role len is 0
+Deployment state changed to: JOB_COMPLETED
+[1304938881] Stopping roles
+Deployment state changed to: INSTANCES_STOPPED
+[1304938883] Roles stopped
+Deployment state changed to: COLLECTING_DATA
+[1304938883] Executing: scp -r -i /home/willmore/.ssh/id_rsa_nopw -o StrictHostKeyChecking=no hpcc-user@ec2-46-137-44-72.eu-west-1.compute.amazonaws.com:/home/hpcc-user ./results/master/home_dir/i-b174f6c7/hpcc-user
+[1304938916] scp: /home/hpcc-user/.pulse/f844cbe4d793854a8463dad100000002-runtime: No such file or directory
+
+Traceback (most recent call last):
+  File "test_4hosts.py", line 94, in <module>
+    sys.exit(main())
+  File "test_4hosts.py", line 90, in main
+    deployment.run()
+  File "/usr/local/lib/python2.6/dist-packages/d2c-1.0-py2.6.egg/d2c/model/Deployment.py", line 170, in run
+    transition()
+  File "/usr/local/lib/python2.6/dist-packages/d2c-1.0-py2.6.egg/d2c/model/Deployment.py", line 299, in __collectData
+    role.collectData()
+  File "/usr/local/lib/python2.6/dist-packages/d2c-1.0-py2.6.egg/d2c/model/Role.py", line 183, in collectData
+    collector.collect(instance)
+  File "/usr/local/lib/python2.6/dist-packages/d2c-1.0-py2.6.egg/d2c/model/DataCollector.py", line 36, in collect
+    ShellExecutor(self.logger).run(cmd)
+  File "/usr/local/lib/python2.6/dist-packages/d2c-1.0-py2.6.egg/d2c/ShellExecutor.py", line 30, in run
+    raise Exception("Command \"%s\"failed with code %d '" % (cmd, p.returncode))
+Exception: Command "scp -r -i /home/willmore/.ssh/id_rsa_nopw -o StrictHostKeyChecking=no hpcc-user@ec2-46-137-44-72.eu-west-1.compute.amazonaws.com:/home/hpcc-user ./results/master/home_dir/i-b174f6c7/hpcc-user"failed with code 1 '

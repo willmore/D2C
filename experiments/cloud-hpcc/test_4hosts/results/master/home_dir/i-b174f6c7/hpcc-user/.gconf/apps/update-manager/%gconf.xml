@@ -1,0 +1,6 @@
+<?xml version="1.0"?>
+<gconf>
+	<entry name="check_new_release_ignore" mtime="1304432164" type="string">
+		<stringvalue>natty</stringvalue>
+	</entry>
+</gconf>
