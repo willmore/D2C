@@ -179,7 +179,7 @@ class Deployment:
         
         assert self.ec2ConnFactory is not None
                 
-        print "Roles = %s" % str(self.roles)
+        #print "Roles = %s" % str(self.roles)
         for role in self.roles:
             role.setEC2ConnFactory(self.ec2ConnFactory)  
             role.launch()    
@@ -200,12 +200,12 @@ class Deployment:
                     allRunning = False
                     break
                 
-            self.logger.write("All instances now running")
-            '''
-            Wait a bit for the systems to really boot up.
-            TODO: replace hardcoded wait time with a valid test, perhaps ping.
-            '''
-            time.sleep(30)
+        self.logger.write("All instances now running")
+        '''
+        Wait a bit for the systems to really boot up.
+        TODO: replace hardcoded wait time with a valid test, perhaps ping.
+        '''
+        time.sleep(30)
         
         self.__setState(DeploymentState.INSTANCES_LAUNCHED)   
         self.logger.write("Instances Launched")

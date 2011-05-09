@@ -1,9 +1,14 @@
 Desktop To Cloud (D2C)
 ------------------------------
 
+Python Setuptools
+apt-get install python-setuptools
+
 Required libraries:
 wxPython
 http://wiki.wxpython.org/InstallingOnUbuntuOrDebian
+apt-get install python-wxgtk2.8 
+
 
 mockito-python
 http://code.google.com/p/mockito-python/
@@ -24,7 +29,7 @@ http://forums.virtualbox.org/viewtopic.php?f=3&t=33413
 boto - Python library wrapping AWS web service
 http://code.google.com/p/boto/
 Currently developing against version 2.0 Beta 4
-
+easy_install boto
 
 EC2 AMI Tools
 http://s3.amazonaws.com/ec2-downloads/ec2-ami-tools.zip
@@ -32,6 +37,7 @@ Tools for bundling and uploading AMIs. Recommended installation directory is /op
 
 EC2 API Tools
 http://s3.amazonaws.com/ec2-downloads/ec2-api-tools.zip
+Recommended installation directory is /opt/EC2TOOLS.
 
 EC2 AMI Tools dependencies:
         - curl

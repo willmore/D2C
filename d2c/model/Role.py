@@ -70,7 +70,7 @@ class Role:
        
         #TODO catch exceptions
         self.reservation = ec2Conn.run_instances(self.ami.amiId, 
-                                                 key_name = launchKey,
+                                                 key_name=launchKey,
                                                  min_count=self.count, 
                                                  max_count=self.count, 
                                                  instance_type=self.instanceType.name) 
@@ -206,5 +206,6 @@ class Role:
             time.sleep(self.pollRate)
         
         self.logger.write("Reservation %s terminated" % self.reservation.id)
+        
     def __str__(self):
         return "{name:%s, ami: %s, instances: %s}" % (self.name, self.ami, str(self.instances))

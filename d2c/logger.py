@@ -3,6 +3,7 @@ Created on Feb 23, 2011
 
 @author: willmore
 '''
+
 class DevNullLogger():
     """
     Logger that writes to nowhere
@@ -14,5 +15,5 @@ class DevNullLogger():
 class StdOutLogger():
     
     def write(self, msg):
-        print msg
+        print "[%d] %s" % (str(time.time(), msg)
         
