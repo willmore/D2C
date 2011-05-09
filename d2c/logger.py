@@ -3,6 +3,7 @@ Created on Feb 23, 2011
 
 @author: willmore
 '''
+import time
 
 class DevNullLogger():
     """
@@ -15,5 +16,5 @@ class DevNullLogger():
 class StdOutLogger():
     
     def write(self, msg):
-        print "[%d] %s" % (str(time.time(), msg)
+        print "[%d] %s" % (time.time(), msg)
         

@@ -62,11 +62,13 @@ class Role:
         
     def launch(self):
         
-        self.logger.write("Reserving %d instance(s) of %s" % (self.count, self.ami.amiId))
+        
        
         ec2Conn = self.ec2ConnFactory.getConnection()
        
         launchKey = self.launchCred.id if self.launchCred is not None else None
+       
+        self.logger.write("Reserving %d instance(s) of %s with launchKey %s" % (self.count, self.ami.amiId, launchKey))
        
         #TODO catch exceptions
         self.reservation = ec2Conn.run_instances(self.ami.amiId, 

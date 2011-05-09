@@ -46,7 +46,7 @@ EC2 AMI Tools dependencies:
         - openssl
         - rsync
         - Ruby 1.8.2 or later
-			- Might need to explicitly install libopenssl-ruby
+			- Might need to explicitly install libopenssl-ruby (maybe not necessary)
         - tee
         
  guestfish and python-guestfs
