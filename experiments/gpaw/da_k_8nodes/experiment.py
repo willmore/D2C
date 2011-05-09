@@ -1,12 +1,10 @@
 import sys
-import os
 
-from d2c.data.DAO import DAO
-from d2c.data.CredStore import CredStore
 from d2c.model.Role import Role
 from d2c.model.Deployment import Deployment
 from d2c.model.Action import Action
 from d2c.model.AsyncAction import AsyncAction
+from d2c.model.UploadAction import UploadAction
 from d2c.model.DataCollector import DataCollector
 from d2c.model.FileExistsFinishedCheck import FileExistsFinishedCheck
 from d2c.EC2ConnectionFactory import EC2ConnectionFactory
@@ -15,9 +13,6 @@ from d2c.model.InstanceType import InstanceType
 from d2c.model.SSHCred import SSHCred
 from d2c.logger import StdOutLogger
 from TestConfig import TestConfig
-from threading import Thread
-from d2c.model.InstanceType import InstanceType
-import random
 
 def main(argv=None):
     
@@ -32,26 +27,29 @@ def main(argv=None):
     slaveOutDir = "./results/slave/"    
     sshCred = SSHCred('dirac', '/home/willmore/dirac.id_rsa')
     
-    numHosts = 32
-    script = "/home/dirac/amAu111BF4/44.py"
+    numHosts = 8
+    script = "da-k-8nodes.py"
     doneFile = "/tmp/done.txt"
     startCmd = "mpirun -np %d -hostfile /tmp/d2c.context gpaw-python %s > experiment.out 2>&1; date > %s" % (numHosts, script, doneFile)
 
     instanceType = InstanceType("m1.xlarge", 2, 7500, 850, [])
     fixSSHCmd = "echo \"Host *\n   StrictHostKeyChecking no\" > .ssh/config"
 
-    deployment = Deployment("44_py", 
+    deployment = Deployment("da_k_8nodes", 
                             ec2ConnFactory, 
                             roles=[
                                    Role(masterRole, "master", 
                                         ami=AMI(amiId="ami-1396a167"), 
-					count=1, 
+					                    count=1, 
                                         instanceType=instanceType,
-					contextCred=sshCred,
-                                        startActions=[Action(command=fixSSHCmd,
-							     sshCred=sshCred),
-							AsyncAction(command=startCmd, 
-                                                             sshCred=sshCred)],
+					                    contextCred=sshCred,
+                                        startActions=[UploadAction(source="./input/hpccinf.txt", 
+                                                                   destination="/home/hpcc-user/hpccinf.txt", 
+                                                                   sshCred=sshCred),
+                                                      Action(command=fixSSHCmd,
+							                                             sshCred=sshCred),
+							                          AsyncAction(command=startCmd, 
+                                                                  sshCred=sshCred)],
                                         finishedChecks=[FileExistsFinishedCheck(fileName=doneFile,
                                                                                 sshCred=sshCred)],
                             
@@ -66,9 +64,12 @@ def main(argv=None):
                                                                       sshCred=sshCred)]),
 				    Role(slaveRole, "slave",
                                         ami=AMI(amiId="ami-1396a167"),
-                                        count=7,
+                                        count=1,
                                         instanceType=instanceType,
                                         contextCred=sshCred,
+                                        startActions=[UploadAction(source="./input/hpccinf.txt", 
+                                                                   destination="/home/hpcc-user/hpccinf.txt", 
+                                                                   sshCred=sshCred)],
                                         dataCollectors=[DataCollector(source="/home/dirac",
                                                                       destination=slaveOutDir + "home_dir",
                                                                       sshCred=sshCred),
