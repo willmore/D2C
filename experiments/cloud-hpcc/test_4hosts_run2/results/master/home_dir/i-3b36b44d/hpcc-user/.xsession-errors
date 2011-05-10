@@ -1,0 +1,113 @@
+/etc/gdm/Xsession: Beginning session setup...
+Setting IM through im-switch for locale=en_US.
+Start IM through /etc/X11/xinit/xinput.d/all_ALL linked to /etc/X11/xinit/xinput.d/default.
+GNOME_KEYRING_CONTROL=/tmp/keyring-KHytUP
+GNOME_KEYRING_CONTROL=/tmp/keyring-KHytUP
+SSH_AUTH_SOCK=/tmp/keyring-KHytUP/ssh
+GNOME_KEYRING_CONTROL=/tmp/keyring-KHytUP
+SSH_AUTH_SOCK=/tmp/keyring-KHytUP/ssh
+
+(gnome-power-manager:1290): Gtk-WARNING **: A floating object was finalized. This means that someone
+called g_object_unref() on an object that had only a floating
+reference; the initial floating reference is not owned by anyone
+and must be removed with g_object_ref_sink().
+
+(gnome-power-manager:1290): Gtk-WARNING **: A floating object was finalized. This means that someone
+called g_object_unref() on an object that had only a floating
+reference; the initial floating reference is not owned by anyone
+and must be removed with g_object_ref_sink().
+
+(gnome-power-manager:1290): Gtk-WARNING **: A floating object was finalized. This means that someone
+called g_object_unref() on an object that had only a floating
+reference; the initial floating reference is not owned by anyone
+and must be removed with g_object_ref_sink().
+
+(polkit-gnome-authentication-agent-1:1307): GLib-GObject-WARNING **: cannot register existing type `_PolkitError'
+
+(polkit-gnome-authentication-agent-1:1307): GLib-CRITICAL **: g_once_init_leave: assertion `initialization_value != 0' failed
+Unable to find a synaptics device.
+** Message: applet now removed from the notification area
+Initializing nautilus-gdu extension
+
+(nautilus:1314): GConf-CRITICAL **: gconf_value_free: assertion `value != NULL' failed
+** Message: applet now embedded in the notification area
+/usr/bin/compiz (core) - Fatal: Software rendering detected.
+/usr/bin/compiz (core) - Error: Failed to manage screen: 0
+/usr/bin/compiz (core) - Fatal: No manageable screens found on display :0.0
+
+(gnome-power-manager:1290): Gtk-WARNING **: A floating object was finalized. This means that someone
+called g_object_unref() on an object that had only a floating
+reference; the initial floating reference is not owned by anyone
+and must be removed with g_object_ref_sink().
+
+** (nm-applet:1309): WARNING **: _nm_object_get_property: Error getting 'State' for /org/freedesktop/NetworkManager/ActiveConnection/0: (19) Method "Get" with signature "ss" on interface "org.freedesktop.DBus.Properties" doesn't exist
+
+
+
+** (nm-applet:1309): WARNING **: _nm_object_get_property: Error getting 'Default' for /org/freedesktop/NetworkManager/ActiveConnection/0: (19) Method "Get" with signature "ss" on interface "org.freedesktop.DBus.Properties" doesn't exist
+
+
+** (nm-applet:1309): DEBUG: old state indicates that this was not a disconnect 9
+** (nm-applet:1309): DEBUG: going for offline with icon: notification-network-ethernet-disconnected
+
+(gnome-power-manager:1290): Gtk-WARNING **: A floating object was finalized. This means that someone
+called g_object_unref() on an object that had only a floating
+reference; the initial floating reference is not owned by anyone
+and must be removed with g_object_ref_sink().
+** (update-notifier:2095): DEBUG: aptdaemon on bus: 0
+** (update-notifier:2095): DEBUG: Skipping reboot required
+
+(gnome-power-manager:1290): Gtk-WARNING **: A floating object was finalized. This means that someone
+called g_object_unref() on an object that had only a floating
+reference; the initial floating reference is not owned by anyone
+and must be removed with g_object_ref_sink().
+
+(gnome-power-manager:1290): Gtk-WARNING **: A floating object was finalized. This means that someone
+called g_object_unref() on an object that had only a floating
+reference; the initial floating reference is not owned by anyone
+and must be removed with g_object_ref_sink().
+
+(gnome-power-manager:1290): Gtk-WARNING **: A floating object was finalized. This means that someone
+called g_object_unref() on an object that had only a floating
+reference; the initial floating reference is not owned by anyone
+and must be removed with g_object_ref_sink().
+
+(gnome-power-manager:1290): Gtk-WARNING **: A floating object was finalized. This means that someone
+called g_object_unref() on an object that had only a floating
+reference; the initial floating reference is not owned by anyone
+and must be removed with g_object_ref_sink().
+
+(gnome-power-manager:1290): Gtk-WARNING **: A floating object was finalized. This means that someone
+called g_object_unref() on an object that had only a floating
+reference; the initial floating reference is not owned by anyone
+and must be removed with g_object_ref_sink().
+
+(gnome-power-manager:1290): Gtk-WARNING **: A floating object was finalized. This means that someone
+called g_object_unref() on an object that had only a floating
+reference; the initial floating reference is not owned by anyone
+and must be removed with g_object_ref_sink().
+Window manager warning: CurrentTime used to choose focus window; focus window may not be correct.
+Window manager warning: Got a request to focus the no_focus_window with a timestamp of 0.  This shouldn't happen!
+
+(gnome-power-manager:1290): GLib-GObject-CRITICAL **: g_object_unref: assertion `G_IS_OBJECT (object)' failed
+
+(gnome-power-manager:1290): Gtk-WARNING **: A floating object was finalized. This means that someone
+called g_object_unref() on an object that had only a floating
+reference; the initial floating reference is not owned by anyone
+and must be removed with g_object_ref_sink().
+** Message: applet now removed from the notification area
+** Message: Got disconnected from the session message bus; retrying to reconnect every 10 seconds
+g_dbus_connection_real_closed: Remote peer vanished with error: Underlying GIOStream returned 0 bytes on an async read (g-io-error-quark, 0). Exiting.
+
+** (nm-applet:1309): CRITICAL **: dbus_g_proxy_disconnect_signal: assertion `!DBUS_G_PROXY_DESTROYED (proxy)' failed
+
+** (nm-applet:1309): CRITICAL **: dbus_g_proxy_disconnect_signal: assertion `!DBUS_G_PROXY_DESTROYED (proxy)' failed
+** Message: <info>  disconnected by the session bus.
+
+gnome-screensaver: Fatal IO error 11 (Resource temporarily unavailable) on X server :0.0.
+nm-applet: Fatal IO error 11 (Resource temporarily unavailable) on X server :0.0.
+update-notifier: Fatal IO error 11 (Resource temporarily unavailable) on X server :0.0.
+gdu-notification-daemon: Fatal IO error 11 (Resource temporarily unavailable) on X server :0.0.
+The application 'gnome-panel' lost its connection to the display :0.0;
+most likely the X server was shut down or you killed/destroyed
+the application.
