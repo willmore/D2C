@@ -10,5 +10,9 @@ D2C_PKGLIST = ['d2c',
 
 setup(name='d2c',
       version='1.0',
-      packages=D2C_PKGLIST
+      packages=D2C_PKGLIST,
+      scripts=['bin/d2c_gui'],
+      data_files=[("data/kernels", 
+                    ["data/kernels/2.6.35-24-virtual.tar", "data/kernels/2.6.35-24-virtual-x86_64.tar"]),
+                  ("data/gui/icons", ["data/icons/alien.png"])]
       )

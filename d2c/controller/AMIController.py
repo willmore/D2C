@@ -8,7 +8,6 @@ from wx.lib.pubsub import Publisher
 import traceback
 from threading import Thread
 from d2c.AMICreator import AMICreator
-from d2c.AMITools import AMIToolsFactory
 
 class _AmiLogMsg:
         
@@ -71,7 +70,7 @@ class AMIController:
         self.__amiView.setAMIs(self.__dao.getAMIs())
     
     def _handleAMIJobDone(self, msg):
-        (jobId, ami, code, exception) = msg.data
+        (_, ami, _, _) = msg.data
         print "HandleDone %s" % str(ami)
         self.__amiView.addAMIEntry(ami)   
     

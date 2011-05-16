@@ -24,7 +24,7 @@ class Application:
         self._amiToolsFactory = amiToolsFactory
         self._dao = dao
         self._app = wx.App()
-        
+
         self._frame = Gui()
         
         self._credController = ConfController(self._frame.getConfigurationPanel(), self._dao)

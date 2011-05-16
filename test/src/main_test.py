@@ -25,7 +25,7 @@ def main(argv=None):
     dao.setCredStore(credStore)
     
     conf = TestConfig("/home/willmore/test.conf")
-        
+    
     dao.saveConfiguration(conf)
     
     

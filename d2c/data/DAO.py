@@ -359,6 +359,8 @@ class DAO:
     def saveEC2Cred(self, ec2Cred):
         
         c = self.__getConn().cursor()
+        
+        c.execute("delete from ec2_cred where id=?", (ec2Cred.id,))
         c.execute("insert into ec2_cred (id, cert, private_key) values (?,?,?)",
                  (ec2Cred.id, ec2Cred.cert, ec2Cred.private_key))
         self.__getConn().commit()

@@ -10,6 +10,7 @@ from .ContainerPanel import ContainerPanel
 from .AMIPanel import AMIPanel
 from .ConfPanel import ConfPanel
 from .RawImagePanel import RawImagePanel
+import pkg_resources
 
 
 class Gui(wx.Frame):    
@@ -60,7 +61,8 @@ class Gui(wx.Frame):
         toolbar = self.CreateToolBar()
         
         ID_ADD_DEPLOYMENT = 1
-        toolbar.AddLabelTool(ID_ADD_DEPLOYMENT, '', wx.Bitmap('../../data/icons/alien.png'))
+        
+        toolbar.AddLabelTool(ID_ADD_DEPLOYMENT, '', wx.Bitmap(pkg_resources.resource_filename(__package__, "icons/alien.png")))
 
         hbox.Add(self._items, 0, wx.ALL|wx.EXPAND, 5)
         hbox.Add(self._containerPanel, 1, wx.ALL|wx.EXPAND, 5)

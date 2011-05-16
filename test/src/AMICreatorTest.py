@@ -17,7 +17,7 @@ from d2c.data.CredStore import CredStore
 class AMICreatorTest():
 
     def main(self):
-        print 
+         
         
         settings = {}
         for l in open("/home/willmore/test.conf", "r"):
