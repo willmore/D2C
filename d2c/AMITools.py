@@ -8,9 +8,9 @@ import subprocess
 from subprocess import Popen
 import string
 import platform
+import shutil
 import shlex
 import re
-import shutil
 import logger
 import pkg_resources
 from .EC2ConnectionFactory import EC2ConnectionFactory
@@ -102,7 +102,7 @@ class AMITools:
         __BUNDLE_CMD = "export EC2_HOME=%s; %s/bin/ec2-bundle-image -i %s -c %s -k %s -u %s -r %s -d %s --kernel %s"
     
         kernelId = {AMITools.ARCH_X86:"aki-4deec439", # eu west pygrub, i386
-                    AMITools.self.ARCH_X86_64:'aki-4feec43b'} # eu west pygrub, x86_64
+                    AMITools.ARCH_X86_64:'aki-4feec43b'} # eu west pygrub, x86_64
         
         bundleCmd = __BUNDLE_CMD % (self.__EC2_TOOLS, self.__EC2_TOOLS, 
                                     img, ec2Cred.cert, ec2Cred.private_key, 
@@ -114,19 +114,16 @@ class AMITools:
         
         return destDir + "/" + os.path.basename(img) + ".manifest.xml"
 
-    def extractRawImageOld(self, srcImg, destImg, log=logger.DevNullLogger()):
-        self.__execCmd("VBoxManage clonehd -format RAW %s %s" % (srcImg, destImg))
 
     def extractRawImage(self, srcImg, destImg, log=logger.DevNullLogger()):
-        self.__execCmd("VBoxManage clonehd -format RAW %s %s" % (srcImg, destImg))
+        
+        if ".vdi" in srcImg:
+            self.__execCmd("VBoxManage clonehd -format RAW %s %s" % (srcImg, destImg))
+        else:
+            self.__execCmd("cp %s %s" % (srcImg, destImg))
 
     def extractMainPartition(self, fullImg, outputImg):
-        if "Linux" == platform.system():
-            self.__extractMainPartitionLinux(fullImg, outputImg)
-        else:
-            raise UnsupportedPlatformError(platform.system())
-
-  
+        self.__extractMainPartitionLinux(fullImg, outputImg)
             
     def ec2izeImage(self, gf):
         """
@@ -141,23 +138,10 @@ class AMITools:
         assert isinstance(gf, GuestFS)
               
         try:
-            #Step 1: mount
-            #os.symlink(partitionImg, mntSrc)
-            #cmd = "mount %s" % mntSrc
-            
-            #self.__execCmd(cmd)
-            
+    
             roots = gf.inspect_os()
             assert (len(roots) == 1)
             root = roots[0]
-            
-            print "  Product name: %s" % (gf.inspect_get_product_name (root))
-            print "  Version:      %d.%d" % \
-                    (gf.inspect_get_major_version (root),
-                    gf.inspect_get_minor_version (root))
-            print "  Type:         %s" % (gf.inspect_get_type (root))
-            print "  Distro:       %s" % (gf.inspect_get_distro (root))
-            
             
             gf.mount(root, "/")
             
@@ -221,7 +205,10 @@ class AMITools:
                     raise UnsupportedImageError("More than one Linux partition found. Only one partition supported.")
                     
         if linuxPartition is None:
-            raise UnsupportedImageError("No Linux partition found")       
+            #Temp assume it is already a single partion
+            self.__logger.write("Assuming file is already a single partion, only renaming the image.")
+            shutil.move(fullImg, outputImg)  
+            return   
         
         blockSize = 512 #TODO check what the real size is
         

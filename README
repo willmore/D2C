@@ -49,5 +49,6 @@ EC2 AMI Tools dependencies:
 			- Might need to explicitly install libopenssl-ruby (maybe not necessary)
         - tee
         
- guestfish and python-guestfs
- http://libguestfs.org/download/binaries/debian-packages/
+guestfish and python-guestfs
+http://libguestfs.org/download/binaries/
+Be sure to read the associated README.txt for dependencies.

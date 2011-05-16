@@ -46,8 +46,10 @@ class AMICreator:
 
         jobId = str(time.time())
         jobDir = self.__JOB_ROOT + "/" + jobId
-        self.__logger.write("Job directory is: " + jobDir)
         
+        os.makedirs(jobDir)
+        self.__logger.write("Job directory is: " + jobDir)
+           
         imgName = os.path.basename(self.__srcImg)
         rawImg = jobDir + "/" + imgName + ".raw"
         
@@ -67,6 +69,8 @@ class AMICreator:
         gf.set_autosync(1)
         gf.set_qemu('/usr/local/bin/qemu-system-x86_64')
         gf.add_drive(outputImg)
+        self.__logger.write("Launching libguestfs - this could take a bit.")
+        gf.launch()
         
         self.__amiTools.ec2izeImage(gf)       
         
@@ -74,7 +78,6 @@ class AMICreator:
         TEST_FILE = "/bin/sh"
         arch = gf.file_architecture(gf.readlink(TEST_FILE)) if (gf.is_symlink(TEST_FILE)) else gf.file_architecture(TEST_FILE)
             
-        
         #sync and close handle
         del gf
 
