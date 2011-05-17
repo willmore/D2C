@@ -1,9 +1,0 @@
-Warning: Permanently added '10.58.177.206' (RSA) to the list of known hosts.
-Warning: Permanently added '10.59.27.26' (RSA) to the list of known hosts.
-Warning: Permanently added '10.58.183.28' (RSA) to the list of known hosts.
-HPL ERROR from process # 0, on line 376 of function HPL_pdinfo:
->>> Number of values of NB is less than 1 or greater than 20 <<<
-
-HPL ERROR from process # 0, on line 376 of function HPL_pdinfo:
->>> Number of values of NB is less than 1 or greater than 20 <<<
-

@@ -1,8 +1,0 @@
-Looking at Module: libsoundmenu.so
-Connected to Application Indicator Service.
-new_application_item ("Set Up Chat...")
-id_prop_update: assertion `priv->root != NULL' failed
-id_prop_update: assertion `priv->root != NULL' failed
-id_prop_update: assertion `priv->root != NULL' failed
-id_prop_update: assertion `priv->root != NULL' failed
-dbusmenu_menuitem_property_get_value: assertion `DBUSMENU_IS_MENUITEM(mi)' failed
