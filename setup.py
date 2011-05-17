@@ -5,7 +5,8 @@ D2C_PKGLIST = ['d2c',
                'd2c.controller',
                'd2c.data',
                'd2c.gui',
-               'd2c.model']
+               'd2c.model',
+               'd2c.graph']
     
 
 setup(name='d2c',
