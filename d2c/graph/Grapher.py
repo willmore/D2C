@@ -23,7 +23,10 @@ class Grapher:
              '000000','7B7B7B','999999','BBBBBB','CCCCCC','D9D9D9','EEEEEE','FFFFFF','CCCCCC']
     
     def generateMemoryGraph(self, start, end):
-        
+        '''
+        Generate one area:
+            a stack for total memory free and one stack for total memory used.
+        '''
         imageName = os.path.join(self.destDir, "Memory.png")
         
         usedDataSets = {}
@@ -45,14 +48,6 @@ class Grapher:
                 rrdFile = os.path.join(statDir, "memory-free.rrd")
                 ds = '%s-mem-free' % hostName
                 freeDataSets[ds] = 'DEF:%s=%s:value:AVERAGE' % (ds, rrdFile)
-                
-        
-        '''
-        cdef = "CDEF:mem-used=%s,%d,AVG" % (string.join(usedDataSets.keys(), ","), 
-                                            len(usedDataSets))
-        cdefSystem = "CDEF:mem-free=%s,%d,AVG" % (string.join(freeDataSets.keys(), ","), 
-                                            len(freeDataSets))
-        '''
         
         cdef = "CDEF:mem-used=%s,%s" % (string.join(usedDataSets.keys(), ","),
                                         string.join(['+' for _ in range(len(usedDataSets)-1)], ","))
@@ -77,12 +72,15 @@ class Grapher:
         args.append(cdef)
         args.append(cdefSystem)
         args.extend(lines)
-        print args
+
         apply(rrdtool.graph, args)
         
         return imageName
     
     def generateNetworkGraph(self, start, end):
+        '''
+        Generate two lines per host: one for TX and one for RX
+        '''
         
         imageName = os.path.join(self.destDir, "TotalNetwork.png")
         
@@ -155,11 +153,14 @@ class Grapher:
       
       
     def generateLoadGraph(self, start, end):
+        '''
+        Graph 3 line per host:
+            shortterm, midterm, and longterm
+        '''
         
         imageName = os.path.join(self.destDir, "Load.png")
         
         dataSets = {}
-        cpuDirRegex = re.compile("load\-(\d+)")
         
         for (hostName,hostDir) in self.srcs.iteritems():
 
@@ -192,7 +193,8 @@ class Grapher:
              '--end', end,
              '--vertical-label', 'Load',
              '--title', 'Host Load',
-             '--lower-limit', '0',]
+             '--lower-limit', '0']
+        
         args.extend(dataSets.values())
         args.extend(lines)
         
@@ -247,21 +249,24 @@ class Grapher:
         return imageName
     
     def generateCPUGraphsAverage(self, start, end):
+        '''
+        Generate one area for average host user CPU and one stack for average System CPU
+        '''
         
         imageName = os.path.join(self.destDir, "CPU.png")
         
         userDataSets = {}
         systemDataSets = {}
+        stealDataSets = {}
         cpuDirRegex = re.compile(".*cpu\-(\d+)$")
         
         for (hostName,hostDir) in self.srcs.iteritems():
            
             for statDir in [os.path.join(hostDir, d) for d in os.listdir(hostDir)]:                
                 m = cpuDirRegex.match(statDir)
-                #print statDir
+
                 if m is None:
                     continue
-                print  "Got Match"
 
                 cpuId = m.group(1)
                 rrdFile = os.path.join(statDir, "cpu-user.rrd")
@@ -271,6 +276,10 @@ class Grapher:
                 rrdFile = os.path.join(statDir, "cpu-system.rrd")
                 ds = '%s-system-cpu%s' % (hostName, cpuId)
                 systemDataSets[ds] = 'DEF:%s=%s:value:AVERAGE' % (ds, rrdFile)
+                
+                rrdFile = os.path.join(statDir, "cpu-steal.rrd")
+                ds = '%s-steal-cpu%s' % (hostName, cpuId)
+                stealDataSets[ds] = 'DEF:%s=%s:value:AVERAGE' % (ds, rrdFile)
         
         
         cdef = "CDEF:cpu-user=%s,%d,AVG" % (string.join(userDataSets.keys(), ","), 
@@ -278,8 +287,12 @@ class Grapher:
         cdefSystem = "CDEF:cpu-system=%s,%d,AVG" % (string.join(systemDataSets.keys(), ","), 
                                             len(systemDataSets))
         
-        lines = ["AREA:cpu-user#0000FF:CPU User:",
-                "AREA:cpu-system#FF0000:CPU System:STACK"]
+        cdefSteal = "CDEF:cpu-steal=%s,%d,AVG" % (string.join(stealDataSets.keys(), ","), 
+                                             len(stealDataSets))
+        
+        lines = ["AREA:cpu-user#00FF00:CPU User:",
+                "AREA:cpu-system#0000FF:CPU System:STACK",
+                "AREA:cpu-steal#FF0000:CPU Steal:STACK"]
             
         args = [imageName,
                 '--imgformat', 'PNG',
@@ -293,11 +306,12 @@ class Grapher:
         
         args.extend(userDataSets.values())
         args.extend(systemDataSets.values())
+        args.extend(stealDataSets.values())
         args.append(cdef)
         args.append(cdefSystem)
+        args.append(cdefSteal)
         args.extend(lines)
         
-        print args
         apply(rrdtool.graph, args)
         
         return imageName
