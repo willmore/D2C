@@ -8,6 +8,7 @@ from d2c.gui.DeploymentWizard import DeploymentWizard
 from d2c.model.AMI import AMI
 from d2c.model.Role import Role
 from d2c.model.Deployment import Deployment
+from d2c.model.InstanceType import InstanceType
 from wx.lib.pubsub import Publisher
 
 class DeploymentWizardController:
@@ -17,12 +18,12 @@ class DeploymentWizardController:
         self.dao = dao
         self.wizard = deploymentWizard
         
-        self.wizard.container.getPanel("ROLES").getPanel("ROLES").nextButton.Bind(wx.EVT_BUTTON, self.showDeplomentSettingsPanel)
+        #self.wizard.container.getPanel("ROLES").getPanel("ROLES").nextButton.Bind(wx.EVT_BUTTON, self.showDeplomentSettingsPanel)
         self.wizard.container.getPanel("ROLES").getPanel("ROLES").addRoleButton.Bind(wx.EVT_BUTTON, self.showAddRolePanel)
         
         self.wizard.container.getPanel("ROLES").getPanel("ADD_ROLE").amiList.setAMIs(dao.getAMIs())
         self.wizard.container.getPanel("ROLES").getPanel("ADD_ROLE").addRoleButton.Bind(wx.EVT_BUTTON, self.addRole)
-        self.wizard.container.getPanel("CONF").finishButton.Bind(wx.EVT_BUTTON, self.addDeployment)
+        self.wizard.container.getPanel("ROLES").getPanel("ROLES").finishButton.Bind(wx.EVT_BUTTON, self.addDeployment)
         
         self.wizard.container.getPanel("COMPLETION").okButton.Bind(wx.EVT_BUTTON, self.done)
         
@@ -63,10 +64,11 @@ class DeploymentWizardController:
         roleName = p.roleName.GetValue()
         hostCount = int(p.hostCount.GetValue())
         amis = p.amiList.getSelectedAMIs()
+        instanceType = InstanceType.TYPES[p.instanceType.GetValue()]
         
         assert len(amis) == 1, "Only one AMI at a time supported"
         
-        role = Role(self.newName, roleName, amis[0], hostCount)
+        role = Role(self.newName, roleName, amis[0], hostCount, instanceType)
         
         self.wizard.container.getPanel("ROLES").getPanel("ROLES").roleList.addRole(role)
         

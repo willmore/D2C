@@ -25,4 +25,11 @@ class InstanceType:
 InstanceType.T1_MICRO = InstanceType('t1.micro', 2, 613, 0, (Architecture.X86, Architecture.X86_64))
 InstanceType.M1_SMALL = InstanceType('m1.small', 1, 1700, 160, (Architecture.X86))
 InstanceType.M1_LARGE = InstanceType('m1.large', 2, 7500, 850, (Architecture.X86_64))
+InstanceType.M1_XLARGE = InstanceType('m1.xlarge', 4, 15000, 850, (Architecture.X86_64))
+
+
+InstanceType.TYPES = {InstanceType.T1_MICRO.name: InstanceType.T1_MICRO, 
+                      InstanceType.M1_SMALL.name: InstanceType.M1_SMALL,
+                      InstanceType.M1_LARGE.name: InstanceType.M1_LARGE,
+                      InstanceType.M1_XLARGE.name: InstanceType.M1_XLARGE}
     

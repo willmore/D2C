@@ -65,7 +65,7 @@ class MyScrolledWindow(wx.Frame):
 
 class MyApp(wx.App):
    def OnInit(self):
-       frame = MyScrolledWindow(None, -1, 'Deployment Metrics')
+       frame = MyScrolledWindow(None, -1, 'Deployment Metricsw')
        frame.Show(True)
        frame.Centre()
        return True

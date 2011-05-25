@@ -20,7 +20,7 @@ class Grapher:
         pass
 
     colors = ['000000','7B0000','990000','BB0000','CC0000','D90000','EE0000','FF0000','CC0000',
-             '000000','7B7B7B','999999','BBBBBB','CCCCCC','D9D9D9','EEEEEE','FFFFFF','CCCCCC']
+              '7B7B7B','999999','BBBBBB','CCCCCC','D9D9D9','EEEEEE','FFFFFF','CCCCCC']
     
     def generateMemoryGraph(self, start, end):
         '''
