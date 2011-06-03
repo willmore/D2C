@@ -40,7 +40,7 @@ class ConfController:
         awsCred = AWSCred(self._credView._aws_key_id.GetValue(),
                           self._credView._aws_secret_access_key.GetValue())
         
-        ec2Cred = EC2Cred(self._credView._ec2_cert.GetValue(),
+        ec2Cred = EC2Cred("defaultEC2Cred", self._credView._ec2_cert.GetValue(),
                 self._credView._ec2_private_key.GetValue())
         
         ec2ToolHome = self._credView.ec2_tool_home.GetValue();
@@ -52,3 +52,5 @@ class ConfController:
                              awsCred=awsCred)
         
         self._dao.saveConfiguration(conf)
+        
+        self._credView.EndModal(wx.ID_OK)

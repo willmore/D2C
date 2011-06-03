@@ -52,3 +52,5 @@ class ConfController:
                              awsCred=awsCred)
         
         self._dao.saveConfiguration(conf)
+        
+        self._credView.EndModal(wx.ID_OK)

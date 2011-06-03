@@ -42,15 +42,14 @@ class DeploymentWizardController:
     def addDeployment(self, event):
         
         roles = self.wizard.roleWizard.getPanel("ROLES").roleList.getRoles()
-        
+                
         #TODO
         startActions = ()
         
         #TODO
         dataCollections = ()
         
-        deployment = Deployment(self.newName, roles, 
-                                startActions, dataCollections)
+        deployment = Deployment(self.newName, roles=roles)
     
         self.dao.saveDeployment(deployment)
         

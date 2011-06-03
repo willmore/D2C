@@ -10,6 +10,7 @@ from .ContainerPanel import ContainerPanel
 from .AMIPanel import AMIPanel
 from .ConfPanel import ConfPanel
 from .RawImagePanel import RawImagePanel
+import pkg_resources
 
 
 class Gui(wx.Frame):    
@@ -18,7 +19,6 @@ class Gui(wx.Frame):
     _ID_ADD_IMAGE = 2
     
     #Labels
-    LABEL_CONFIGURATION = "Configuration"
     LABEL_SOURCE_IMAGES = "Source Images"
     LABEL_AMIS = "AMIs"
     
@@ -36,17 +36,14 @@ class Gui(wx.Frame):
 
         self.Bind(wx.EVT_MENU, self.OnQuit, id=1)
         
-        #gridSizer = wx.FlexGridSizer(rows=1, cols=2, hgap=5, vgap=5)
-        #gridSizer.AddGrowableCol(1, 1)
         vbox = wx.BoxSizer(wx.VERTICAL)
         hbox = wx.BoxSizer(wx.HORIZONTAL)
   
         labels = []
         self._containerPanel = ContainerPanel(self)
-        for (label, panel) in [(self.LABEL_CONFIGURATION, ConfPanel(self._containerPanel)),
-                               (self.LABEL_SOURCE_IMAGES, RawImagePanel(self._containerPanel)),
-                               (self.LABEL_AMIS, AMIPanel(self._containerPanel))
-                               ]:
+        
+        for (label, panel) in [(self.LABEL_SOURCE_IMAGES, RawImagePanel(self._containerPanel)),
+                               (self.LABEL_AMIS, AMIPanel(self._containerPanel))]:
             self._containerPanel.addPanel(label, panel)
             labels.append(label)
         
@@ -60,7 +57,10 @@ class Gui(wx.Frame):
         toolbar = self.CreateToolBar()
         
         ID_ADD_DEPLOYMENT = 1
-        toolbar.AddLabelTool(ID_ADD_DEPLOYMENT, '', wx.Bitmap('../../data/icons/alien.png'))
+        ID_CONF = 2
+        
+        toolbar.AddLabelTool(ID_CONF, '', wx.Bitmap(pkg_resources.resource_filename(__package__, "icons/Configuration-Settings-icon.png")))
+        toolbar.AddLabelTool(ID_ADD_DEPLOYMENT, '', wx.Bitmap(pkg_resources.resource_filename(__package__, "icons/network-icon.png")))
 
         hbox.Add(self._items, 0, wx.ALL|wx.EXPAND, 5)
         hbox.Add(self._containerPanel, 1, wx.ALL|wx.EXPAND, 5)
@@ -79,6 +79,9 @@ class Gui(wx.Frame):
     def bindAddDeploymentTool(self, method):
         self.Bind(wx.EVT_TOOL, method, id=1) #TODO unhardcode id 
         
+    def bindConfTool(self, method):
+        self.Bind(wx.EVT_TOOL, method, id=2) #TODO unhardcode id
+        
     #TODO move to controller
     
     
@@ -89,9 +92,6 @@ class Gui(wx.Frame):
     def setSelection(self, label):
         self._items.SetStringSelection(label)
         self._containerPanel.showPanel(self._items.GetStringSelection())
-        
-    def getConfigurationPanel(self):
-        return self._containerPanel.getPanel(self.LABEL_CONFIGURATION)
     
     def getImagePanel(self):
         return self._containerPanel.getPanel(self.LABEL_SOURCE_IMAGES)

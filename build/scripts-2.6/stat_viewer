@@ -1,0 +1,74 @@
+# /usr/bin/python
+'''
+Created on May 13, 2011
+
+@author: willmore
+'''
+
+from d2c.graph.Grapher import Grapher
+import wx
+import tempfile
+import sys
+import os
+
+hostsDir = sys.argv[1]
+start = sys.argv[2]
+end = sys.argv[3]
+
+imgHeight = 100
+imgWidth = 540
+
+hostDirMap = {} 
+
+for host, dir in [(dir, os.path.join(hostsDir, dir)) 
+                    for dir in os.listdir(hostsDir) 
+                        if os.path.isdir(os.path.join(hostsDir, dir))]:
+    hostDirMap[host] = dir
+
+print hostDirMap
+grapher = Grapher(hostDirMap, tempfile.mkdtemp(), imgWidth, imgHeight)
+
+cpuImg = grapher.generateCPUGraphsAverage(start, end)
+memImg = grapher.generateMemoryGraph(start, end)
+netImg = grapher.generateNetworkGraph(start, end)
+loadImg = grapher.generateLoadGraph(start, end)
+
+class MyScrolledWindow(wx.Frame):
+   def __init__(self, parent, id, title):
+       wx.Frame.__init__(self, parent, id, title, size=(imgWidth+125, 400))
+
+       sizer = wx.BoxSizer(wx.VERTICAL)
+       sw = wx.ScrolledWindow(self)
+       bmp = wx.Image(cpuImg,wx.BITMAP_TYPE_PNG).ConvertToBitmap()
+       
+       hsizer = wx.BoxSizer(wx.HORIZONTAL)
+       hsizer.Add(wx.StaticBitmap(sw, -1, bmp))
+       sizer.Add(hsizer)
+       
+       bmp = wx.Image(memImg,wx.BITMAP_TYPE_PNG).ConvertToBitmap()
+       hsizer = wx.BoxSizer(wx.HORIZONTAL)
+       hsizer.Add(wx.StaticBitmap(sw, -1, bmp))
+       sizer.Add(hsizer)
+       
+       bmp = wx.Image(netImg,wx.BITMAP_TYPE_PNG).ConvertToBitmap()
+       hsizer = wx.BoxSizer(wx.HORIZONTAL)
+       hsizer.Add(wx.StaticBitmap(sw, -1, bmp))
+       sizer.Add(hsizer)
+       
+       bmp = wx.Image(loadImg,wx.BITMAP_TYPE_PNG).ConvertToBitmap()
+       hsizer = wx.BoxSizer(wx.HORIZONTAL)
+       hsizer.Add(wx.StaticBitmap(sw, -1, bmp))
+       sizer.Add(hsizer)
+       
+       sw.SetScrollbars(20,20,55,40)
+       sw.SetSizer(sizer)
+
+class MyApp(wx.App):
+   def OnInit(self):
+       frame = MyScrolledWindow(None, -1, 'Deployment Metricsw')
+       frame.Show(True)
+       frame.Centre()
+       return True
+
+app = MyApp(0)
+app.MainLoop()

@@ -335,14 +335,12 @@ class DAO:
              
     def rowToDeployment(self, row):
         print self
-        return Deployment(row['name'], 
-                          ec2ConnFactory=self.__ec2ConnFactory)
+        return Deployment(row['name'])
         
     def rowToRole(self, row):
         return Role(row['deploy'], row['name'], 
                     row['ami'], row['count'], 
-                    self.__instanceType(row['instance_type']),
-                    ec2ConnFactory=self.__ec2ConnFactory)
+                    self.__instanceType(row['instance_type']))
     
     def getEC2Cred(self, id):
         
@@ -359,6 +357,8 @@ class DAO:
     def saveEC2Cred(self, ec2Cred):
         
         c = self.__getConn().cursor()
+        
+        c.execute("delete from ec2_cred where id=?", (ec2Cred.id,))
         c.execute("insert into ec2_cred (id, cert, private_key) values (?,?,?)",
                  (ec2Cred.id, ec2Cred.cert, ec2Cred.private_key))
         self.__getConn().commit()

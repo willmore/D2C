@@ -9,6 +9,8 @@ import time
 
 from d2c.data.DAO import DAO
 
+from guestfs import GuestFS
+
 def can_create_ami(srcImg):
     """
     returns true if an AMI can be created
@@ -44,8 +46,10 @@ class AMICreator:
 
         jobId = str(time.time())
         jobDir = self.__JOB_ROOT + "/" + jobId
-        self.__logger.write("Job directory is: " + jobDir)
         
+        os.makedirs(jobDir)
+        self.__logger.write("Job directory is: " + jobDir)
+           
         imgName = os.path.basename(self.__srcImg)
         rawImg = jobDir + "/" + imgName + ".raw"
         
@@ -59,14 +63,31 @@ class AMICreator:
         self.__amiTools.extractMainPartition(rawImg, outputImg)
         
         self.__logger.write("EC2izing image")
-        self.__amiTools.ec2izeImage(outputImg)       
+        
+        gf = GuestFS ()
+        gf.set_trace(1)
+        gf.set_autosync(1)
+        gf.set_qemu('/usr/local/bin/qemu-system-x86_64')
+        gf.add_drive(outputImg)
+        self.__logger.write("Launching libguestfs - this could take a bit.")
+        gf.launch()
+        
+        self.__amiTools.ec2izeImage(gf)       
+        
+        #TODO remove duplicate arch test
+        TEST_FILE = "/bin/sh"
+        arch = gf.file_architecture(gf.readlink(TEST_FILE)) if (gf.is_symlink(TEST_FILE)) else gf.file_architecture(TEST_FILE)
+            
+        #sync and close handle
+        del gf
 
         self.__logger.write("Bundling AMI")
         bundleDir = jobDir + "/bundle"
         manifest = self.__amiTools.bundleImage(outputImg, 
                                                bundleDir, 
                                                self.__ec2Cred,
-                                               self.__userId) 
+                                               self.__userId,
+                                               arch) 
     
         self.__logger.write("Uploading bundle")
         s3ManifestPath = self.__amiTools.uploadBundle("ee.ut.cs.cloud/testupload/" + str(time.time()), 

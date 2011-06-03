@@ -9,6 +9,7 @@ from wx.lib.pubsub import Publisher
 
 from d2c.gui.Gui import Gui
 from controller.ConfController import ConfController
+from d2c.gui.ConfPanel import ConfPanel
 from controller.ImageController import ImageController
 from controller.AMIController import AMIController
 from d2c.gui.DeploymentWizard import DeploymentWizard
@@ -24,15 +25,15 @@ class Application:
         self._amiToolsFactory = amiToolsFactory
         self._dao = dao
         self._app = wx.App()
-        
+
         self._frame = Gui()
         
-        self._credController = ConfController(self._frame.getConfigurationPanel(), self._dao)
         self._imageController = ImageController(self._frame.getImagePanel(), self._dao)
         self._amiController = AMIController(self._frame.getAMIPanel(), self._dao, self._amiToolsFactory)
         self.loadDeploymentPanels()
         
         self._frame.bindAddDeploymentTool(self.addDeployment)
+        self._frame.bindConfTool(self.showConf)
         
         Publisher.subscribe(self._handleNewDeployment, "DEPLOYMENT CREATED")
         
@@ -55,11 +56,18 @@ class Application:
         self.deplomentControllers[deployment.id] = DeploymentController(deployPanel, self._dao)
     
     def addDeployment(self, event):
-        mywiz = DeploymentWizard(None, -1, 'Simple Wizard')
+        mywiz = DeploymentWizard(None, -1, 'Deployment Creation Wizard', size=(600,400))
     
         controller = DeploymentWizardController(mywiz, self._dao)
         mywiz.ShowModal()
         mywiz.Destroy()
+        
+    def showConf(self, event):
+        
+        conf = ConfPanel(None, size=(600,300))
+        controller = ConfController(conf, self._dao)
+        conf.ShowModal()
+        conf.Destroy()
         
     def MainLoop(self):
         self._app.MainLoop()

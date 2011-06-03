@@ -335,14 +335,12 @@ class DAO:
              
     def rowToDeployment(self, row):
         print self
-        return Deployment(row['name'], 
-                          ec2ConnFactory=self.__ec2ConnFactory)
+        return Deployment(row['name'])
         
     def rowToRole(self, row):
         return Role(row['deploy'], row['name'], 
                     row['ami'], row['count'], 
-                    self.__instanceType(row['instance_type']),
-                    ec2ConnFactory=self.__ec2ConnFactory)
+                    self.__instanceType(row['instance_type']))
     
     def getEC2Cred(self, id):
         

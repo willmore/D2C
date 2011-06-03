@@ -5,6 +5,8 @@ Created on Feb 15, 2011
 '''
 import wx
 from threading import Thread
+from d2c.EC2ConnectionFactory import EC2ConnectionFactory 
+from d2c.logger import StdOutLogger
 
 class DeploymentThread(Thread):
         
@@ -45,12 +47,19 @@ class DeploymentController:
         
         self.deployment = deploymentView.deployment
         
-    
-
     def handleLaunch(self, evt):
         
-        ret = wx.MessageBox('Are you sure you want to start? AWS charges will start.', 'Question', wx.YES_NO)
+        ret = wx.MessageBox('Are you sure you want to start? AWS charges will start at the rate of $%.2f per hour' % self.deployment.costPerHour(), 'Question', wx.YES_NO)
+        
         if wx.YES == ret:
+            
+            self.deploymentView.deployButton.Hide()
+            
+            conf = self.dao.getConfiguration()
+            self.deployment.setEC2ConnFactory(EC2ConnectionFactory(conf.awsCred.access_key_id, 
+                                                                   conf.awsCred.secret_access_key,
+                                                                   StdOutLogger()))
+            
             self.deployment.addAnyStateChangeListener(PersistenceListener(self.dao))
             self.deployment.addAnyStateChangeListener(ViewListener(self.deploymentView))
             self.deploymentThread = DeploymentThread(self.deployment)

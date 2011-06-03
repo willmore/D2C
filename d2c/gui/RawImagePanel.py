@@ -13,7 +13,7 @@ class RawImagePanel(wx.Panel):
 
         vbox = wx.BoxSizer(wx.VERTICAL)
         
-        self._list = wx.ListCtrl(self, -1, style=wx.LC_REPORT, size=(110,300))
+        self._list = wx.ListCtrl(self, -1, style=wx.LC_REPORT, size=(110,200))
         
         hbox1 = wx.BoxSizer(wx.HORIZONTAL)
         hbox1.Add(self._list, 1, wx.EXPAND)
@@ -31,13 +31,13 @@ class RawImagePanel(wx.Panel):
     
         self.createAMIButton = wx.Button(self, wx.ID_ANY, 'Create AMI', size=(110, -1))
     
-        hbox2.Add(self._addButton, 0, wx.ALIGN_CENTER_VERTICAL)
-        hbox2.Add(self._findButton, 0, wx.ALIGN_CENTER_VERTICAL)
-        hbox2.Add(self._newFile, 1, wx.ALIGN_CENTER_VERTICAL)
+        hbox2.Add(self._addButton, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 2)
+        hbox2.Add(self._findButton, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 2)
+        hbox2.Add(self._newFile, 1, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 2)
         
         vbox.Add(hbox1, 1, wx.EXPAND)
         vbox.Add(hbox2, 0, wx.EXPAND)
-        vbox.Add(self.createAMIButton, 0)
+        vbox.Add(self.createAMIButton, 0, wx.ALL, 2)
         self.SetSizer(vbox)
         
     def SetImages(self, images): 

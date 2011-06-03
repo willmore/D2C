@@ -111,14 +111,24 @@ class Deployment:
         self.pollRate = pollRate
     
     def setEC2ConnFactory(self, ec2ConnFactory):
-        assert self.ec2ConnFactory is None  
+
         self.ec2ConnFactory = ec2ConnFactory
+        
+        for role in self.roles:
+            role.setEC2ConnFactory(ec2ConnFactory)
     
     def getState(self):
         pass
     
     def addRole(self, role):
         self.roles.append(role)
+       
+    def costPerHour(self):
+        sum = 0
+        for r in self.roles:
+            sum += r.costPerHour()
+            
+        return sum
         
     def pause(self):
         '''

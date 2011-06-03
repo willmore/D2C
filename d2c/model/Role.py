@@ -59,11 +59,12 @@ class Role:
     
     def setEC2ConnFactory(self, ec2ConnFactory):
         self.ec2ConnFactory = ec2ConnFactory  
-        
+     
+    def costPerHour(self):
+        return self.count * self.instanceType.costPerHour
+       
     def launch(self):
         
-        
-       
         ec2Conn = self.ec2ConnFactory.getConnection()
        
         launchKey = self.launchCred.id if self.launchCred is not None else None
@@ -105,6 +106,10 @@ class Role:
         This will be reworked in the the future to create a more full-featured 
         context scheme.
         '''
+        
+        if (self.contextCred is None):
+            self.logger.write("Role has no context cred. Cannot contextualize.")
+            return
         
         ctxt = string.join(ips, "\n")
         cmd = "echo -e \"%s\" > /tmp/d2c.context" % ctxt

@@ -11,13 +11,13 @@ class RolePanel(wx.Panel):
         
         self.roleList = RoleList(self, -1, style=wx.LC_REPORT)
 
-        self.sizer.Add(self.roleList, 0, wx.ALL|wx.EXPAND)
+        self.sizer.Add(self.roleList, 0, wx.EXPAND|wx.ALL, 5)
         
         self.addRoleButton = wx.Button(self, wx.ID_ANY, 'Add New Role', size=(110, -1))
-        self.sizer.Add(self.addRoleButton, 0, wx.ALIGN_RIGHT)
+        self.sizer.Add(self.addRoleButton, 0, wx.ALIGN_RIGHT|wx.ALL, 2)
         
         self.finishButton = wx.Button(self, wx.ID_ANY, 'Finish', size=(110, -1))
-        self.sizer.Add(self.finishButton, 0, wx.ALIGN_RIGHT)
+        self.sizer.Add(self.finishButton, 0, wx.ALIGN_RIGHT|wx.ALL, 2)
         
         self.SetSizer(self.sizer)
 
@@ -51,9 +51,9 @@ class AddRolePanel(wx.Panel):
                         (self.roleName, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL|wx.EXPAND|wx.ALL, 2),
                         
                         (wx.StaticText(self, -1, 'Host Count'),0, wx.ALIGN_RIGHT|wx.ALL, 2),
-                        (self.hostCount, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL|wx.EXPAND|wx.ALL, 2),
+                        (self.hostCount, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 2),
                         
-                        (wx.StaticText(self, -1, 'Image Type'),0, wx.ALIGN_RIGHT|wx.ALL, 2),
+                        (wx.StaticText(self, -1, 'Instance Type'),0, wx.ALIGN_RIGHT|wx.ALL, 2),
                         (self.instanceType, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL|wx.EXPAND|wx.ALL, 2),
                         (wx.StaticText(self, -1, 'Start Script'),0, wx.ALIGN_RIGHT|wx.ALL, 2),
                         (self.startScript, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL|wx.EXPAND|wx.ALL, 2),
@@ -119,7 +119,7 @@ class NamePanel(wx.Panel):
         self.nextButton = wx.Button(self, wx.ID_ANY, 'Next', size=(110, -1))
         
         hbox = wx.BoxSizer(wx.HORIZONTAL)
-        hbox.Add(self.nextButton, 0, wx.ALIGN_RIGHT)
+        hbox.Add(self.nextButton, 0, wx.ALIGN_RIGHT|wx.ALL, 5)
         self.sizer.Add(hbox, 0, wx.ALIGN_RIGHT)
         
         self.SetSizer(self.sizer)

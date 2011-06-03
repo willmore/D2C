@@ -1,0 +1,16 @@
+Source: d2c
+Section: d2c
+Priority: optional
+Maintainer: Chris Willmore <willmore@ut.ee>
+Build-Depends: debhelper (>=7.0.50~), python-support (>= 0.6), cdbs (>= 0.4.49), python-all-dev
+Standards-Version: 3.9.2.0
+
+Package: d2c
+Architecture: all
+Homepage: http://yourprojectshomepade.com/
+XB-Python-Version: ${python:Versions}
+Depends: ${misc:Depends}, ${python:Depends}, 
+ python-guestfs (>=1.11.0), python-boto (>=1.9b), 
+ python-wxgtk2.8 (>= 2.8.10.1), python-sqlite (>= 1.0.1)
+Description: Desktop-2-Cloud: Deploy your local VM images on the Cloud
+ This is some long description...
