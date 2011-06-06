@@ -52,3 +52,4 @@ EC2 AMI Tools dependencies:
 guestfish and python-guestfs
 http://libguestfs.org/download/binaries/
 Be sure to read the associated README.txt for dependencies.
+
