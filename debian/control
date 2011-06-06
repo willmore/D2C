@@ -12,6 +12,7 @@ XB-Python-Version: ${python:Versions}
 Depends: ${misc:Depends}, ${python:Depends}, 
  python-guestfs (>=1.11.0), python-boto (>=1.9b), 
  python-wxgtk2.8 (>= 2.8.10.1), python-sqlite (>= 1.0.1),
- libguestfs0 (>= 1.11.8), python-guestfs (>=1.11.8)
+ libguestfs0 (>= 1.11.8), python-guestfs (>=1.11.8),
+ ruby (>= 4.5)
 Description: Desktop-2-Cloud: Deploy your local VM images on the Cloud
  This is some long description...

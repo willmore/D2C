@@ -27,11 +27,13 @@ class EC2ConnectionFactory:
         self.__secretKey = args[1]
         self.__ec2Conn = None
         
-    def getConnection(self, region=None):
+    def getConnection(self, region):
         
         #TODO worry about thread safety?
         #TODO un-hardcode
-        region = "eu-west-1" if region is None else region
+        #region = "eu-west-1" if region is None else region
+        
+        assert region is not None
         
         if hasattr(self, 'credStore'):
             cred = self.credStore.getDefaultAWSCred()

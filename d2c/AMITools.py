@@ -94,15 +94,35 @@ class AMITools:
         
         return bucket + "/" + os.path.basename(manifest)
 
-    def bundleImage(self, img, destDir, ec2Cred, userId, arch):
+    def bundleImage(self, img, destDir, region, ec2Cred, userId, arch, kernelId):
+    
+        if not os.path.exists(destDir):
+            os.makedirs(destDir)
+    
+        __BUNDLE_CMD = "export EC2_HOME=%s; %s/bin/ec2-bundle-image -i %s -c %s -k %s -u %s -r %s -d %s --kernel %s"
+        
+        bundleCmd = __BUNDLE_CMD % (self.__EC2_TOOLS, self.__EC2_TOOLS, 
+                                    img, ec2Cred.cert, ec2Cred.private_key, 
+                                    userId, arch, destDir, kernelId)
+        
+        self.__logger.write("Executing: " + bundleCmd)
+        
+        self.__execCmd(bundleCmd)
+        
+        return destDir + "/" + os.path.basename(img) + ".manifest.xml"
+    
+    def bundleImageOld(self, img, destDir, ec2Cred, userId, arch, kernelId):
     
         if not os.path.exists(destDir):
             os.makedirs(destDir)
     
         __BUNDLE_CMD = "export EC2_HOME=%s; %s/bin/ec2-bundle-image -i %s -c %s -k %s -u %s -r %s -d %s --kernel %s"
     
-        kernelId = {AMITools.ARCH_X86:"aki-4deec439", # eu west pygrub, i386
-                    AMITools.ARCH_X86_64:'aki-4feec43b'} # eu west pygrub, x86_64
+        if kernelId is None:
+            self.__logger.writer("Auto-assigning kernel")
+            kernelId = {AMITools.ARCH_X86:"aki-4deec439", # eu west pygrub, i386
+                        AMITools.ARCH_X86_64:'aki-4feec43b'} # eu west pygrub, x86_64
+        
         
         bundleCmd = __BUNDLE_CMD % (self.__EC2_TOOLS, self.__EC2_TOOLS, 
                                     img, ec2Cred.cert, ec2Cred.private_key, 
@@ -113,6 +133,12 @@ class AMITools:
         self.__execCmd(bundleCmd)
         
         return destDir + "/" + os.path.basename(img) + ".manifest.xml"
+    
+    
+    
+    
+    
+    
 
 
     def extractRawImage(self, srcImg, destImg, log=logger.DevNullLogger()):

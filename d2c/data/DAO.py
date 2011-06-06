@@ -106,7 +106,14 @@ class DAO:
                     value float not null,
                     primary key (instance_id, metric, time)
                     foreign key(instance_id) references deploy_role_instance(instance))''')
-    
+        '''
+        c.execute(
+                    create table if not exists ec2_region
+                    (
+                    )
+                 )
+        '''
+        
         for name, unit in [('CPUUtilization', 'Percent'),
                            ("NetworkIn", "Bytes"),
                            ("NetworkOut", "Bytes"),
