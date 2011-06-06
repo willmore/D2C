@@ -4,6 +4,7 @@
 .pyproject
 .pydevproject
 .svn
+build
 dist
 MANIFEST
 build
