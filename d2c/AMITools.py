@@ -6,16 +6,10 @@ Created on Mar 3, 2011
 import os
 import subprocess
 from subprocess import Popen
-import string
-import platform
-import shutil
-import shlex
-import re
-import logger
 import pkg_resources
-from .EC2ConnectionFactory import EC2ConnectionFactory
-
-from guestfs import GuestFS
+import guestfs
+from d2c.model.Storage import S3Storage
+from d2c.logger import StdOutLogger
 
 class UnsupportedPlatformError(Exception):
     def __init__(self, value):
@@ -36,30 +30,18 @@ class AMIToolsFactory:
         #self.ec2ConnFactory = ec2ConnFactory
         pass
     
-    def getAMITools(self, ec2_tools, accessKey, secretKey, logger):
-        return AMITools(ec2_tools, accessKey, secretKey, 
-                        EC2ConnectionFactory(accessKey, secretKey, logger),
-                        logger)
-
+    def getAMITools(self, accessKey, secretKey, logger):
+        return AMITools(accessKey, secretKey, logger)
 
 class AMITools:
 
     ARCH_X86 = 'i386'
     ARCH_X86_64 = 'x86_64'
 
-    def __init__(self, 
-                 ec2_tools, 
-                 accessKey, 
-                 secretKey, 
-                 ec2ConnFactory, 
-                 logger):
-        
+    def __init__(self, logger=StdOutLogger()):
         
         self.__logger = logger
-        self.__EC2_TOOLS = ec2_tools   
-        self.__accessKey = accessKey
-        self.__secretKey = secretKey
-        self.ec2ConnFactory = ec2ConnFactory
+        
    
     def __execCmd(self, cmd):
     
@@ -79,31 +61,35 @@ class AMITools:
         if 0 != p.returncode:
             raise Exception("Command failed with code %d '" % p.returncode) 
     
-    def registerAMI(self, manifest):
-       
-        return self.ec2ConnFactory.getConnection().register_image(image_location=manifest)
+    def registerAMI(self, manifest, region, awsCred):
+
+        return region.getConnection(awsCred).register_image(image_location=manifest)
     
-    def uploadBundle(self, bucket, manifest):
-        __UPLOAD_CMD = "export EC2_HOME=%s; %s/bin/ec2-upload-bundle -b %s -m %s -a %s -s %s"
+    def uploadBundle(self, s3Storage, bucket, manifest, awsCred):
         
-        uploadCmd = __UPLOAD_CMD % (self.__EC2_TOOLS, self.__EC2_TOOLS, 
-                                    bucket, manifest, 
-                                    self.__accessKey, self.__secretKey)
+        assert isinstance(s3Storage, S3Storage)
+        
+        UPLOAD_CMD = "ec2-upload-bundle --url %s -b %s -m %s -a %s -s %s"
+        
+        uploadCmd = UPLOAD_CMD % (s3Storage.getServiceURL(),
+                                    bucket, manifest,
+                                    awsCred.access_key_id,
+                                    awsCred.secret_access_key)
         
         self.__execCmd(uploadCmd)
         
         return bucket + "/" + os.path.basename(manifest)
+    
 
-    def bundleImage(self, img, destDir, region, ec2Cred, userId, arch, kernelId):
+    def bundleImage(self, img, destDir, ec2Cred, userId, region, kernel):
     
         if not os.path.exists(destDir):
             os.makedirs(destDir)
     
-        __BUNDLE_CMD = "export EC2_HOME=%s; %s/bin/ec2-bundle-image -i %s -c %s -k %s -u %s -r %s -d %s --kernel %s"
+        BUNDLE_CMD = "ec2-bundle-image -i %s -c %s -k %s -u %s -r %s -d %s --kernel %s"
         
-        bundleCmd = __BUNDLE_CMD % (self.__EC2_TOOLS, self.__EC2_TOOLS, 
-                                    img, ec2Cred.cert, ec2Cred.private_key, 
-                                    userId, arch, destDir, kernelId)
+        bundleCmd = BUNDLE_CMD % (img, ec2Cred.cert, ec2Cred.private_key, 
+                                    userId, kernel.arch, destDir, kernel.aki)
         
         self.__logger.write("Executing: " + bundleCmd)
         
@@ -111,77 +97,85 @@ class AMITools:
         
         return destDir + "/" + os.path.basename(img) + ".manifest.xml"
     
-    def bundleImageOld(self, img, destDir, ec2Cred, userId, arch, kernelId):
-    
-        if not os.path.exists(destDir):
-            os.makedirs(destDir)
-    
-        __BUNDLE_CMD = "export EC2_HOME=%s; %s/bin/ec2-bundle-image -i %s -c %s -k %s -u %s -r %s -d %s --kernel %s"
-    
-        if kernelId is None:
-            self.__logger.writer("Auto-assigning kernel")
-            kernelId = {AMITools.ARCH_X86:"aki-4deec439", # eu west pygrub, i386
-                        AMITools.ARCH_X86_64:'aki-4feec43b'} # eu west pygrub, x86_64
         
+    def getArch(self, image):
         
-        bundleCmd = __BUNDLE_CMD % (self.__EC2_TOOLS, self.__EC2_TOOLS, 
-                                    img, ec2Cred.cert, ec2Cred.private_key, 
-                                    userId, arch, destDir, kernelId[arch])
+        gf = guestfs.GuestFS ()
+        gf.set_trace(1)
+        gf.add_drive(image)
+        gf.launch()
         
-        self.__logger.write("Executing: " + bundleCmd)
+        roots = gf.inspect_os()
+        assert (len(roots) == 1)
+        rootDev = roots[0]
+        gf.mount(rootDev, "/")
         
-        self.__execCmd(bundleCmd)
+        #Determine architecture by looking at arch of /bin/sh
+        TEST_FILE = "/bin/sh"
+        arch = gf.file_architecture(self.__guestFSLink(gf, TEST_FILE)) 
         
-        return destDir + "/" + os.path.basename(img) + ".manifest.xml"
-    
-    
-    
-    
-    
-    
-
-
-    def extractRawImage(self, srcImg, destImg, log=logger.DevNullLogger()):
+        del gf
+        return arch   
+       
         
-        if ".vdi" in srcImg:
-            self.__execCmd("VBoxManage clonehd -format RAW %s %s" % (srcImg, destImg))
-        else:
-            self.__execCmd("cp %s %s" % (srcImg, destImg))
-
-    def extractMainPartition(self, fullImg, outputImg):
-        self.__extractMainPartitionLinux(fullImg, outputImg)
-            
-    def ec2izeImage(self, gf):
+    def ec2izeImage(self, disk, outputDir, kernel, fstab):
         """
         Mounts an image and does the following:
+        1. Extract disk's main partition to a new file in outputDir.
         1. Writes new kernel and modules.
         2. Writes an /etc/fstab to it suitable for EC2.
-           The preexisting fstab will be preserved as /etc/fstab.save
+           The pre-existing fstab will be preserved as /etc/fstab.save
         """
         
-        #mntPoint = "/opt/d2c/mnt/"
-        #mntSrc = "/opt/d2c/mntsrc"
-        assert isinstance(gf, GuestFS)
-              
-        try:
+        assert disk is not None
+        assert os.path.isdir(outputDir)
+        
+        outputImg = os.path.join(outputDir, os.path.basename(disk))
+        
+        assert not os.path.exists(outputImg)
+                      
+        try: 
+            gf = guestfs.GuestFS ()
+            gf.set_trace(1)
+            gf.set_autosync(1)
+            gf.add_drive(disk)
+            gf.launch()
     
             roots = gf.inspect_os()
             assert (len(roots) == 1)
-            root = roots[0]
+            rootDev = roots[0]
             
-            gf.mount(root, "/")
+            partSize = gf.blockdev_getsize64(rootDev)
+                           
+            self.__logger.write("Creating new disk file %s. Size = %d bytes" % (outputImg,partSize))
             
-            #Determine architecture by looking at arch of /bin/sh
-            TEST_FILE = "/bin/sh"
-            arch = gf.file_architecture(gf.readlink(TEST_FILE)) if (gf.is_symlink(TEST_FILE)) else gf.file_architecture(TEST_FILE)
+            f = open (outputImg, "w")
+            f.truncate (partSize)
+            f.close()
             
-            #Step 2: copy kernel
-            kernelDir = pkg_resources.resource_filename(__package__, "ami_data/kernels")
+            self.__logger.write("Restarting guestfs to add new drive.")
             
-            kernelSrcTar = {AMITools.ARCH_X86:kernelDir + "/2.6.35-24-virtual.tar",
-                            AMITools.ARCH_X86_64:kernelDir + "/2.6.35-24-virtual-x86_64.tar"}
+            del gf
             
-            gf.tar_in(kernelSrcTar[arch], "/")
+            gf = guestfs.GuestFS ()
+            gf.set_trace(1)
+            gf.set_autosync(1)
+            gf.add_drive(disk)
+            gf.add_drive(outputImg)
+            gf.launch()
+            
+            newDev = "/dev/vdb" # a guess of name by ordering
+       
+            self.__logger.write("DDing from root device %s to new device %s" % (rootDev, newDev))
+            
+            gf.dd(rootDev, newDev)
+            
+            self.__logger.write("Modifying new image")
+            
+            gf.mount(newDev, "/")
+            
+            #Step 2: copy kernel            
+            gf.tar_in(kernel.contents, "/") 
                     
             #Step 3: Save old fstab
             self.__logger.write("Saving image's old fstab")
@@ -189,59 +183,35 @@ class AMITools:
             gf.mv("/etc/fstab", "/etc/fstab.d2c.save")
                     
             #Step 4: write out fstab
-            self.__logger.write("Writting out new EC2 /etc/fstab")
+            self.__logger.write("Writing out new EC2 /etc/fstab")
             
-            fstabFileName = pkg_resources.resource_filename(__package__, "ami_data/fstab")
-            gf.upload(fstabFileName, "/etc/fstab")
+            gf.upload(fstab, "/etc/fstab")
         
         except Exception as x:
+            
             self.__logger.write("Exception encountered: %s" % str(x))
             raise
-                
-        self.__logger.write("Done EC2ing image")         
+        
+        finally:
             
-    def __extractMainPartitionLinux(self, fullImg, outputImg):
+            if gf is not None:
+                del gf
+                
+        self.__logger.write("Done EC2ing image %s" % outputImg)
         
-        self.__logger.write("Img is %s" % fullImg)
-        cmd = "/sbin/fdisk -lu %s" % fullImg
-        self.__logger.write("Executing: " + cmd)
-        
-        p = subprocess.Popen(shlex.split(cmd), stdout=subprocess.PIPE, 
-                                 stdin=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=True)
-          
-        (stdoutdata, _) = p.communicate()
-                      
-        partitions = []
-           
-        for line in string.split(stdoutdata, "\n"):
-            match = re.match("(\S+)[\s\*]+(\d+)[\s]+(\d+)[\s]+(\S+)[\s]+(\S+)[\s]+(.+)", line)
-            if match is not None:
-                partitions.append({'start':int(match.group(2)), 'end':int(match.group(3)), 
-                                   'system':match.group(6)})
-        
-        self.__logger.write("Image partitions are: " + str(partitions))
+        return outputImg        
     
-        linuxPartition = None
-    
-        for p in partitions:
-            if p['system'] == 'Linux':
-                if linuxPartition is None:
-                    linuxPartition = p
-                else:
-                    raise UnsupportedImageError("More than one Linux partition found. Only one partition supported.")
-                    
-        if linuxPartition is None:
-            #Temp assume it is already a single partion
-            self.__logger.write("Assuming file is already a single partion, only renaming the image.")
-            shutil.move(fullImg, outputImg)  
-            return   
+    def __guestFSLink(self, gf, path):
+        '''
+        Returns actual path of 'path' in guestfs handle.
+        '''
+        if not gf.is_symlink(path):
+            return path
         
-        blockSize = 512 #TODO check what the real size is
+        link = gf.readlink(path)
         
-        cmd = "/bin/dd if=%s of=%s bs=%d skip=%d count=%d" % (fullImg, 
-                                                              outputImg, 
-                                                              blockSize, 
-                                                              linuxPartition['start'], 
-                                                              linuxPartition['end'] - linuxPartition['start'] + 1)
-        self.__execCmd(cmd)
-        self.__logger.write("Done extracting partition.")
+        if os.path.isabs(link):
+            return link
+        
+        return os.path.join(os.path.dirname(path), link)
+        

@@ -1,59 +1,44 @@
-import unittest
 #import d2c.AMICreator
 import string
-import time
-import sys
-
-#sys.path.append("/home/willmore/workspace/cloud/src")
-print sys.path
 from d2c.logger import StdOutLogger
 from d2c.model.EC2Cred import EC2Cred
-from d2c.AMITools import AMITools
-from d2c.EC2ConnectionFactory import EC2ConnectionFactory
-from d2c.data.DAO import DAO
-from d2c.data.CredStore import CredStore
-#import d2c.AMICreator as AMICreator
+import tempfile
+import time
+from d2c.AMICreator import AMICreator
+from d2c.model.Storage import AWSStorage
+from d2c.model.Region import EC2Region
+from d2c.model.AWSCred import AWSCred
+
 
 class AMICreatorTest():
 
     def main(self):
          
-        
         settings = {}
         for l in open("/home/willmore/test.conf", "r"):
             (k, v) = string.split(l.strip(), "=")
             settings[k] = v
         
         ec2Cred = EC2Cred("default", settings['cert'], settings['privateKey'])
+        awsCred = AWSCred(settings['accessKey'], 
+                            settings['secretKey'])
+        s3Bucket = "ee.ut.cs.cloud/test/" + str(time.time())
+        disk = "/home/willmore/Downloads/dsl-4.4.10-x86.vdi"
         
+        userId = settings['userid']
+        region = EC2Region("eu-west-1")
+        s3Storage = AWSStorage()
         
-        logger = StdOutLogger();
+        amiCreator = AMICreator(disk, 
+                 ec2Cred, awsCred,
+                 userId, s3Bucket,
+                 region, s3Storage,
+                 tempfile.mkdtemp(),
+                 StdOutLogger())
         
-        amiTools = AMITools("/opt/EC2TOOLS", settings['accessKey'], 
-                            settings['secretKey'], EC2ConnectionFactory(settings['accessKey'], 
-                            settings['secretKey'], StdOutLogger()), 
-                            StdOutLogger(),
-                            kernelDir="../../data/kernels")
-        '''
-        jobDir = "/media/host/opt/d2c/job/1304594602.11/"
-        partitionImg = jobDir + "cloud-hpcc.vdi.main"
-        amiTools.ec2izeImage(partitionImg)
-                
-        logger.write("Bundling AMI")
-        bundleDir = jobDir + "/bundle"
-        manifest = amiTools.bundleImage(partitionImg,
-                                               bundleDir,
-                                               ec2Cred,
-                                               settings['userid'])
-    
-        logger.write("Uploading bundle")
-        s3ManifestPath = amiTools.uploadBundle("ee.ut.cs.cloud/testupload/" + str(time.time()),
-                                                     manifest)
-        '''
-        s3ManifestPath="ee.ut.cs.cloud/testupload/hpcc/cloud-hpcc.vdi.main.manifest.xml"
-        logger.write("Registering AMI: " + s3ManifestPath)
-        amiId = amiTools.registerAMI(s3ManifestPath)       
-        print "AMIID = " + amiId
+        ami = amiCreator.createAMI()
+        
+        print "Ami = " + ami
 
 if __name__ == '__main__':
     AMICreatorTest().main()
