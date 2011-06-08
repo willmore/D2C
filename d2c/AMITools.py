@@ -10,6 +10,7 @@ import pkg_resources
 import guestfs
 from d2c.model.Storage import S3Storage
 from d2c.logger import StdOutLogger
+from d2c.model.AWSCred import AWSCred
 
 class UnsupportedPlatformError(Exception):
     def __init__(self, value):
@@ -17,11 +18,7 @@ class UnsupportedPlatformError(Exception):
     def __str__(self):
         return repr(self.value)
     
-class UnsupportedImageError(Exception):
-    def __init__(self, value):
-        self.value = value
-    def __str__(self):
-        return repr(self.value)
+
 
 class AMIToolsFactory:
     
@@ -34,9 +31,6 @@ class AMIToolsFactory:
         return AMITools(accessKey, secretKey, logger)
 
 class AMITools:
-
-    ARCH_X86 = 'i386'
-    ARCH_X86_64 = 'x86_64'
 
     def __init__(self, logger=StdOutLogger()):
         
@@ -68,18 +62,11 @@ class AMITools:
     def uploadBundle(self, s3Storage, bucket, manifest, awsCred):
         
         assert isinstance(s3Storage, S3Storage)
+        assert isinstance(bucket, basestring)
+        assert isinstance(manifest, basestring)
+        assert isinstance(awsCred, AWSCred)
         
-        UPLOAD_CMD = "ec2-upload-bundle --url %s -b %s -m %s -a %s -s %s"
-        
-        uploadCmd = UPLOAD_CMD % (s3Storage.getServiceURL(),
-                                    bucket, manifest,
-                                    awsCred.access_key_id,
-                                    awsCred.secret_access_key)
-        
-        self.__execCmd(uploadCmd)
-        
-        return bucket + "/" + os.path.basename(manifest)
-    
+        return s3Storage.bundleUploader().upload(manifest, bucket, awsCred)
 
     def bundleImage(self, img, destDir, ec2Cred, userId, region, kernel):
     
@@ -100,10 +87,7 @@ class AMITools:
         
     def getArch(self, image):
         
-        gf = guestfs.GuestFS ()
-        gf.set_trace(1)
-        gf.add_drive(image)
-        gf.launch()
+        gf = self.__initGuestFS(image)
         
         roots = gf.inspect_os()
         assert (len(roots) == 1)
@@ -116,7 +100,20 @@ class AMITools:
         
         del gf
         return arch   
-       
+    
+    def __initGuestFS(self, *disks):
+        
+        gf = guestfs.GuestFS ()
+        gf.set_trace(1)
+        gf.set_autosync(1)
+        
+        for disk in disks:
+            gf.add_drive(disk)
+            
+        gf.launch()
+        
+        return gf
+            
         
     def ec2izeImage(self, disk, outputDir, kernel, fstab):
         """
@@ -135,11 +132,8 @@ class AMITools:
         assert not os.path.exists(outputImg)
                       
         try: 
-            gf = guestfs.GuestFS ()
-            gf.set_trace(1)
-            gf.set_autosync(1)
-            gf.add_drive(disk)
-            gf.launch()
+            
+            gf = self.__initGuestFS(disk)
     
             roots = gf.inspect_os()
             assert (len(roots) == 1)
@@ -157,12 +151,7 @@ class AMITools:
             
             del gf
             
-            gf = guestfs.GuestFS ()
-            gf.set_trace(1)
-            gf.set_autosync(1)
-            gf.add_drive(disk)
-            gf.add_drive(outputImg)
-            gf.launch()
+            gf = self.__initGuestFS(disk, outputImg)
             
             newDev = "/dev/vdb" # a guess of name by ordering
        

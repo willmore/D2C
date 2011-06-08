@@ -6,10 +6,16 @@ Created on Feb 16, 2011
 
 import os
 import time
+import tempfile
 
-from d2c.data.DAO import DAO
 from d2c.AMITools import AMITools
 from d2c.logger import StdOutLogger
+
+class UnsupportedImageError(Exception):
+    def __init__(self, value):
+        self.value = value
+    def __str__(self):
+        return repr(self.value)
 
 class AMICreator:
     '''
@@ -20,7 +26,7 @@ class AMICreator:
                  ec2Cred, awsCred,
                  userId, s3Bucket,
                  region, s3Storage,
-                 outputDir,
+                 dao, outputDir=None,
                  logger=StdOutLogger()):
         
         self.__srcImg = srcImg
@@ -32,24 +38,32 @@ class AMICreator:
         self.__amiTools = AMITools(logger)
         self.__logger = logger
         self.__region = region
+        
+        if outputDir is None:
+            outputDir = tempfile.mkdtemp()
+        
         self.__outputDir = outputDir
-        self.__dao = DAO()
+        self.__dao = dao
     
     def createAMI(self):
         """
-        Creates AMI and returns the newly created AMI ID
+        Creates AMI from source image, uploads to storage, 
+        registers, and returns the new AMI handle object.
         """
-        self.__logger.write("Extracting raw image from VDI")
-
+        
         if not os.path.exists(self.__outputDir):
             os.makedirs(self.__outputDir)
-            
-        self.__logger.write("Job directory is: " + self.__outputDir)
        
-        self.__logger.write("EC2izing image")
-        
         arch = self.__amiTools.getArch(self.__srcImg)
+        
         kernel = self.__region.getKernel(arch)
+        
+        if kernel is None:
+            raise UnsupportedImageError("Cannot get kernel for architecture %s in region %s" % 
+                                        (arch, self.__region))
+        
+        self.__logger.write("EC2izing image")
+        self.__logger.write("Job directory is: " + self.__outputDir)
         
         newImg = self.__amiTools.ec2izeImage(self.__srcImg, self.__outputDir, 
                                              kernel, self.__region.getFStab())       
@@ -65,11 +79,11 @@ class AMICreator:
     
         self.__logger.write("Uploading bundle")
         s3ManifestPath = self.__amiTools.uploadBundle(self.__s3Storage,
-                                                      "ee.ut.cs.cloud/testupload/" + str(time.time()), 
+                                                      self.__s3Bucket, 
                                                       manifest, self.__awsCred)
     
         self.__logger.write("Registering AMI: " + s3ManifestPath)
-        amiId = self.__amiTools.registerAMI(s3ManifestPath, self.__awsCred)     
+        amiId = self.__amiTools.registerAMI(s3ManifestPath, self.__region, self.__awsCred)     
         
         self.__dao.addAMI(amiId, self.__srcImg)
         ami = self.__dao.getAMIById(amiId)

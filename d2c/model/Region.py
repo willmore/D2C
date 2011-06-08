@@ -11,16 +11,40 @@ from d2c.model.Kernel import Kernel
 import pkg_resources
 
 class Region:
+    '''
+    Region represents the EC2 concept of a region, which is an isolated instance of 
+    a cloud system.
+    '''
     
     def __init__(self):
-        pass
+        self.__kernels = {}
     
+    def _registerKernels(self, kernels):
+        self.__kernels.update(kernels)
+        
+    def getKernel(self, arch):
+        '''
+        Return a supported kernel for the region and provided architecture.
+        '''
+        
+        return self.__kernels[arch] if self.__kernels.has_key(arch) else None
         
 class EC2Region(Region):
         
     def __init__(self, name, logger=StdOutLogger()):
+          
         Region.__init__(self)
+        
         self.name = name
+        self.__ec2Conn = None
+        self.__logger = logger
+        
+        kernelDir = pkg_resources.resource_filename(__package__, "ami_data/kernels")
+        
+        kernels = {Kernel.ARCH_X86: Kernel("aki-4deec439", Kernel.ARCH_X86, kernelDir + "/2.6.35-24-virtual.tar"), # eu west pygrub, i386
+                    Kernel.ARCH_X86_64: Kernel('aki-4feec43b', Kernel.ARCH_X86_64, kernelDir + "/2.6.35-24-virtual-x86_64.tar")} # eu west pygrub, x86_64
+         
+        self._registerKernels(kernels)
         
     def getConnection(self, awsCred):
         
@@ -34,15 +58,6 @@ class EC2Region(Region):
             
         return self.__ec2Conn
     
-    def getKernel(self, arch):
-        
-        kernelDir = pkg_resources.resource_filename(__package__, "ami_data/kernels")
-        
-        kernels = {Kernel.ARCH_X86: Kernel("aki-4deec439", Kernel.ARCH_X86, kernelDir + "/2.6.35-24-virtual.tar"), # eu west pygrub, i386
-                    Kernel.ARCH_X86_64: Kernel('aki-4feec43b', Kernel.ARCH_X86_64, kernelDir + "/2.6.35-24-virtual-x86_64.tar")} # eu west pygrub, x86_64
-         
-        return kernels[arch]
-    
     def getFStab(self):
         return pkg_resources.resource_filename(__package__, "ami_data/fstab")
     
@@ -51,7 +66,7 @@ class EucRegion(Region):
         
     def __init__(self, name, endpoint):
         
-        Region.__init__(self, tuple())
+        Region.__init__(self)
         
         assert name is not None
         assert endpoint is not None
@@ -60,14 +75,22 @@ class EucRegion(Region):
         self.regionInfo = RegionInfo(name=name, endpoint=self.endpoint.hostname)
         self.type = type
         
+        kernelDir = pkg_resources.resource_filename(__package__, "ami_data/kernels")
+        
+        kernels = {Kernel.ARCH_X86_64: Kernel("eki-B482178C", Kernel.ARCH_X86, kernelDir + "/2.6.27.21-0.1-xen.tar")}
+        
+        self._registerKernels(kernels)
+        
     def getConnection(self, awsCred):
         
         return boto.connect_ec2(aws_access_key_id=awsCred.access_key_id,
                               aws_secret_access_key=awsCred.secret_access_key,
-                              is_secure=self.regionInfo.scheme == "https",
+                              is_secure=self.endpoint.scheme == "https",
                               region=self.regionInfo,
-                              port=self.regionInfo.port,
+                              port=self.endpoint.port,
                               path=self.endpoint.path)
         
-    
+    def getFStab(self):
+        return pkg_resources.resource_filename(__package__, "ami_data/fstab")
+
         
