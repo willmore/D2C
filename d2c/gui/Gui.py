@@ -22,6 +22,10 @@ class Gui(wx.Frame):
     LABEL_SOURCE_IMAGES = "Source Images"
     LABEL_AMIS = "AMIs"
     
+    ID_ADD_DEPLOYMENT = 1
+    ID_CONF = 2
+    ID_COMPUTER_CLOUD_CONF = 3
+    
     def __init__(self, parent=None, id=-1, title='D2C'):
         wx.Frame.__init__(self, parent, id, title, size=(750, 450))
 
@@ -56,11 +60,12 @@ class Gui(wx.Frame):
 
         toolbar = self.CreateToolBar()
         
-        ID_ADD_DEPLOYMENT = 1
-        ID_CONF = 2
         
-        toolbar.AddLabelTool(ID_CONF, '', wx.Bitmap(pkg_resources.resource_filename(__package__, "icons/Configuration-Settings-icon.png")))
-        toolbar.AddLabelTool(ID_ADD_DEPLOYMENT, '', wx.Bitmap(pkg_resources.resource_filename(__package__, "icons/network-icon.png")))
+        
+        toolbar.AddLabelTool(self.ID_CONF, '', wx.Bitmap(pkg_resources.resource_filename(__package__, "icons/Configuration-Settings-icon.png")))
+        toolbar.AddLabelTool(self.ID_ADD_DEPLOYMENT, '', wx.Bitmap(pkg_resources.resource_filename(__package__, "icons/network-icon.png")))
+
+        toolbar.AddLabelTool(self.ID_COMPUTER_CLOUD_CONF, '', wx.Bitmap(pkg_resources.resource_filename(__package__, "icons/Configuration-Settings-icon.png")))
 
         hbox.Add(self._items, 0, wx.ALL|wx.EXPAND, 5)
         hbox.Add(self._containerPanel, 1, wx.ALL|wx.EXPAND, 5)
@@ -77,10 +82,13 @@ class Gui(wx.Frame):
         self._containerPanel.addPanel(label, panel)
     
     def bindAddDeploymentTool(self, method):
-        self.Bind(wx.EVT_TOOL, method, id=1) #TODO unhardcode id 
+        self.Bind(wx.EVT_TOOL, method, id=self.ID_ADD_DEPLOYMENT)
         
     def bindConfTool(self, method):
-        self.Bind(wx.EVT_TOOL, method, id=2) #TODO unhardcode id
+        self.Bind(wx.EVT_TOOL, method, id=self.ID_CONF)
+        
+    def bindCompCloudConfTool(self, method):
+        self.Bind(wx.EVT_TOOL, method, id=self.ID_COMPUTER_CLOUD_CONF)
         
     #TODO move to controller
     

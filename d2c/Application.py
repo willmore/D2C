@@ -10,6 +10,7 @@ from wx.lib.pubsub import Publisher
 from d2c.gui.Gui import Gui
 from controller.ConfController import ConfController
 from d2c.gui.ConfPanel import ConfPanel
+from d2c.gui.CompCloudConfPanel import CompCloudConfPanel
 from controller.ImageController import ImageController
 from controller.AMIController import AMIController
 from d2c.gui.DeploymentWizard import DeploymentWizard
@@ -34,6 +35,7 @@ class Application:
         
         self._frame.bindAddDeploymentTool(self.addDeployment)
         self._frame.bindConfTool(self.showConf)
+        self._frame.bindCompCloudConfTool(self.showCompCloudConf)
         
         Publisher.subscribe(self._handleNewDeployment, "DEPLOYMENT CREATED")
         
@@ -65,6 +67,13 @@ class Application:
     def showConf(self, event):
         
         conf = ConfPanel(None, size=(600,300))
+        controller = ConfController(conf, self._dao)
+        conf.ShowModal()
+        conf.Destroy()
+        
+    def showCompCloudConf(self, event):
+        
+        conf = CompCloudConfPanel(None, size=(600,300))
         controller = ConfController(conf, self._dao)
         conf.ShowModal()
         conf.Destroy()
