@@ -5,7 +5,6 @@ Created on Feb 16, 2011
 '''
 
 import os
-import time
 import tempfile
 
 from d2c.AMITools import AMITools

@@ -76,8 +76,7 @@ class WalrusStorage(S3Storage):
             ShellExecutor().run(uploadCmd)
             
             return bucket + "/" + os.path.basename(manifest)
-            
-        
+                 
         
     def bundleUploader(self):
         return self.EucBundleUploader(self.serviceURL)

@@ -4,13 +4,15 @@ Created on Mar 3, 2011
 @author: willmore
 '''
 import os
-import subprocess
-from subprocess import Popen
-import pkg_resources
 import guestfs
 from d2c.model.Storage import S3Storage
 from d2c.logger import StdOutLogger
 from d2c.model.AWSCred import AWSCred
+from d2c.ShellExecutor import ShellExecutor
+from d2c.model.Kernel import Kernel
+from d2c.model.EC2Cred import EC2Cred
+from d2c.model.Region import Region
+from guestfs import GuestFS
 
 class UnsupportedPlatformError(Exception):
     def __init__(self, value):
@@ -36,25 +38,7 @@ class AMITools:
         
         self.__logger = logger
         
-   
-    def __execCmd(self, cmd):
-    
-        self.__logger.write("Executing: " + cmd)    
         
-        p = Popen(cmd, shell=True,
-               stdout=subprocess.PIPE, stderr=subprocess.STDOUT, close_fds=True)
-        
-        while True:
-            line = p.stdout.readline()
-            if not line: break
-            self.__logger.write(line)
-    
-        # This call will block until process finishes and p.returncode is set.
-        p.wait()
-        
-        if 0 != p.returncode:
-            raise Exception("Command failed with code %d '" % p.returncode) 
-    
     def registerAMI(self, manifest, region, awsCred):
 
         return region.getConnection(awsCred).register_image(image_location=manifest)
@@ -70,22 +54,33 @@ class AMITools:
 
     def bundleImage(self, img, destDir, ec2Cred, userId, region, kernel):
     
+    
+        assert isinstance(img, basestring)
+        assert isinstance(destDir, basestring)
+        assert isinstance(ec2Cred, EC2Cred)
+        assert isinstance(userId, basestring)
+        assert isinstance(region, Region)
+        assert isinstance(kernel, Kernel)
+    
         if not os.path.exists(destDir):
             os.makedirs(destDir)
-    
-        BUNDLE_CMD = "ec2-bundle-image -i %s -c %s -k %s -u %s -r %s -d %s --kernel %s"
+        
+        BUNDLE_CMD = "euca-bundle-image -i %s -c %s -k %s -u %s -r %s -d %s --kernel %s --ec2cert %s"
         
         bundleCmd = BUNDLE_CMD % (img, ec2Cred.cert, ec2Cred.private_key, 
-                                    userId, kernel.arch, destDir, kernel.aki)
+                                    userId, kernel.arch, destDir, kernel.aki,
+                                    region.getEC2Cert())
         
         self.__logger.write("Executing: " + bundleCmd)
         
-        self.__execCmd(bundleCmd)
+        ShellExecutor().run(bundleCmd)
         
         return destDir + "/" + os.path.basename(img) + ".manifest.xml"
     
         
     def getArch(self, image):
+        
+        assert isinstance(image, basestring)
         
         gf = self.__initGuestFS(image)
         

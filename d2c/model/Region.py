@@ -16,7 +16,13 @@ class Region:
     a cloud system.
     '''
     
-    def __init__(self):
+    def __init__(self, name, ec2Cert):
+        
+        assert isinstance(name, basestring)
+        assert isinstance(ec2Cert, basestring)
+        
+        self.__name = name
+        self.__ec2Cert = ec2Cert
         self.__kernels = {}
     
     def _registerKernels(self, kernels):
@@ -28,14 +34,16 @@ class Region:
         '''
         
         return self.__kernels[arch] if self.__kernels.has_key(arch) else None
+    
+    def getEC2Cert(self):
+        return self.__ec2Cert
         
 class EC2Region(Region):
         
-    def __init__(self, name, logger=StdOutLogger()):
+    def __init__(self, name, ec2Cert, logger=StdOutLogger()):
           
-        Region.__init__(self)
+        Region.__init__(self, name, ec2Cert)
         
-        self.name = name
         self.__ec2Conn = None
         self.__logger = logger
         
@@ -64,11 +72,10 @@ class EC2Region(Region):
         
 class EucRegion(Region):
         
-    def __init__(self, name, endpoint):
+    def __init__(self, name, ec2Cert, endpoint):
         
-        Region.__init__(self)
+        Region.__init__(self, name, ec2Cert)
         
-        assert name is not None
         assert endpoint is not None
                 
         self.endpoint = urlparse(endpoint)
@@ -77,7 +84,7 @@ class EucRegion(Region):
         
         kernelDir = pkg_resources.resource_filename(__package__, "ami_data/kernels")
         
-        kernels = {Kernel.ARCH_X86_64: Kernel("eki-B482178C", Kernel.ARCH_X86, kernelDir + "/2.6.27.21-0.1-xen.tar")}
+        kernels = {Kernel.ARCH_X86_64: Kernel("eki-B482178C", Kernel.ARCH_X86_64, kernelDir + "/2.6.27.21-0.1-xen.tar")}
         
         self._registerKernels(kernels)
         

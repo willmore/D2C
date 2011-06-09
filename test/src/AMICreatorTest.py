@@ -32,7 +32,7 @@ class AMICreatorTest():
         disk = "/home/willmore/Downloads/dsl-4.4.10-x86.vdi"
         
         userId = settings['userid']
-        region = EC2Region("eu-west-1")
+        region = EC2Region("eu-west-1", "/opt/EC2_TOOLS/etc/ec2/amitools/cert-ec2.pem")
         s3Storage = AWSStorage()
         
         amiCreator = AMICreator(disk, 
@@ -67,7 +67,9 @@ class AMICreatorTest():
         disk = "/home/willmore/Downloads/euca-ubuntu-9.04-x86_64/ubuntu.9-04.x86-64.img"
         
         userId = settings['userid']
-        region = EucRegion("SciCloud", "http://172.17.36.21:8773/services/Eucalyptus")
+        region = EucRegion("SciCloud", 
+                           "/home/willmore/Downloads/cloud-cert.pem",
+                           "http://172.17.36.21:8773/services/Eucalyptus")
         
         s3Storage = WalrusStorage("SciCloud Storage", "http://172.17.36.21:8773/services/Walrus")
         
