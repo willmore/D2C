@@ -9,6 +9,7 @@ from d2c.model.Deployment import Deployment
 from d2c.model.Role import Role
 from d2c.data.InstanceMetrics import InstanceMetrics, Metric, MetricList, MetricValue
 from d2c.model.InstanceType import InstanceType
+from d2c.model.Region import EucRegion, EC2Region
 
 import string
 import sqlite3
@@ -435,4 +436,15 @@ class DAO:
         Map string name to InstanceType enum.
         '''
         return getattr(InstanceType, string.replace(name.swapcase(), ".", "_"))
+    
+    def getRegions(self):
+        
+        return [
+                EucRegion("SciCloud", 
+                           "/home/willmore/Downloads/cloud-cert.pem",
+                           "http://172.17.36.21:8773/services/Eucalyptus"),
+                EC2Region("eu-west-1", "https://eu-west-1.amazonaws.com", "/opt/EC2_TOOLS/etc/ec2/amitools/cert-ec2.pem"),
+                EC2Region("us-west-1", "https://us-west-1.amazonaws.com", "/opt/EC2_TOOLS/etc/ec2/amitools/cert-ec2.pem")
+                
+                ]
     

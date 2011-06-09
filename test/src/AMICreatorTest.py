@@ -32,7 +32,7 @@ class AMICreatorTest():
         disk = "/home/willmore/Downloads/dsl-4.4.10-x86.vdi"
         
         userId = settings['userid']
-        region = EC2Region("eu-west-1", "/opt/EC2_TOOLS/etc/ec2/amitools/cert-ec2.pem")
+        region = EC2Region("eu-west-1", "https://eu-west-1.amazonaws.com", "/opt/EC2_TOOLS/etc/ec2/amitools/cert-ec2.pem")
         s3Storage = AWSStorage()
         
         amiCreator = AMICreator(disk, 

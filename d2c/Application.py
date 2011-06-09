@@ -8,11 +8,13 @@ import wx
 from wx.lib.pubsub import Publisher
 
 from d2c.gui.Gui import Gui
-from controller.ConfController import ConfController
+from d2c.controller.ConfController import ConfController
+
+from d2c.controller.CompCloudConfController import CompCloudConfController
 from d2c.gui.ConfPanel import ConfPanel
 from d2c.gui.CompCloudConfPanel import CompCloudConfPanel
-from controller.ImageController import ImageController
-from controller.AMIController import AMIController
+from d2c.controller.ImageController import ImageController
+from d2c.controller.AMIController import AMIController
 from d2c.gui.DeploymentWizard import DeploymentWizard
 from d2c.controller.DeploymentWizardController import DeploymentWizardController
 from d2c.gui.DeploymentPanel import DeploymentPanel
@@ -74,7 +76,7 @@ class Application:
     def showCompCloudConf(self, event):
         
         conf = CompCloudConfPanel(None, size=(600,300))
-        controller = ConfController(conf, self._dao)
+        controller = CompCloudConfController(conf, self._dao)
         conf.ShowModal()
         conf.Destroy()
         

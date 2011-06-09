@@ -16,14 +16,19 @@ class Region:
     a cloud system.
     '''
     
-    def __init__(self, name, ec2Cert):
+    def __init__(self, name, endpoint, ec2Cert):
         
         assert isinstance(name, basestring)
+        assert isinstance(endpoint, basestring)
         assert isinstance(ec2Cert, basestring)
         
         self.__name = name
+        self.__endpoint = endpoint
         self.__ec2Cert = ec2Cert
         self.__kernels = {}
+        
+    def getName(self):
+        return self.__name
     
     def _registerKernels(self, kernels):
         self.__kernels.update(kernels)
@@ -31,18 +36,20 @@ class Region:
     def getKernel(self, arch):
         '''
         Return a supported kernel for the region and provided architecture.
-        '''
-        
+        '''  
         return self.__kernels[arch] if self.__kernels.has_key(arch) else None
     
     def getEC2Cert(self):
         return self.__ec2Cert
+    
+    def getEndpoint(self):
+        return self.__endpoint
         
 class EC2Region(Region):
         
-    def __init__(self, name, ec2Cert, logger=StdOutLogger()):
+    def __init__(self, name, endpoint, ec2Cert, logger=StdOutLogger()):
           
-        Region.__init__(self, name, ec2Cert)
+        Region.__init__(self, name, endpoint, ec2Cert)
         
         self.__ec2Conn = None
         self.__logger = logger
@@ -74,12 +81,12 @@ class EucRegion(Region):
         
     def __init__(self, name, ec2Cert, endpoint):
         
-        Region.__init__(self, name, ec2Cert)
+        Region.__init__(self, name, endpoint, ec2Cert)
         
         assert endpoint is not None
                 
-        self.endpoint = urlparse(endpoint)
-        self.regionInfo = RegionInfo(name=name, endpoint=self.endpoint.hostname)
+        self.parsedEndpoint = urlparse(endpoint)
+        self.regionInfo = RegionInfo(name=name, endpoint=self.parsedEndpoint.hostname)
         self.type = type
         
         kernelDir = pkg_resources.resource_filename(__package__, "ami_data/kernels")
@@ -92,10 +99,10 @@ class EucRegion(Region):
         
         return boto.connect_ec2(aws_access_key_id=awsCred.access_key_id,
                               aws_secret_access_key=awsCred.secret_access_key,
-                              is_secure=self.endpoint.scheme == "https",
+                              is_secure=self.parsedEndpoint.scheme == "https",
                               region=self.regionInfo,
-                              port=self.endpoint.port,
-                              path=self.endpoint.path)
+                              port=self.parsedEndpoint.port,
+                              path=self.parsedEndpoint.path)
         
     def getFStab(self):
         return pkg_resources.resource_filename(__package__, "ami_data/fstab")
