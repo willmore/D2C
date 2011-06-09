@@ -115,7 +115,6 @@ class NamePanel(wx.Panel):
         hbox.Add(self.name) 
         self.sizer.Add(hbox, 0, wx.ALL, 5)
         
-        
         self.nextButton = wx.Button(self, wx.ID_ANY, 'Next', size=(110, -1))
         
         hbox = wx.BoxSizer(wx.HORIZONTAL)

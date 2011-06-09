@@ -11,26 +11,23 @@ class CompCloudConfController:
         self._view.compCloudConfPanel.setRegions(dao.getRegions())
         self._view.showPanel("MAIN") 
         
+        self._view.container.getPanel("MAIN").addButton.Bind(wx.EVT_BUTTON, self.showPanel("NEW_CLOUD"))
+        self._view.container.getPanel("NEW_CLOUD").addButton.Bind(wx.EVT_BUTTON, self.addCloud)
+    
+    def showPanel(self, label):
+        return lambda _: self._view.showPanel(label)
+    
+    def addCloud(self, _):
         
-    '''  
-    def _onSave(self, event):
+        newCloudPanel = self._view.container.getPanel("NEW_CLOUD")
+        try:
+            region = newCloudPanel.getRegion()
+        except Exception as x:
+            wx.MessageBox(x.message, 'Info')
+            return
         
+        newCloudPanel.clear()
         
-        awsCred = AWSCred(self._credView._aws_key_id.GetValue(),
-                          self._credView._aws_secret_access_key.GetValue())
-        
-        ec2Cred = EC2Cred("defaultEC2Cred", self._credView._ec2_cert.GetValue(),
-                self._credView._ec2_private_key.GetValue())
-        
-        ec2ToolHome = self._credView.ec2_tool_home.GetValue();
-        awsUserId = self._credView.aws_user_id.GetValue();
-        
-        conf = Configuration(ec2ToolHome=ec2ToolHome,
-                             awsUserId=awsUserId,
-                             ec2Cred=ec2Cred,
-                             awsCred=awsCred)
-        
-        self._dao.saveConfiguration(conf)
-        
-        self._credView.EndModal(wx.ID_OK)
-    '''
+        self._dao.addRegion(region)
+        self._view.container.getPanel("MAIN").addRegion(region)
+        self._view.showPanel("MAIN")

@@ -448,3 +448,5 @@ class DAO:
                 
                 ]
     
+    def addRegion(self, region):
+        pass

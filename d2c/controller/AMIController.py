@@ -71,7 +71,6 @@ class AMIController:
     
     def _handleAMIJobDone(self, msg):
         (_, ami, _, _) = msg.data
-        print "HandleDone %s" % str(ami)
         self.__amiView.addAMIEntry(ami)   
     
     def _handleAMILog(self, msg):

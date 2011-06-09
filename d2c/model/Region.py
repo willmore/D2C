@@ -44,6 +44,18 @@ class Region:
     
     def getEndpoint(self):
         return self.__endpoint
+    
+    def getConnection(self, awsCred):
+        
+        return boto.connect_ec2(aws_access_key_id=awsCred.access_key_id,
+                              aws_secret_access_key=awsCred.secret_access_key,
+                              is_secure=self.parsedEndpoint.scheme == "https",
+                              region=self.regionInfo,
+                              port=self.parsedEndpoint.port,
+                              path=self.parsedEndpoint.path)
+        
+    def getFStab(self):
+        return pkg_resources.resource_filename(__package__, "ami_data/fstab")
         
 class EC2Region(Region):
         
