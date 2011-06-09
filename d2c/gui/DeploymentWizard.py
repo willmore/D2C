@@ -144,5 +144,4 @@ class DeploymentWizard(wx.Dialog):
         self.completionPanel = CompletionPanel(self.container)
         self.container.addPanel("COMPLETION", self.completionPanel)        
         
-
     

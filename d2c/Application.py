@@ -12,7 +12,7 @@ from d2c.controller.ConfController import ConfController
 
 from d2c.controller.CompCloudConfController import CompCloudConfController
 from d2c.gui.ConfPanel import ConfPanel
-from d2c.gui.CompCloudConfPanel import CompCloudConfPanel
+from d2c.gui.CompCloudConfPanel import CompCloudWizard
 from d2c.controller.ImageController import ImageController
 from d2c.controller.AMIController import AMIController
 from d2c.gui.DeploymentWizard import DeploymentWizard
@@ -75,10 +75,10 @@ class Application:
         
     def showCompCloudConf(self, event):
         
-        conf = CompCloudConfPanel(None, size=(600,300))
-        controller = CompCloudConfController(conf, self._dao)
-        conf.ShowModal()
-        conf.Destroy()
+        cloudWiz = CompCloudWizard(None, -1, 'Computation Clouds', size=(600,300))
+        controller = CompCloudConfController(cloudWiz, self._dao)
+        cloudWiz.ShowModal()
+        cloudWiz.Destroy()
         
     def MainLoop(self):
         self._app.MainLoop()

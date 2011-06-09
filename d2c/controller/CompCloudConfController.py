@@ -1,7 +1,5 @@
 import wx
-from d2c.model.EC2Cred import EC2Cred
-from d2c.model.AWSCred import AWSCred
-from d2c.model.Configuration import Configuration
+
 
 class CompCloudConfController:
     
@@ -10,8 +8,10 @@ class CompCloudConfController:
         self._view = view
         self._dao = dao
          
-        self._view.setRegions(dao.getRegions())
-      
+        self._view.compCloudConfPanel.setRegions(dao.getRegions())
+        self._view.showPanel("MAIN") 
+        
+        
     '''  
     def _onSave(self, event):
         

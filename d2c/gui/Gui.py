@@ -8,7 +8,6 @@ import wx
 from wx.lib.pubsub import Publisher as pub
 from .ContainerPanel import ContainerPanel
 from .AMIPanel import AMIPanel
-from .ConfPanel import ConfPanel
 from .RawImagePanel import RawImagePanel
 import pkg_resources
 

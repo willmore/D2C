@@ -18,9 +18,7 @@ class DeploymentWizardController:
         self.dao = dao
         self.wizard = deploymentWizard
         
-        #self.wizard.container.getPanel("ROLES").getPanel("ROLES").nextButton.Bind(wx.EVT_BUTTON, self.showDeplomentSettingsPanel)
         self.wizard.container.getPanel("ROLES").getPanel("ROLES").addRoleButton.Bind(wx.EVT_BUTTON, self.showAddRolePanel)
-        
         self.wizard.container.getPanel("ROLES").getPanel("ADD_ROLE").amiList.setAMIs(dao.getAMIs())
         self.wizard.container.getPanel("ROLES").getPanel("ADD_ROLE").addRoleButton.Bind(wx.EVT_BUTTON, self.addRole)
         self.wizard.container.getPanel("ROLES").getPanel("ROLES").finishButton.Bind(wx.EVT_BUTTON, self.addDeployment)
