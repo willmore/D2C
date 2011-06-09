@@ -42,9 +42,5 @@ class ImageController:
     def _createAMIImage(self, event):
         i = self._imageView._list.GetFirstSelected();
         img = self._imageView._list.GetItem(i).GetText()
-        if d2c.AMICreator.can_create_ami(img):
-            pub.sendMessage("CREATE AMI", img)
-        else:
-            wx.MessageBox('Cannot create an AMI. AMI already exists for this image.', 'Info')
-
+        pub.sendMessage("CREATE AMI", img)
         

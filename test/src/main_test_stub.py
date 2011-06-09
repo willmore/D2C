@@ -8,6 +8,7 @@ from d2c.model.Role import Role
 from d2c.model.InstanceType import InstanceType
 from d2c.model.Deployment import Deployment
 from d2c.model.Region import Region
+from d2c.model.Storage import WalrusStorage
 from d2c.EC2ConnectionFactory import EC2ConnectionFactory
 from d2c.data.CredStore import CredStore
 from TestConfig import TestConfig
@@ -98,7 +99,8 @@ def main(argv=None):
                 Region("eu-west-1", "https://eu-west-1.amazonaws.com", "/opt/EC2_TOOLS/etc/ec2/amitools/cert-ec2.pem"),
                 Region("us-west-1", "https://us-west-1.amazonaws.com", "/opt/EC2_TOOLS/etc/ec2/amitools/cert-ec2.pem")]:
         dao.addRegion(region)
-                
+        
+    dao.addImageStore(WalrusStorage("SciCloud Storage", "http://172.17.36.21:8773/services/Walrus"))
     
     app = Application(dao, AMIToolsFactoryStub())
     app.MainLoop()

@@ -24,6 +24,7 @@ class Gui(wx.Frame):
     ID_ADD_DEPLOYMENT = 1
     ID_CONF = 2
     ID_COMPUTER_CLOUD_CONF = 3
+    ID_CLOUD_STORAGE = 4
     
     def __init__(self, parent=None, id=-1, title='D2C'):
         wx.Frame.__init__(self, parent, id, title, size=(750, 450))
@@ -66,6 +67,8 @@ class Gui(wx.Frame):
 
         toolbar.AddLabelTool(self.ID_COMPUTER_CLOUD_CONF, '', wx.Bitmap(pkg_resources.resource_filename(__package__, "icons/Configuration-Settings-icon.png")))
 
+        toolbar.AddLabelTool(self.ID_CLOUD_STORAGE, '', wx.Bitmap(pkg_resources.resource_filename(__package__, "icons/cloud-hd-icon.png")))
+
         hbox.Add(self._items, 0, wx.ALL|wx.EXPAND, 5)
         hbox.Add(self._containerPanel, 1, wx.ALL|wx.EXPAND, 5)
         
@@ -88,6 +91,9 @@ class Gui(wx.Frame):
         
     def bindCompCloudConfTool(self, method):
         self.Bind(wx.EVT_TOOL, method, id=self.ID_COMPUTER_CLOUD_CONF)
+        
+    def bindStoreTool(self, method):
+        self.Bind(wx.EVT_TOOL, method, id=self.ID_CLOUD_STORAGE)
         
     #TODO move to controller
     

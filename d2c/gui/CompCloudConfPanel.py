@@ -40,12 +40,15 @@ class CompCloudConfPanel(wx.Panel):
  
         self.regionList = RegionList(self, -1, style=wx.LC_REPORT, size=(-1, 200))
         self.addButton = wx.Button(self, wx.ID_ANY, 'Add Computation Cloud', size=(190, -1))
+        self.doneButton = wx.Button(self, wx.ID_ANY, 'Done', size=(190, -1))
         
         self.sizer = wx.BoxSizer(wx.VERTICAL) 
         self.SetSizer(self.sizer)
         
         self.sizer.Add(self.regionList, 0, wx.EXPAND|wx.ALL, 5)
         self.sizer.Add(self.addButton, 0, wx.ALIGN_RIGHT|wx.ALL, 2)
+        self.sizer.Add(self.doneButton, 0, wx.ALIGN_RIGHT|wx.ALL, 2)
+
         
     def setRegions(self, regions):
         self.regionList.setRegions(regions)
@@ -90,14 +93,13 @@ class NewCloudPanel(wx.Panel):
     
     def getRegion(self):
         
-        self.assertFieldNotEmpty("Name", self.name)
-        self.assertFieldNotEmpty("End Point", self.endpoint)
-        self.assertFieldNotEmpty("EC2 Cert", self.ec2Cert)
+        self.__assertFieldNotEmpty("Name", self.name)
+        self.__assertFieldNotEmpty("End Point", self.endpoint)
+        self.__assertFieldNotEmpty("EC2 Cert", self.ec2Cert)
         
         return Region(self.name.GetValue(), self.endpoint.GetValue(), self.ec2Cert.GetValue())
     
-    def assertFieldNotEmpty(self, name, field):
-       
+    def __assertFieldNotEmpty(self, name, field):
         
         if field.GetValue() == "":
             raise Exception("Field %s is blank" % name)

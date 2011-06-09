@@ -10,7 +10,6 @@ class S3Storage:
         def __init__(self, serviceURL):
             self.serviceURL = serviceURL
             
-
     def __init__(self, name, serviceURL):
         self.name = name
         self.serviceURL = serviceURL

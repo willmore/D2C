@@ -14,8 +14,10 @@ from d2c.controller.CompCloudConfController import CompCloudConfController
 from d2c.gui.ConfPanel import ConfPanel
 from d2c.gui.CompCloudConfPanel import CompCloudWizard
 from d2c.controller.ImageController import ImageController
+from d2c.controller.StorageWizardController import StorageWizardController
 from d2c.controller.AMIController import AMIController
 from d2c.gui.DeploymentWizard import DeploymentWizard
+from d2c.gui.ImageStoreWizard import ImageStoreWizard
 from d2c.controller.DeploymentWizardController import DeploymentWizardController
 from d2c.gui.DeploymentPanel import DeploymentPanel
 from d2c.controller.DeploymentController import DeploymentController
@@ -38,6 +40,7 @@ class Application:
         self._frame.bindAddDeploymentTool(self.addDeployment)
         self._frame.bindConfTool(self.showConf)
         self._frame.bindCompCloudConfTool(self.showCompCloudConf)
+        self._frame.bindStoreTool(self.showStoreWizard)
         
         Publisher.subscribe(self._handleNewDeployment, "DEPLOYMENT CREATED")
         
@@ -80,9 +83,14 @@ class Application:
         cloudWiz.ShowModal()
         cloudWiz.Destroy()
         
+    def showStoreWizard(self, event):
+        
+        storageWiz = ImageStoreWizard(None, -1, 'Storage Clouds', size=(600,300))
+        controller = StorageWizardController(storageWiz, self._dao)
+        storageWiz.ShowModal()
+        storageWiz.Destroy()
+        
     def MainLoop(self):
         self._app.MainLoop()
-        
-
         
         

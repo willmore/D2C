@@ -14,6 +14,9 @@ class CompCloudConfController:
         self._view.container.getPanel("MAIN").addButton.Bind(wx.EVT_BUTTON, self.showPanel("NEW_CLOUD"))
         self._view.container.getPanel("NEW_CLOUD").addButton.Bind(wx.EVT_BUTTON, self.addCloud)
     
+        self._view.container.getPanel("MAIN").doneButton.Bind(wx.EVT_BUTTON, lambda _: self._view.EndModal(wx.ID_OK))
+
+    
     def showPanel(self, label):
         return lambda _: self._view.showPanel(label)
     

@@ -20,11 +20,17 @@ class Codes:
 
 class AMIThread(Thread):
             
-    def __init__(self, img, conf, amiToolsFactory, logger):
+    def __init__(self, img, conf, amiToolsFactory, s3Bucket, 
+                 s3Storage, region, dao, logger):
+        
         Thread.__init__(self)
         self.__img = img
         self.__amiToolsFactory = amiToolsFactory
         self.__conf = conf
+        self.__s3Bucket = s3Bucket
+        self.__region = region
+        self.__s3Storage = s3Storage
+        self.__dao = dao
         self.__logger = logger
             
     def _sendFinishMessage(self, jobid, amiid=None, 
@@ -35,17 +41,15 @@ class AMIThread(Thread):
             
     def run(self):
         try:
-            ami = AMICreator(self.__img, 
-                                   self.__conf.ec2Cred, 
-                                   self.__conf.awsUserId, 
-                                   "et.cs.ut.cloud",
-                                   amiTools=self.__amiToolsFactory.getAMITools(
-                                                         self.__conf.ec2ToolHome, 
-                                                         self.__conf.awsCred.access_key_id, 
-                                                         self.__conf.awsCred.secret_access_key,
-                                                         self.__logger),
-                                    logger=self.__logger
-                                    ).createAMI()
+            ami =AMICreator(self.__img, 
+                 self.__conf.ec2Cred, 
+                 awsCred,
+                 self.__conf.awsUserId, 
+                 self.__s3Bucket,
+                 self.__region, 
+                 self.__s3Storage,
+                 self.__dao,
+                 logger=self.__logger)          
 
             self._sendFinishMessage(self.__img, ami, code=Codes.JOB_CODE_SUCCESS, exception=None)
                                    
@@ -93,7 +97,8 @@ class AMIController:
         amiThread = AMIThread(rawImg, 
                                      self.__dao.getConfiguration(),
                                      self.__amiToolsFactory,
-                                     self.__createLogger(rawImg))
+                                     self.__createLogger(rawImg),
+                                     self.__dao)
         amiThread.start()
         
         self.__amiView.addAMIEntry(name=rawImg)

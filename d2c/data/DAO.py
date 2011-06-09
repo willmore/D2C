@@ -10,6 +10,7 @@ from d2c.model.Role import Role
 from d2c.data.InstanceMetrics import InstanceMetrics, Metric, MetricList, MetricValue
 from d2c.model.InstanceType import InstanceType
 from d2c.model.Region import Region
+from d2c.model.Storage import WalrusStorage
 
 import string
 import sqlite3
@@ -113,6 +114,10 @@ class DAO:
                     (name string primary key, 
                     endpoint text not null, 
                     ec2cert text not null)''')
+        
+        c.execute('''create table if not exists image_store
+                    (name string primary key, 
+                    service_url text not null)''')
         
         for name, unit in [('CPUUtilization', 'Percent'),
                            ("NetworkIn", "Bytes"),
@@ -454,3 +459,24 @@ class DAO:
                       (region.getName(), region.getEndpoint(), region.getEC2Cert()))
         self.__getConn().commit()
         c.close()  
+        
+    def getImageStores(self):
+        
+        c = self.__getConn().cursor()
+        
+        c.execute("select * from image_store")
+    
+        stores = [WalrusStorage(row['name'], row['service_url']) for row in c]
+        
+        c.close()
+        
+        return stores
+    
+    def addImageStore(self, store):
+        c = self.__getConn().cursor()
+
+        c.execute("insert into image_store (name, service_url) values (?,?)", 
+                      (store.name, store.serviceURL))
+        self.__getConn().commit()
+        c.close()  
+        
