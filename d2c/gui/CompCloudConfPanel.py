@@ -32,6 +32,15 @@ class RegionList(wx.ListCtrl):
     def addRegionEntry(self, region):
         idx = self.Append((region.getName(),region.getEndpoint(), region.getEC2Cert()))
         self.regions[idx] = region  
+        
+    def getSelectedRegions(self):
+        #TODO return more than one ami if selected
+        i = self.GetFirstSelected();
+        
+        if i < 0:
+            return []
+        else:
+            return [self.regions[i]]
        
 class CompCloudConfPanel(wx.Panel):    
     

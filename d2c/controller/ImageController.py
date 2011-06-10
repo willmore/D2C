@@ -13,6 +13,8 @@ from wx.lib.pubsub import Publisher as pub
 
 from d2c.model.SourceImage import SourceImage
 import d2c.AMICreator
+from .AMIWizardController import AMIWizardController
+from d2c.gui.NewAMIWizard import NewAMIWizard
 
 class ImageController:
     
@@ -42,5 +44,12 @@ class ImageController:
     def _createAMIImage(self, event):
         i = self._imageView._list.GetFirstSelected();
         img = self._imageView._list.GetItem(i).GetText()
-        pub.sendMessage("CREATE AMI", img)
+        
+        amiWiz = NewAMIWizard(None, -1, 'Create AMI', size=(600,300))
+        
+        controller = AMIWizardController(amiWiz, self._dao)
+        controller.setImage(img)
+        
+        amiWiz.ShowModal()
+        amiWiz.Destroy()
         

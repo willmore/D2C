@@ -39,6 +39,9 @@ class Region:
         '''  
         return self.__kernels[arch] if self.__kernels.has_key(arch) else None
     
+    def getKernels(self):
+        return self.__kernels.values()
+    
     def getEC2Cert(self):
         return self.__ec2Cert
     

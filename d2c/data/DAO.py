@@ -11,6 +11,7 @@ from d2c.data.InstanceMetrics import InstanceMetrics, Metric, MetricList, Metric
 from d2c.model.InstanceType import InstanceType
 from d2c.model.Region import Region
 from d2c.model.Storage import WalrusStorage
+from d2c.model.Cloud import Cloud
 
 import string
 import sqlite3
@@ -479,4 +480,8 @@ class DAO:
                       (store.name, store.serviceURL))
         self.__getConn().commit()
         c.close()  
+        
+    def saveCloud(self, cloud):
+        
+        assert isinstance(cloud, Cloud)
         

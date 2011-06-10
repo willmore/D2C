@@ -89,16 +89,16 @@ class AMIController:
         3. Add a new entry into the AMI list with the in-creation-progress AMI information.
         '''
         
-        rawImg = msg.data.encode('ascii')
+        rawImg,store = msg.data
         
         self.__amiView.addLogPanel(rawImg)
         self.__amiView.showLogPanel(rawImg)
 
         amiThread = AMIThread(rawImg, 
-                                     self.__dao.getConfiguration(),
-                                     self.__amiToolsFactory,
-                                     self.__createLogger(rawImg),
-                                     self.__dao)
+                              self.__dao.getConfiguration(),
+                              self.__amiToolsFactory,
+                              self.__createLogger(rawImg),
+                              self.__dao)
         amiThread.start()
         
         self.__amiView.addAMIEntry(name=rawImg)

@@ -32,6 +32,15 @@ class ImageStoreList(wx.ListCtrl):
     def addStoreEntry(self, store):
         idx = self.Append((store.name,store.serviceURL))
         self.stores[idx] = store  
+        
+    def getSelectedStores(self):
+        #TODO return more than one store if selected
+        i = self.GetFirstSelected();
+        
+        if i < 0:
+            return []
+        else:
+            return [self.stores[i]]
        
 class StoreConfPanel(wx.Panel):    
     
