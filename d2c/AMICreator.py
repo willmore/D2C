@@ -9,6 +9,11 @@ import tempfile
 
 from d2c.AMITools import AMITools
 from d2c.logger import StdOutLogger
+from d2c.model.EC2Cred import EC2Cred
+from d2c.model.AWSCred import AWSCred
+from d2c.model.Kernel import Kernel
+from d2c.data.DAO import DAO
+from d2c.model.Cloud import Cloud
 
 class UnsupportedImageError(Exception):
     def __init__(self, value):
@@ -24,19 +29,26 @@ class AMICreator:
     def __init__(self, srcImg, 
                  ec2Cred, awsCred,
                  userId, s3Bucket,
-                 region, s3Storage,
+                 cloud, kernel,
                  dao, outputDir=None,
                  logger=StdOutLogger()):
+        
+        assert isinstance(srcImg, basestring)
+        assert isinstance(ec2Cred, EC2Cred)
+        assert isinstance(awsCred, AWSCred)
+        assert isinstance(cloud, Cloud)
+        assert isinstance(kernel, Kernel)
+        assert isinstance(dao, DAO)
         
         self.__srcImg = srcImg
         self.__ec2Cred = ec2Cred
         self.__awsCred = awsCred
         self.__userId = userId
         self.__s3Bucket = s3Bucket
-        self.__s3Storage = s3Storage
         self.__amiTools = AMITools(logger)
         self.__logger = logger
-        self.__region = region
+        self.__cloud = cloud
+        self.__kernel = kernel
         
         if outputDir is None:
             outputDir = tempfile.mkdtemp()
@@ -53,19 +65,19 @@ class AMICreator:
         if not os.path.exists(self.__outputDir):
             os.makedirs(self.__outputDir)
        
+        if not self.__kernel in self.__cloud.getKernels():
+            raise Exception("Kernel %s not in cloud kernels" % str(self.__kernel))
+       
         arch = self.__amiTools.getArch(self.__srcImg)
         
-        kernel = self.__region.getKernel(arch)
-        
-        if kernel is None:
-            raise UnsupportedImageError("Cannot get kernel for architecture %s in region %s" % 
-                                        (arch, self.__region))
+        if arch != self.__kernel.arch:
+            raise Exception("Image architecture %s does not match kernel architecture %s." % (arch, self.__kernel.arch))
         
         self.__logger.write("EC2izing image")
         self.__logger.write("Job directory is: " + self.__outputDir)
         
         newImg = self.__amiTools.ec2izeImage(self.__srcImg, self.__outputDir, 
-                                             kernel, self.__region.getFStab())       
+                                             self.__kernel, self.__cloud.getFStab())       
 
         self.__logger.write("Bundling AMI")
         bundleDir =  self.__outputDir + "/bundle"
@@ -73,16 +85,16 @@ class AMICreator:
                                                bundleDir, 
                                                self.__ec2Cred,
                                                self.__userId,
-                                               self.__region,
-                                               kernel) 
+                                               self.__cloud,
+                                               self.__kernel) 
     
         self.__logger.write("Uploading bundle")
-        s3ManifestPath = self.__amiTools.uploadBundle(self.__s3Storage,
+        s3ManifestPath = self.__amiTools.uploadBundle(self.__cloud,
                                                       self.__s3Bucket, 
                                                       manifest, self.__awsCred)
     
         self.__logger.write("Registering AMI: " + s3ManifestPath)
-        amiId = self.__amiTools.registerAMI(s3ManifestPath, self.__region, self.__awsCred)     
+        amiId = self.__amiTools.registerAMI(s3ManifestPath, self.__cloud, self.__awsCred)     
         
         self.__dao.addAMI(amiId, self.__srcImg)
         ami = self.__dao.getAMIById(amiId)

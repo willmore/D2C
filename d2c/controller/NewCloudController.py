@@ -46,7 +46,7 @@ class NewCloudController:
     
     def addKernel(self, _):
         panel = self._view.container.getPanel("NEW_CLOUD")
-        panel.kernelList.addItem(Kernel(panel.kernelId.GetValue(), panel.kernelId.GetValue(), 
+        panel.kernelList.addItem(Kernel(panel.kernelId.GetValue(), 
                                         Kernel.ARCH_X86_64, panel.kernelData.GetValue()))
         
         

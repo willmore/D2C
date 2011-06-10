@@ -7,7 +7,10 @@ from d2c.model.Storage import AWSStorage, WalrusStorage
 from d2c.model.Region import EC2Region, EucRegion
 from d2c.model.AWSCred import AWSCred
 from d2c.data.DAO import DAO
+from d2c.model.Cloud import Cloud
+from d2c.model.Kernel import Kernel
 import os
+import pkg_resources
 
 class AMICreatorTest():
 
@@ -67,16 +70,19 @@ class AMICreatorTest():
         disk = "/home/willmore/Downloads/euca-ubuntu-9.04-x86_64/ubuntu.9-04.x86-64.img"
         
         userId = settings['userid']
-        region = EucRegion("SciCloud", 
-                           "/home/willmore/Downloads/cloud-cert.pem",
-                           "http://172.17.36.21:8773/services/Eucalyptus")
         
-        s3Storage = WalrusStorage("SciCloud Storage", "http://172.17.36.21:8773/services/Walrus")
+        kernelDir = pkg_resources.resource_filename("d2c.model", "ami_data/kernels")
+        kernel = Kernel("eki-B482178C", Kernel.ARCH_X86_64, kernelDir + "/2.6.27.21-0.1-xen.tar")
+        
+        kernels = [kernel]
+        cloud = Cloud("SciCloud", "http://172.17.36.21:8773/services/Eucalyptus", 
+                      "http://172.17.36.21:8773/services/Walrus",
+                      "/home/willmore/Downloads/cloud-cert.pem", kernels)
         
         amiCreator = AMICreator(disk, 
                  ec2Cred, awsCred,
                  userId, s3Bucket,
-                 region, s3Storage,
+                 cloud, kernel,
                  dao)
         
         ami = amiCreator.createAMI()

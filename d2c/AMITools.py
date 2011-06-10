@@ -5,14 +5,12 @@ Created on Mar 3, 2011
 '''
 import os
 import guestfs
-from d2c.model.Storage import S3Storage
 from d2c.logger import StdOutLogger
 from d2c.model.AWSCred import AWSCred
 from d2c.ShellExecutor import ShellExecutor
 from d2c.model.Kernel import Kernel
 from d2c.model.EC2Cred import EC2Cred
-from d2c.model.Region import Region
-from guestfs import GuestFS
+from d2c.model.Cloud import Cloud
 
 class UnsupportedPlatformError(Exception):
     def __init__(self, value):
@@ -20,7 +18,6 @@ class UnsupportedPlatformError(Exception):
     def __str__(self):
         return repr(self.value)
     
-
 
 class AMIToolsFactory:
     
@@ -39,28 +36,31 @@ class AMITools:
         self.__logger = logger
         
         
-    def registerAMI(self, manifest, region, awsCred):
+    def registerAMI(self, manifest, cloud, awsCred):
+        assert isinstance(cloud, Cloud)
+        assert isinstance(manifest, basestring)
+        assert isinstance(awsCred, AWSCred)
 
-        return region.getConnection(awsCred).register_image(image_location=manifest)
+        return cloud.getConnection(awsCred).register_image(image_location=manifest)
     
-    def uploadBundle(self, s3Storage, bucket, manifest, awsCred):
+    def uploadBundle(self, cloud, bucket, manifest, awsCred):
         
-        assert isinstance(s3Storage, S3Storage)
+        assert isinstance(cloud, Cloud)
         assert isinstance(bucket, basestring)
         assert isinstance(manifest, basestring)
         assert isinstance(awsCred, AWSCred)
         
-        return s3Storage.bundleUploader().upload(manifest, bucket, awsCred)
+        return cloud.bundleUploader().upload(manifest, bucket, awsCred)
 
-    def bundleImage(self, img, destDir, ec2Cred, userId, region, kernel):
+    def bundleImage(self, img, destDir, ec2Cred, userId, cloud, kernel):
     
     
         assert isinstance(img, basestring)
         assert isinstance(destDir, basestring)
         assert isinstance(ec2Cred, EC2Cred)
         assert isinstance(userId, basestring)
-        assert isinstance(region, Region)
         assert isinstance(kernel, Kernel)
+        assert isinstance(cloud, Cloud)
     
         if not os.path.exists(destDir):
             os.makedirs(destDir)
@@ -69,7 +69,7 @@ class AMITools:
         
         bundleCmd = BUNDLE_CMD % (img, ec2Cred.cert, ec2Cred.private_key, 
                                     userId, kernel.arch, destDir, kernel.aki,
-                                    region.getEC2Cert())
+                                    cloud.getEC2Cert())
         
         self.__logger.write("Executing: " + bundleCmd)
         
