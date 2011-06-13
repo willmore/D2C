@@ -8,13 +8,24 @@ class AMIWizardController:
         self._view = view
         self._dao = dao
          
-        self._view.container.getPanel("CLOUD").setClouds(dao.getRegions())
+        self._view.container.getPanel("CLOUD").setClouds(dao.getClouds())
         self._view.container.getPanel("CLOUD").chooseButton.Bind(wx.EVT_BUTTON, self.selectCloud)
         self._view.container.getPanel("CLOUD").cancelButton.Bind(wx.EVT_BUTTON, lambda _: self._view.EndModal(wx.ID_OK))
+        
+        
+        self._view.container.getPanel("CLOUD").chooseButton.Disable()
+        
+        self._view.container.getPanel("KERNEL").chooseButton.Bind(wx.EVT_BUTTON, self.selectKernel)
+        self._view.container.getPanel("BUCKET").createButton.Bind(wx.EVT_BUTTON, self.createAMI)
+        self._view.container.getPanel("CLOUD").cloudList.Bind(wx.EVT_LIST_ITEM_SELECTED, self.testContinue)
         self._view.showPanel("CLOUD") 
         
-        self._view.container.getPanel("KERNEL").chooseButton.Bind(wx.EVT_BUTTON, self.createAMI)
-        
+    def testContinue(self, _):
+        if self._view.container.getPanel("CLOUD").cloudList.GetSelectedItemCount() == 1:
+            self._view.container.getPanel("CLOUD").chooseButton.Enable()
+        else:
+            self._view.container.getPanel("CLOUD").chooseButton.Disable()
+      
     def showPanel(self, label):
         return lambda _: self._view.showPanel(label)
     
@@ -25,32 +36,26 @@ class AMIWizardController:
             self.store = store
             
     def selectCloud(self, _):
-        regions = self._view.container.getPanel("CLOUD").regionList.getSelectedRegions()
+        clouds = self._view.container.getPanel("CLOUD").cloudList.getSelectedItems()
         
-        if len(regions) != 1:
+        if len(clouds) != 1:
             wx.MessageBox("Select one Cloud.", 'Info')
             return
             
-        self.region = regions[0]
-        self._view.container.getPanel("KERNEL").kernelList.setKernels(self.region.getKernels())
+        self.cloud = clouds[0]
+        self._view.container.getPanel("KERNEL").kernelList.setItems(self._dao.getKernels(self.cloud.name))
         self._view.showPanel("KERNEL")
+    
+    def selectKernel(self, _):
+        
+        self.kernel = self._view.container.getPanel("KERNEL").kernelList.getSelectedItems()[0]
+        self._view.showPanel("BUCKET")
     
     def createAMI(self, _):
         
-        kernelPanel = self._view.container.getPanel("KERNEL")
-        try:
-            kernels = kernelPanel.storeList.getSelectedStores()
-            if len(kernels) != 1:
-                wx.MessageBox("Select one Kernel.", 'Info')
-                return
-            
-            kernel = kernels[0]
-            
-        except Exception as x:
-            wx.MessageBox(x.message, 'Info')
-            return
+        bucket = self._view.container.getPanel("BUCKET").bucket.GetValue()
         
-        wx.CallAfter(Publisher().sendMessage, "CREATE AMI", (self.img, self.region, kernel))
+        wx.CallAfter(Publisher().sendMessage, "CREATE AMI", (self.img, self.cloud, self.kernel, bucket))
         
         self._view.EndModal(wx.ID_OK)
     

@@ -6,8 +6,7 @@ Created on Mar 10, 2011
 
 import wx
 from .ContainerPanel import ContainerPanel
-from .CompCloudConfPanel import RegionList
-from .KernelList import KernelList
+from .ItemList import ItemList, ColumnMapper
   
        
 class CloudPanel(wx.Panel):    
@@ -15,7 +14,9 @@ class CloudPanel(wx.Panel):
     def __init__(self, *args, **kwargs):
         wx.Panel.__init__(self, *args, **kwargs)
  
-        self.regionList = RegionList(self, -1, style=wx.LC_REPORT, size=(-1, 200))
+        self.cloudList = ItemList(self, -1, style=wx.LC_REPORT, size=(-1, 200),
+                                   mappers=[ColumnMapper('Name', lambda c: c.name)])
+        
         self.chooseButton = wx.Button(self, wx.ID_ANY, 'Choose Cloud', size=(190, -1))
         self.cancelButton = wx.Button(self, wx.ID_ANY, 'Cancel', size=(190, -1))
         
@@ -26,12 +27,12 @@ class CloudPanel(wx.Panel):
         addStoreTxt.SetFont(wx.Font(15, wx.DEFAULT, wx.DEFAULT, wx.BOLD))
         self.sizer.Add(addStoreTxt, 0)
         
-        self.sizer.Add(self.regionList, 0, wx.EXPAND|wx.ALL, 5)
+        self.sizer.Add(self.cloudList, 0, wx.EXPAND|wx.ALL, 5)
         self.sizer.Add(self.chooseButton, 0, wx.ALIGN_RIGHT|wx.ALL, 2)
         self.sizer.Add(self.cancelButton, 0, wx.ALIGN_RIGHT|wx.ALL, 2)     
         
     def setClouds(self, clouds):
-        self.regionList.setRegions(clouds)
+        self.cloudList.setItems(clouds)
         
         
 class KernelPanel(wx.Panel):    
@@ -39,7 +40,9 @@ class KernelPanel(wx.Panel):
     def __init__(self, *args, **kwargs):
         wx.Panel.__init__(self, *args, **kwargs)
  
-        self.kernelList = KernelList(self, -1, style=wx.LC_REPORT, size=(-1, 200))
+        self.kernelList = ItemList(self, -1, style=wx.LC_REPORT, size=(-1, 100),
+                                     mappers=[ColumnMapper('AKI', lambda k: k.aki),
+                                              ColumnMapper('Architecture', lambda k: k.arch)])
         self.chooseButton = wx.Button(self, wx.ID_ANY, 'Select', size=(190, -1))
         self.cancelButton = wx.Button(self, wx.ID_ANY, 'Cancel', size=(190, -1))
         
@@ -52,10 +55,32 @@ class KernelPanel(wx.Panel):
         
         self.sizer.Add(self.kernelList, 0, wx.EXPAND|wx.ALL, 5)
         self.sizer.Add(self.chooseButton, 0, wx.ALIGN_RIGHT|wx.ALL, 2)
-        self.sizer.Add(self.cancelButton, 0, wx.ALIGN_RIGHT|wx.ALL, 2)     
+        self.sizer.Add(self.cancelButton, 0, wx.ALIGN_RIGHT|wx.ALL, 2) 
         
-    def setStores(self, stores):
-        self.storeList.setStores(stores)
+class BucketPanel(wx.Panel):    
+    
+    def __init__(self, *args, **kwargs):
+        wx.Panel.__init__(self, *args, **kwargs)
+ 
+        
+        self.createButton = wx.Button(self, wx.ID_ANY, 'Create AMI', size=(190, -1))
+        self.cancelButton = wx.Button(self, wx.ID_ANY, 'Cancel', size=(190, -1))
+        
+        self.sizer = wx.BoxSizer(wx.VERTICAL) 
+        self.SetSizer(self.sizer)
+        
+        addStoreTxt = wx.StaticText(self, -1, 'Choose bucket to store image')
+        addStoreTxt.SetFont(wx.Font(15, wx.DEFAULT, wx.DEFAULT, wx.BOLD))
+        self.sizer.Add(addStoreTxt, 0)
+        
+        self.bucket = wx.TextCtrl(self)
+        
+        hbox = wx.BoxSizer(wx.HORIZONTAL)
+        hbox.Add(wx.StaticText(self, -1, 'Choose bucket to store image'), 0)
+        hbox.Add(self.bucket, 0)
+        self.sizer.Add(hbox, 0)
+        self.sizer.Add(self.createButton, 0, wx.ALIGN_RIGHT|wx.ALL, 2)
+        self.sizer.Add(self.cancelButton, 0, wx.ALIGN_RIGHT|wx.ALL, 2)     
 
 
 class NewAMIWizard(wx.Dialog):
@@ -74,6 +99,9 @@ class NewAMIWizard(wx.Dialog):
         
         self.kernelPanel = KernelPanel(self.container)
         self.container.addPanel("KERNEL", self.kernelPanel)
+        
+        self.bucketPanel = BucketPanel(self.container)
+        self.container.addPanel("BUCKET", self.bucketPanel)
         
     def showPanel(self, label):
         self.container.showPanel(label)

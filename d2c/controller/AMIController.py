@@ -20,16 +20,16 @@ class Codes:
 
 class AMIThread(Thread):
             
-    def __init__(self, img, conf, amiToolsFactory, s3Bucket, 
-                 s3Storage, region, dao, logger):
+    def __init__(self, img, conf, amiToolsFactory, 
+                  cloud, kernel, s3Bucket, dao, logger):
         
         Thread.__init__(self)
         self.__img = img
         self.__amiToolsFactory = amiToolsFactory
         self.__conf = conf
         self.__s3Bucket = s3Bucket
-        self.__region = region
-        self.__s3Storage = s3Storage
+        self.__cloud = cloud
+        self.__kernel = kernel
         self.__dao = dao
         self.__logger = logger
             
@@ -41,15 +41,18 @@ class AMIThread(Thread):
             
     def run(self):
         try:
+            
             ami =AMICreator(self.__img, 
                  self.__conf.ec2Cred, 
-                 awsCred,
+                 self.__conf.awsCred,
                  self.__conf.awsUserId, 
                  self.__s3Bucket,
-                 self.__region, 
-                 self.__s3Storage,
+                 self.__cloud,
+                 self.__kernel,
                  self.__dao,
-                 logger=self.__logger)          
+                 self.__dao,
+                 logger=self.__logger)  
+            
 
             self._sendFinishMessage(self.__img, ami, code=Codes.JOB_CODE_SUCCESS, exception=None)
                                    
@@ -89,7 +92,7 @@ class AMIController:
         3. Add a new entry into the AMI list with the in-creation-progress AMI information.
         '''
         
-        rawImg,store = msg.data
+        rawImg,cloud,kernel,s3Bucket = msg.data
         
         self.__amiView.addLogPanel(rawImg)
         self.__amiView.showLogPanel(rawImg)
@@ -97,8 +100,12 @@ class AMIController:
         amiThread = AMIThread(rawImg, 
                               self.__dao.getConfiguration(),
                               self.__amiToolsFactory,
+                              cloud,
+                              kernel,
+                              s3Bucket,
+                              self.__dao,
                               self.__createLogger(rawImg),
-                              self.__dao)
+                              )
         amiThread.start()
         
         self.__amiView.addAMIEntry(name=rawImg)

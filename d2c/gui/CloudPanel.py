@@ -6,7 +6,6 @@ Created on Mar 10, 2011
 
 import wx
 from .ContainerPanel import ContainerPanel
-from d2c.model.Region import Region
 from .ItemList import ItemList, ColumnMapper
        
 class CloudListPanel(wx.Panel):    
@@ -67,7 +66,8 @@ class NewCloudPanel(wx.Panel):
         self.sizer.Add(hbox)
         
         self.kernelList = ItemList(self, -1, style=wx.LC_REPORT, size=(-1, 100),
-                                     mappers=[ColumnMapper('AKI', lambda k: k.aki)])
+                                     mappers=[ColumnMapper('AKI', lambda k: k.aki),
+                                              ColumnMapper('Architecture', lambda k: k.arch)])
         
         self.sizer.Add(self.kernelList, 0, wx.EXPAND|wx.ALL, 2)
         

@@ -12,6 +12,7 @@ from d2c.model.InstanceType import InstanceType
 from d2c.model.Region import Region
 from d2c.model.Storage import WalrusStorage
 from d2c.model.Cloud import Cloud
+from d2c.model.Kernel import Kernel
 
 import string
 import sqlite3
@@ -115,6 +116,20 @@ class DAO:
                     (name string primary key, 
                     endpoint text not null, 
                     ec2cert text not null)''')
+        
+        c.execute('''create table if not exists cloud
+                    (name string primary key, 
+                    service_url text not null, 
+                    storage_url text not null,
+                    ec2cert text not null)''')
+        
+        c.execute('''create table if not exists amikernel
+                    (aki string not null, 
+                    cloud text not null, 
+                    arch string not null,
+                    contents string not null,
+                    primary key (aki, cloud),
+                    foreign key(cloud) references cloud(name))''')
         
         c.execute('''create table if not exists image_store
                     (name string primary key, 
@@ -484,4 +499,49 @@ class DAO:
     def saveCloud(self, cloud):
         
         assert isinstance(cloud, Cloud)
+        
+        c = self.__getConn().cursor()
+
+        c.execute("insert into cloud (name, service_url, storage_url, ec2cert) values (?,?,?,?)", 
+                      (cloud.name, cloud.serviceURL, cloud.storageURL, cloud.ec2Cert))
+        self.__getConn().commit()
+        c.close() 
+        
+        for k in cloud.kernels:
+            self.saveKernel(k)
+            
+    def getClouds(self):
+        
+        c = self.__getConn().cursor()
+        
+        c.execute("select * from cloud")
+    
+        clouds = [Cloud(row['name'], row['service_url'], row['storage_url'], row['ec2cert']) for row in c]
+        
+        c.close()
+        
+        return clouds
+        
+    def saveKernel(self, kernel):
+        
+        assert isinstance(kernel, Kernel)
+                
+        c = self.__getConn().cursor()
+
+        c.execute("insert into amikernel (aki, cloud, arch, contents) values (?,?,?,?)", 
+                      (kernel.aki, kernel.cloudName, kernel.arch, kernel.contents))
+        self.__getConn().commit()
+        c.close() 
+        
+    def getKernels(self, cloudName):
+        
+        c = self.__getConn().cursor()
+        
+        c.execute("select * from amikernel where cloud = ?", (cloudName,))
+    
+        kernels = [Kernel(row['aki'], row['arch'], row['contents'], row['cloud']) for row in c]
+        
+        c.close()
+        
+        return kernels
         

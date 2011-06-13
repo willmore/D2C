@@ -16,7 +16,11 @@ class NewCloudController:
         self._view = view
         self._dao = dao
          
-        self._view.container.getPanel("MAIN").addButton.Bind(wx.EVT_BUTTON, self.createCloud)
+        self._view.container.getPanel("MAIN").cloudList.setItems(self._dao.getClouds()) 
+         
+        self._view.container.getPanel("MAIN").doneButton.Bind(wx.EVT_BUTTON, self.done)
+        self._view.container.getPanel("MAIN").addButton.Bind(wx.EVT_BUTTON, self.showAddCloud)
+        
         
         self._view.container.getPanel("NEW_CLOUD").name.Bind(wx.EVT_TEXT, self.checkCanSaveCloud)
         self._view.container.getPanel("NEW_CLOUD").serviceURL.Bind(wx.EVT_TEXT, self.checkCanSaveCloud)
@@ -31,13 +35,20 @@ class NewCloudController:
         
         self._view.container.showPanel("MAIN")
     
+    def showAddCloud(self, _):
+        self._view.container.showPanel("NEW_CLOUD")
+    
+    def done(self, _):
+        self._view.EndModal(wx.ID_OK)
+    
     def save(self, _):
         
         panel = self._view.container.getPanel("NEW_CLOUD")
         
         cloud = Cloud(panel.name.GetValue(), panel.serviceURL.GetValue(), 
-                      panel.storageURL.GetValue(), panel.ec2Cert.GetValue(), 
-                      panel.kernelList.getItems())
+                      panel.storageURL.GetValue(), panel.ec2Cert.GetValue())
+        
+        cloud.addKernels(panel.kernelList.getItems())
         
         self._dao.saveCloud(cloud)
         self._view.container.getPanel("MAIN").cloudList.addItem(cloud)
@@ -70,21 +81,3 @@ class NewCloudController:
             panel.saveButton.Disable()
             
     
-    def createCloud(self, _):
-        self._view.container.getPanel("NEW_CLOUD").clear()
-        self._view.container.showPanel("NEW_CLOUD")
-    
-    def addStore(self, _):
-        
-        newStorePanel = self._view.container.getPanel("NEW_STORE")
-        try:
-            store = newStorePanel.getStore()
-        except Exception as x:
-            wx.MessageBox(x.message, 'Info')
-            return
-        
-        newStorePanel.clear()
-        
-        self._dao.addImageStore(store)
-        self._view.container.getPanel("MAIN").addStore(store)
-        self._view.showPanel("MAIN")

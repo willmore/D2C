@@ -13,7 +13,7 @@ class Cloud:
     '''
     
     def __init__(self, name, serviceURL, 
-                 storageURL, ec2Cert, kernels=()):
+                 storageURL, ec2Cert, kernels=list()):
         
         assert isinstance(name, basestring)
         assert isinstance(serviceURL, basestring)
@@ -21,18 +21,25 @@ class Cloud:
         assert isinstance(ec2Cert, basestring)
         
         self.name = name
-        self.ec2Cert = ec2Cert
-        self.kernels = list(kernels)
-        self.storage = WalrusStorage("placeholder_name", storageURL)
         self.serviceURL = serviceURL
+        self.storageURL = storageURL
+        self.ec2Cert = ec2Cert
+        self.kernels = list()
+        self.addKernels(kernels)
+        
+        self.storage = WalrusStorage("placeholder_name", storageURL)
         self.parsedEndpoint = urlparse(serviceURL)
         self.regionInfo = RegionInfo(name=name, endpoint=self.parsedEndpoint.hostname)
         
     def getName(self):
         return self.name
     
-    def _registerKernels(self, kernels):
-        self.kernels.update(kernels)
+    def addKernels(self, kernels):
+        
+        for k in kernels:
+            k.cloudName = self.name
+        
+        self.kernels.extend(kernels)
     
     def getKernels(self):
         return self.kernels

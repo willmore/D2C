@@ -63,7 +63,7 @@ class Gui(wx.Frame):
         
         
         
-        toolbar.AddLabelTool(self.ID_CONF, '', wx.Bitmap(pkg_resources.resource_filename(__package__, "icons/Configuration-Settings-icon.png")))
+        toolbar.AddLabelTool(self.ID_CONF, '', wx.Bitmap(pkg_resources.resource_filename(__package__, "icons/keys-icon.png")))
         toolbar.AddLabelTool(self.ID_ADD_DEPLOYMENT, '', wx.Bitmap(pkg_resources.resource_filename(__package__, "icons/network-icon.png")))
 
         toolbar.AddLabelTool(self.ID_COMPUTER_CLOUD_CONF, '', wx.Bitmap(pkg_resources.resource_filename(__package__, "icons/Configuration-Settings-icon.png")))
