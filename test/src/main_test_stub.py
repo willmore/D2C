@@ -76,7 +76,7 @@ def main(argv=None):
         os.unlink(sqlFile)
     dao = DAO(sqlFile)
     
-    conf = TestConfig("/home/willmore/test.conf")   
+    conf = TestConfig("/home/willmore/scicloud.conf")   
     dao.saveConfiguration(conf)
     
     ec2ConnFactory = mock(EC2ConnectionFactory)

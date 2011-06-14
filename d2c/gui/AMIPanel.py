@@ -55,9 +55,11 @@ class AMIPanel(wx.Panel):
         
     def showLogPanel(self, id):
         self._logPanel.showPanel(id)
+        self.Layout()
+        self.Refresh()
+        
         
     def appendLogPanelText(self, logPanelId, text):
-        print "Logging to %s" % str(logPanelId)
         self._logPanel.getPanel(logPanelId).AppendText(str(text) + "\n")
         
     def addAMIEntry(self, name):

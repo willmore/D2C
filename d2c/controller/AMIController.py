@@ -54,8 +54,8 @@ class AMIThread(Thread):
         except:
             traceback.print_exc()
 
+
 class AMIController:
-    
     
     def __init__(self, amiView, dao, amiToolsFactory):
         self.__dao = dao
@@ -109,7 +109,7 @@ class AMIController:
         
         amiThread.start()
         
-        self.__amiView.addAMIEntry(name=rawImg)
+        self.__amiView._list.Append(("---", rawImg,'In Progress', ''))
      
     class __CreationLogger:
         

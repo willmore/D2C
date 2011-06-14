@@ -44,7 +44,6 @@ class Gui(wx.Frame):
         self._items = wx.ListBox(self, self._ID_LISTBOX, wx.DefaultPosition, (170, 130), labels, wx.LB_SINGLE)
         self._items.SetSelection(0)
         
-        
         #TODO move to controller
         self.Bind(wx.EVT_LISTBOX, self.OnListSelect, id=self._ID_LISTBOX)
 
@@ -90,10 +89,8 @@ class Gui(wx.Frame):
         self.Bind(wx.EVT_TOOL, method, id=self.ID_CLOUD)
         
     #TODO move to controller
-    
-    
-    def __createAMI(self, msg):
-        self._containerPanel.showPanel(self.LABEL_AMIS)
+    def __createAMI(self, _):
+        self.setSelection(self.LABEL_AMIS)
         
     def setSelection(self, label):
         self._items.SetStringSelection(label)

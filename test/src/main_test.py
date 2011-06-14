@@ -24,7 +24,7 @@ def main(argv=None):
     dao.setEC2ConnectionFactory(EC2ConnectionFactory(credStore))
     dao.setCredStore(credStore)
     
-    conf = TestConfig("/home/willmore/test.conf")
+    conf = TestConfig("/home/willmore/scicloud.conf")
     
     dao.saveConfiguration(conf)
     
