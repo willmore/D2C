@@ -1,15 +1,18 @@
 Desktop To Cloud (D2C)
 ------------------------------
 
-Python Setuptools
-apt-get install python-setuptools
+--------------------
+- Development Setup
+--------------------
 
 Required Debian/Ubuntu packages installable from aptitude:
+    python-setuptools (>=0.6.15)
 	python-boto (>=1.9b) 
  	python-wxgtk2.8 (>= 2.8.10.1)
 	python-sqlite (>= 1.0.1)
  	ec2-ami-tools (>= 1.3.49953)
  	euca2ools (>= 1.3.1)
+ 	virtualbox-ose (>=4.0.4-dfsg)
 
 guestfish packages:
 	http://libguestfs.org/download/binaries/
@@ -22,17 +25,19 @@ mockito-python
 http://code.google.com/p/mockito-python/
 easy_install mockito
 
-Required tools:
-VirtualBox
-Installation instructions for Ubuntu 10:
-http://www.techienote.com/2010/10/installing-virtualbox-on-ubuntu-10-10.html
-Note: instead of installing package viturtualbox-3.2, I installed virtualbox-ose.
-The only required executable from this package is VirtualBoxManage.
+--------------------
+- Installation
+--------------------
 
-After installing this in a development VirtualBox VM, I got errors during the boot process about 
-being unable to mount the shared host folder due to an invalid vmboxsf.ko module. This was fixed by
-running insmod on the module. See following for more details:
-http://forums.virtualbox.org/viewtopic.php?f=3&t=33413
+In the project root directory run:
+	make builddeb
+
+This will create ../d2c_0.0.1_all.deb.
+To install run:
+dpkg -i ../d2c_0.0.1_all.deb
+
+Note that installing with dpkg explicitly will not resolve dependencies. 
+If there are broken dependencies, resolve using aptitude.
 
         
 
