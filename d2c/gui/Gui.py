@@ -28,16 +28,7 @@ class Gui(wx.Frame):
     def __init__(self, parent=None, id=-1, title='D2C'):
         wx.Frame.__init__(self, parent, id, title, size=(750, 450))
 
-        # Menubar
-        menubar = wx.MenuBar()
-        file = wx.Menu()
-        quit = wx.MenuItem(file, 1, '&Quit\tCtrl+Q')
-        file.AppendItem(quit)
-
-        menubar.Append(file, '&File')
-        self.SetMenuBar(menubar)
-
-        self.Bind(wx.EVT_MENU, self.OnQuit, id=1)
+        self.__initMenuBar()
         
         vbox = wx.BoxSizer(wx.VERTICAL)
         hbox = wx.BoxSizer(wx.HORIZONTAL)
@@ -59,13 +50,9 @@ class Gui(wx.Frame):
 
         toolbar = self.CreateToolBar()
         
-        
-        
         toolbar.AddLabelTool(self.ID_CONF, '', wx.Bitmap(pkg_resources.resource_filename(__package__, "icons/keys-icon.png")))
         toolbar.AddLabelTool(self.ID_CLOUD, '', wx.Bitmap(pkg_resources.resource_filename(__package__, "icons/cloud-hd-icon.png")))
         toolbar.AddLabelTool(self.ID_ADD_DEPLOYMENT, '', wx.Bitmap(pkg_resources.resource_filename(__package__, "icons/network-icon.png")))
-
-        
 
         hbox.Add(self._items, 0, wx.ALL|wx.EXPAND, 5)
         hbox.Add(self._containerPanel, 1, wx.ALL|wx.EXPAND, 5)
@@ -76,6 +63,18 @@ class Gui(wx.Frame):
         
         #TODO move to controller
         pub.subscribe(self.__createAMI, "CREATE AMI")
+        
+    def __initMenuBar(self):
+        
+        menubar = wx.MenuBar()
+        file = wx.Menu()
+        quit = wx.MenuItem(file, 1, '&Quit\tCtrl+Q')
+        file.AppendItem(quit)
+
+        menubar.Append(file, '&File')
+        self.SetMenuBar(menubar)
+
+        self.Bind(wx.EVT_MENU, self.OnQuit, id=1)
         
     def addPanel(self, label, panel):
         self._items.Append(label)
@@ -95,7 +94,6 @@ class Gui(wx.Frame):
     
     def __createAMI(self, msg):
         self._containerPanel.showPanel(self.LABEL_AMIS)
-        self._items.SetSelection(2)
         
     def setSelection(self, label):
         self._items.SetStringSelection(label)

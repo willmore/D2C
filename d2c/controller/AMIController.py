@@ -9,12 +9,6 @@ import traceback
 from threading import Thread
 from d2c.AMICreator import AMICreator
 import time
-
-class _AmiLogMsg:
-        
-    def __init__(self, img, msg):
-        self.img = img
-        self.msg = msg
         
 class Codes:
     JOB_CODE_SUCCESS=0
@@ -97,11 +91,12 @@ class AMIController:
         '''
         
         rawImg,cloud,kernel,s3Bucket = msg.data
-        
-        logId = rawImg
+
+        #Create a logger that will capture process output and display in a GUI panel        
         logger = self.__createLogger(rawImg)
         self.__amiView.addLogPanel(logger._channelId)
         self.__amiView.showLogPanel(logger._channelId)
+        self.__amiView.Refresh()
 
         amiThread = AMIThread(rawImg, 
                               self.__dao.getConfiguration(),
@@ -123,21 +118,16 @@ class AMIController:
             self._channelId = "AMI_CREATION_LOG_%d" % time.time()
             
         def write(self, msg):
-            print "Sending msg"
             wx.CallAfter(Publisher().sendMessage, self._channelId, msg)
     
     
     def receiveLogMessage(self, msg):
         self.__amiView.appendLogPanelText(msg.topic[0], msg.data)
-        
-        
+            
     def __createLogger(self, img):
         logger = self.__CreationLogger(img)
         
-        print "Subscribing to " + logger._channelId
         Publisher.subscribe(self.receiveLogMessage, 
-                            logger._channelId)
-        Publisher.subscribe(lambda msg: self.__amiView.appendLogPanelText(logger._channelId, msg.data.msg), 
                             logger._channelId)
         return logger
         

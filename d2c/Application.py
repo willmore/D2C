@@ -10,14 +10,10 @@ from wx.lib.pubsub import Publisher
 from d2c.gui.Gui import Gui
 from d2c.controller.ConfController import ConfController
 
-from d2c.controller.CompCloudConfController import CompCloudConfController
 from d2c.gui.ConfPanel import ConfPanel
-from d2c.gui.CompCloudConfPanel import CompCloudWizard
 from d2c.controller.ImageController import ImageController
-from d2c.controller.StorageWizardController import StorageWizardController
 from d2c.controller.AMIController import AMIController
 from d2c.gui.DeploymentWizard import DeploymentWizard
-from d2c.gui.ImageStoreWizard import ImageStoreWizard
 from d2c.controller.DeploymentWizardController import DeploymentWizardController
 from d2c.gui.DeploymentPanel import DeploymentPanel
 from d2c.controller.DeploymentController import DeploymentController
@@ -66,21 +62,21 @@ class Application:
     def addDeployment(self, event):
         mywiz = DeploymentWizard(None, -1, 'Deployment Creation Wizard', size=(600,400))
     
-        controller = DeploymentWizardController(mywiz, self._dao)
+        DeploymentWizardController(mywiz, self._dao)
         mywiz.ShowModal()
         mywiz.Destroy()
         
     def showConf(self, event):
         
         conf = ConfPanel(None, size=(600,300))
-        controller = ConfController(conf, self._dao)
+        ConfController(conf, self._dao)
         conf.ShowModal()
         conf.Destroy()
         
     def showCloudWizard(self, event):
         
         cloudWiz = CloudWizard(None, -1, 'Clouds', size=(600,400))
-        controller = NewCloudController(cloudWiz, self._dao)
+        NewCloudController(cloudWiz, self._dao)
         cloudWiz.ShowModal()
         cloudWiz.Destroy()
         
