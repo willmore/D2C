@@ -4,11 +4,19 @@ Desktop To Cloud (D2C)
 Python Setuptools
 apt-get install python-setuptools
 
-Required libraries:
-wxPython
-http://wiki.wxpython.org/InstallingOnUbuntuOrDebian
-apt-get install python-wxgtk2.8 
+Required Debian/Ubuntu packages installable from aptitude:
+	python-boto (>=1.9b) 
+ 	python-wxgtk2.8 (>= 2.8.10.1)
+	python-sqlite (>= 1.0.1)
+ 	ec2-ami-tools (>= 1.3.49953)
+ 	euca2ools (>= 1.3.1)
 
+guestfish packages:
+	http://libguestfs.org/download/binaries/
+	Be sure to read the associated README.txt thoroughly for dependencies, such as adding /sbin/insmod.static
+	
+ 	libguestfs0 (>= 1.11.8)
+ 	python-guestfs (>=1.11.8)
 
 mockito-python
 http://code.google.com/p/mockito-python/
@@ -26,30 +34,6 @@ being unable to mount the shared host folder due to an invalid vmboxsf.ko module
 running insmod on the module. See following for more details:
 http://forums.virtualbox.org/viewtopic.php?f=3&t=33413
 
-boto - Python library wrapping AWS web service
-http://code.google.com/p/boto/
-Currently developing against version 2.0 Beta 4
-easy_install boto
-
-EC2 AMI Tools
-http://s3.amazonaws.com/ec2-downloads/ec2-ami-tools.zip
-Tools for bundling and uploading AMIs. Recommended installation directory is /opt/EC2TOOLS.
-
-EC2 API Tools
-http://s3.amazonaws.com/ec2-downloads/ec2-api-tools.zip
-Recommended installation directory is /opt/EC2TOOLS.
-
-EC2 AMI Tools dependencies:
-        - curl
-        - gzip
-        - mkfifo
-        - openssl
-        - rsync
-        - Ruby 1.8.2 or later
-			- Might need to explicitly install libopenssl-ruby (maybe not necessary)
-        - tee
         
-guestfish and python-guestfs
-http://libguestfs.org/download/binaries/
-Be sure to read the associated README.txt for dependencies.
+
 
