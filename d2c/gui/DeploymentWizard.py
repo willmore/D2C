@@ -39,7 +39,7 @@ class AddRolePanel(wx.Panel):
         self.hostCount = wx.SpinCtrl(self, size=(60, -1))
         self.hostCount.SetRange(1, 1000)
         
-        self.instanceType = wx.TextCtrl(self)
+        self.instanceType = wx.ComboBox(self, style=wx.CB_READONLY)
         self.startScript = wx.TextCtrl(self)
         self.endCheck = wx.TextCtrl(self)
         self.data = wx.TextCtrl(self);
@@ -82,8 +82,7 @@ class RoleWizardContainer(ContainerPanel):
         
         self.showPanel("ROLES")
 
-
-        
+ 
 class CompletionPanel(wx.Panel):
     
     def __init__(self, *args, **kwargs):
@@ -122,6 +121,31 @@ class NamePanel(wx.Panel):
         self.sizer.Add(hbox, 0, wx.ALIGN_RIGHT)
         
         self.SetSizer(self.sizer)
+        
+class CloudPanel(wx.Panel):
+    
+    def __init__(self, *args, **kwargs):
+        wx.Panel.__init__(self, *args, **kwargs)
+        
+        self.sizer = wx.BoxSizer(wx.VERTICAL)
+       
+        hbox = wx.BoxSizer(wx.HORIZONTAL)
+        hbox.Add(wx.StaticText(self, -1, 'Choose a cloud to deploy on'))
+        self.sizer.Add(hbox, 0, wx.ALL, 5)
+        
+        hbox = wx.BoxSizer(wx.HORIZONTAL)
+        self.clouds = wx.ComboBox(self, -1,style=wx.CB_READONLY)
+        hbox.Add(self.clouds) 
+        self.sizer.Add(hbox, 0, wx.ALL, 5)
+        
+        self.nextButton = wx.Button(self, wx.ID_ANY, 'Next', size=(110, -1))
+        
+        hbox = wx.BoxSizer(wx.HORIZONTAL)
+        hbox.Add(self.nextButton, 0, wx.ALIGN_RIGHT|wx.ALL, 5)
+        self.sizer.Add(hbox, 0, wx.ALIGN_RIGHT)
+        
+        self.SetSizer(self.sizer)
+
 
 class DeploymentWizard(wx.Dialog):
     
@@ -136,6 +160,9 @@ class DeploymentWizard(wx.Dialog):
         
         self.namePanel = NamePanel(self.container)
         self.container.addPanel("NAME", self.namePanel)  
+        
+        self.cloudPanel = CloudPanel(self.container)
+        self.container.addPanel("CLOUD", self.cloudPanel) 
          
         self.roleWizard = RoleWizardContainer(self.container)
         self.container.addPanel("ROLES", self.roleWizard)   

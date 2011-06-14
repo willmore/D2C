@@ -37,7 +37,7 @@ class ConfController:
     def _onSave(self, event):
         
         
-        awsCred = AWSCred(self._credView._aws_key_id.GetValue(),
+        awsCred = AWSCred("mainKey", self._credView._aws_key_id.GetValue(),
                           self._credView._aws_secret_access_key.GetValue())
         
         ec2Cred = EC2Cred("defaultEC2Cred", self._credView._ec2_cert.GetValue(),

@@ -16,7 +16,9 @@ class Cloud:
     '''
     
     def __init__(self, name, serviceURL, 
-                 storageURL, ec2Cert, kernels=list()):
+                 storageURL, ec2Cert, 
+                 kernels=list(), 
+                 instanceTypes=list()):
         
         assert isinstance(name, basestring)
         assert isinstance(serviceURL, basestring)
@@ -31,7 +33,8 @@ class Cloud:
         self.ec2Cert = ec2Cert
         self.kernels = list()
         self.addKernels(kernels)
-        
+        self.instanceTypes = list()
+        self.addInstanceTypes(instanceTypes)
         self.storage = WalrusStorage("placeholder_name", storageURL)
         self.parsedEndpoint = urlparse(serviceURL)
         self.regionInfo = RegionInfo(name=name, endpoint=self.parsedEndpoint.hostname)
@@ -46,6 +49,11 @@ class Cloud:
         
         if deployment.cloud is not self:
             deployment.cloud = self
+    
+    def addInstanceTypes(self, types):
+        for t in types:
+            self.instanceTypes.append(t)
+            t.cloud = self
     
     def addKernels(self, kernels):
         

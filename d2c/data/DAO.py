@@ -13,6 +13,7 @@ from d2c.model.Region import Region
 from d2c.model.Storage import WalrusStorage
 from d2c.model.Cloud import Cloud
 from d2c.model.Kernel import Kernel
+from d2c.model.AMI import AMI
 
 import string
 import sqlite3
@@ -56,6 +57,8 @@ class DAO:
         c.execute('''create table if not exists ami
                     (id text primary key,
                     src_img text,
+                    cloud text not null,
+                    foreign key(cloud) references cloud(name),
                     foreign key(src_img) REFERENCES src_img(path))''')
         
         c.execute('''create table if not exists ec2_cred
@@ -82,13 +85,27 @@ class DAO:
                     instance_type text,
                     primary key (name, deploy)
                     foreign key(deploy) references deploy(name),
-                    foreign key(ami) references ami(id))''')
+                    foreign key(ami) references ami(id),
+                    foreign key(instance_type) references instance_type(name))''')
         
         c.execute('''create table if not exists deploy_role_instance
                     (instance text primary key, -- AWS instance ID
                     role_name text,
                     role_deploy text,
                     foreign key(role_name, role_deploy) references deploy_role(name, deploy))''')
+
+        c.execute('''create table if not exists instance_type
+                    (name text not null,
+                     cloud text not null,
+                     cpu integer not null, --mhz
+                     cpu_count integer not null,
+                     memory integer not null, --GB
+                     disk integer not null, --GB
+                     cost_per_hour integer not null, --USD cents
+                     architecture string not null, --colon delimited list
+                     foreign key(cloud) references cloud(name),
+                     primary key(name, cloud))''')
+        
     
         c.execute('''create table if not exists ami_creation_job
                     (id integer primary key, 
@@ -158,13 +175,6 @@ class DAO:
         c.close()
         
         return newId
-    
-    def createAmi(self, amiId, srcImg):
-        
-        c = self.__getConn().cursor()
-        c.execute("insert into ami (id, src_img) values (?,?)", (amiId,srcImg))
-        self.__getConn().commit()
-        c.close()
     
     def setAmiJobFinishTime(self, jobId, endTime):        
         c = self.__getConn().cursor()
@@ -239,7 +249,7 @@ class DAO:
         c.close()
         
         ec2Cred = self.getEC2Cred(defEC2Cred) if defEC2Cred is not None else None
-        awsCred = AWSCred(awsAccessKeyId, awsSecretAccessKey) if (awsAccessKeyId is not None and awsSecretAccessKey is not None) else None
+        awsCred = AWSCred("mainKey", awsAccessKeyId, awsSecretAccessKey) if (awsAccessKeyId is not None and awsSecretAccessKey is not None) else None
             
         return Configuration(ec2ToolHome=ec2ToolHome,
                              awsUserId=awsUserId,
@@ -266,7 +276,7 @@ class DAO:
     
     def __rowToAMI(self, row):
         
-        return AMI(amiId=row['id'], srcImg=row['src_img'])
+        return AMI(id=row['id'], srcImg=row['src_img'])
     
     def getAMIBySrcImg(self, srcImg):
         c = self.__getConn().cursor()
@@ -304,10 +314,13 @@ class DAO:
     
         return out
     
-    def addAMI(self, amiid, srcImg=None):     
+    def addAMI(self, ami):
+        
+        assert isinstance(ami, AMI)
+             
         c = self.__getConn().cursor()
 
-        c.execute("insert into ami(id, src_img) values (?,?)", (amiid, srcImg))
+        c.execute("insert into ami(id, src_img, cloud) values (?,?,?)", (ami.id, ami.srcImg, ami.cloud.name))
         
         self.__getConn().commit()
         c.close()  
@@ -335,7 +348,7 @@ class DAO:
     
         for role in deployment.roles:
             c.execute("insert into deploy_role (name, deploy, ami, count, instance_type) values (?,?,?,?,?)", 
-                  (role.name, deployment.id, role.ami.amiId, role.count, role.instanceType.name))
+                  (role.name, deployment.id, role.ami.id, role.count, role.instanceType.name))
             
         self.__getConn().commit()
         c.close()  
@@ -527,15 +540,21 @@ class DAO:
         for k in cloud.kernels:
             self.saveKernel(k)
             
+        for i in cloud.instanceTypes:
+            self.saveInstanceType(i)
+            
     def getClouds(self):
         
         c = self.__getConn().cursor()
         
         c.execute("select * from cloud")
     
-        clouds = [Cloud(row['name'], row['service_url'], row['storage_url'], row['ec2cert']) for row in c]
-        
+        clouds = [self.__mapCloud(row) for row in c]
+
         c.close()
+        
+        for c in clouds:
+            c.addInstanceTypes(self.getInstanceTypes(c.name))
         
         return clouds
     
@@ -545,9 +564,12 @@ class DAO:
         
         c.execute("select * from cloud where name = ?", (name,))
     
-        clouds = [Cloud(row['name'], row['service_url'], row['storage_url'], row['ec2cert']) for row in c]
+        clouds = [self.__mapCloud(row) for row in c]
         
         c.close()
+        
+        for c in clouds:
+            c.addInstanceTypes(self.getInstanceTypes(c.name))
         
         return clouds[0]
     
@@ -564,6 +586,21 @@ class DAO:
                       (kernel.aki, kernel.cloudName, kernel.arch, kernel.contents))
         self.__getConn().commit()
         c.close() 
+
+    def saveInstanceType(self, instanceType):
+        
+        assert isinstance(instanceType, InstanceType), "Object is %s" % str(instanceType)
+                
+        c = self.__getConn().cursor()
+
+        c.execute("insert into instance_type (name, cloud, cpu, cpu_count, memory, disk, cost_per_hour, architecture) values (?,?,?,?,?,?,?,?)", 
+                      (instanceType.name, instanceType.cloud.name, 
+                       instanceType.cpu, instanceType.cpuCount,
+                       instanceType.memory, instanceType.disk, 
+                       instanceType.costPerHour, ":".join(str(x) for x in instanceType.architectures)))
+        
+        self.__getConn().commit()
+        c.close() 
         
     def getKernels(self, cloudName):
         
@@ -576,4 +613,19 @@ class DAO:
         c.close()
         
         return kernels
+    
+    def getInstanceTypes(self, cloudName):
+        
+        c = self.__getConn().cursor()
+        
+        c.execute("select * from instance_type where cloud = ?", (cloudName,))
+        
+        instanceTypes = [InstanceType(row['name'], row['cpu'], 
+                                      row['cpu_count'], row['memory'],
+                                      row['disk'], string.split(row['architecture'], ":"), 
+                                      row['cost_per_hour']) for row in c]
+        
+        c.close()
+        
+        return instanceTypes
         

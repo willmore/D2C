@@ -13,20 +13,21 @@ class InstanceType:
     http://aws.amazon.com/ec2/instance-types/
     '''
     
-    def __init__(self, name, cpu, memory, disk, architectures, costPerHour):
+    def __init__(self, name, cpu, cpuCount, memory, disk, architectures, costPerHour):
         
         self.name = name
         self.cpu = cpu
+        self.cpuCount = cpuCount
         self.memory = memory
         self.disk = disk
         self.architectures = architectures
         self.costPerHour = costPerHour
     
         
-InstanceType.T1_MICRO = InstanceType('t1.micro', 2, 613, 0, (Architecture.X86, Architecture.X86_64), 0.025)
-InstanceType.M1_SMALL = InstanceType('m1.small', 1, 1700, 160, (Architecture.X86), 0.095)
-InstanceType.M1_LARGE = InstanceType('m1.large', 2, 7500, 850, (Architecture.X86_64), 0.038)
-InstanceType.M1_XLARGE = InstanceType('m1.xlarge', 4, 15000, 850, (Architecture.X86_64), 0.76)
+InstanceType.T1_MICRO = InstanceType('t1.micro', 2, 2, 613, 0, (Architecture.X86, Architecture.X86_64), 0.025)
+InstanceType.M1_SMALL = InstanceType('m1.small', 2, 1, 1700, 160, (Architecture.X86,), 0.095)
+InstanceType.M1_LARGE = InstanceType('m1.large', 2, 2, 7500, 850, (Architecture.X86_64,), 0.038)
+InstanceType.M1_XLARGE = InstanceType('m1.xlarge', 2, 4, 15000, 850, (Architecture.X86_64,), 0.76)
 
 
 InstanceType.TYPES = {InstanceType.T1_MICRO.name: InstanceType.T1_MICRO, 

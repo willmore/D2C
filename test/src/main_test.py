@@ -10,6 +10,9 @@ from d2c.AMITools import AMIToolsFactory
 from d2c.data.CredStore import CredStore
 from d2c.model.Cloud import Cloud
 from d2c.model.Kernel import Kernel
+from d2c.model.AMI import AMI
+from copy import copy
+
 
 from TestConfig import TestConfig
 
@@ -31,21 +34,24 @@ def main(argv=None):
     dao.addAWSCred(conf.awsCred)
     
     dao.addSourceImage("/foobar/vm.vdi")
-    amiId = "ami-47cefa33"
-    dao.createAmi(amiId, "/foobar/vm.vdi")
-    ami = dao.getAMIById(amiId)
     
     clouds = [Cloud("SciCloud", 
                         "http://172.17.36.21:8773/services/Eucalyptus",
                         "/home/willmore/Downloads/cloud-cert.pem",
                         "http://172.17.36.21:8773/services/Eucalyptus",
-                        [Kernel("aki-123", Kernel.ARCH_X86_64, "/foo/bar")]
+                        [Kernel("aki-123", Kernel.ARCH_X86_64, "/foo/bar")],
+                        instanceTypes=[copy(InstanceType.T1_MICRO)]
                         ),
-                Cloud("eu-west-1", "https://eu-west-1.ec2.amazonaws.com", "https://s3.amazonaws.com","/opt/EC2_TOOLS/etc/ec2/amitools/cert-ec2.pem"),
-                Cloud("us-west-1", "https://us-west-1.ec2.amazonaws.com", "https://s3.amazonaws.com", "/opt/EC2_TOOLS/etc/ec2/amitools/cert-ec2.pem")]
+                Cloud("eu-west-1", "https://eu-west-1.ec2.amazonaws.com", "https://s3.amazonaws.com","/opt/EC2_TOOLS/etc/ec2/amitools/cert-ec2.pem",
+                      instanceTypes=[copy(InstanceType.T1_MICRO), copy(InstanceType.M1_SMALL), copy(InstanceType.M1_LARGE), copy(InstanceType.M1_XLARGE)]),
+                Cloud("us-west-1", "https://us-west-1.ec2.amazonaws.com", "https://s3.amazonaws.com", "/opt/EC2_TOOLS/etc/ec2/amitools/cert-ec2.pem",
+                      instanceTypes=[copy(InstanceType.T1_MICRO), copy(InstanceType.M1_SMALL), copy(InstanceType.M1_LARGE), copy(InstanceType.M1_XLARGE)])]
     
     for cloud in clouds:
         dao.saveCloud(cloud)
+    
+    ami = AMI("ami-47cefa33", "/foobar/vm.vdi", clouds[1])
+    dao.addAMI(ami)
         
     dao.saveDeployment(Deployment("dummyDep", 
                                   cloud=clouds[1],
