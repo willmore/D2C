@@ -41,8 +41,6 @@ class Application:
         
         self._frame.bindAddDeploymentTool(self.addDeployment)
         self._frame.bindConfTool(self.showConf)
-        self._frame.bindCompCloudConfTool(self.showCompCloudConf)
-        self._frame.bindStoreTool(self.showStoreWizard)
         self._frame.bindCloudTool(self.showCloudWizard)
         
         Publisher.subscribe(self._handleNewDeployment, "DEPLOYMENT CREATED")
@@ -78,20 +76,6 @@ class Application:
         controller = ConfController(conf, self._dao)
         conf.ShowModal()
         conf.Destroy()
-        
-    def showCompCloudConf(self, event):
-        
-        cloudWiz = CompCloudWizard(None, -1, 'Computation Clouds', size=(600,300))
-        controller = CompCloudConfController(cloudWiz, self._dao)
-        cloudWiz.ShowModal()
-        cloudWiz.Destroy()
-        
-    def showStoreWizard(self, event):
-        
-        storageWiz = ImageStoreWizard(None, -1, 'Storage Clouds', size=(600,300))
-        controller = StorageWizardController(storageWiz, self._dao)
-        storageWiz.ShowModal()
-        storageWiz.Destroy()
         
     def showCloudWizard(self, event):
         

@@ -8,6 +8,7 @@ from wx.lib.pubsub import Publisher
 import traceback
 from threading import Thread
 from d2c.AMICreator import AMICreator
+import time
 
 class _AmiLogMsg:
         
@@ -119,18 +120,24 @@ class AMIController:
         
         def __init__(self, img):
             self._img = img
-            self._channelId = "AMI_LOG:%s" % img
+            self._channelId = "AMI_CREATION_LOG_%d" % time.time()
             
         def write(self, msg):
-            print msg
-            wx.CallAfter(Publisher().sendMessage, "AMI_LOG", msg)
+            print "Sending msg"
+            wx.CallAfter(Publisher().sendMessage, self._channelId, msg)
     
+    
+    def receiveLogMessage(self, msg):
+        self.__amiView.appendLogPanelText(msg.topic[0], msg.data)
+        
+        
     def __createLogger(self, img):
         logger = self.__CreationLogger(img)
         
         print "Subscribing to " + logger._channelId
-        
-        Publisher.subscribe(lambda msg: self.__amiView.appendLogPanelText(msg.data.img, msg.data.msg), 
+        Publisher.subscribe(self.receiveLogMessage, 
+                            logger._channelId)
+        Publisher.subscribe(lambda msg: self.__amiView.appendLogPanelText(logger._channelId, msg.data.msg), 
                             logger._channelId)
         return logger
         
