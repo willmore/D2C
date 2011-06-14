@@ -31,9 +31,6 @@ class DAO:
         
         self._init_db()
         
-    def setEC2ConnectionFactory(self, ec2ConnFactory):
-        self.__ec2ConnFactory = ec2ConnFactory
-        
     def setCredStore(self, credStore):
         self.__credStore = credStore
         
@@ -49,9 +46,9 @@ class DAO:
         c = self.__getConn().cursor()
         
         c.execute('''create table if not exists aws_cred
-                    (id integer primary key, 
-                    access_key_id text, 
-                    secret_access_key text)''')
+                    (id text primary key, 
+                    access_key_id text not null, 
+                    secret_access_key text not null)''')
         
         c.execute('''create table if not exists src_img
                     (path text primary key)''')
@@ -71,7 +68,11 @@ class DAO:
         
         c.execute('''create table if not exists deploy
                     (name text primary key,
-                    state text)''')
+                    cloud text not null,
+                    aws_cred text not null,
+                    state text,
+                    foreign key(cloud) references cloud(name),
+                    foreign key(aws_cred) references awc_cred(id))''')
                      
         c.execute('''create table if not exists deploy_role
                     (name text,
@@ -310,12 +311,27 @@ class DAO:
         
         self.__getConn().commit()
         c.close()  
+        
+    def addAWSCred(self, awsCred):     
+        c = self.__getConn().cursor()
+        c.execute("insert into aws_cred(id, access_key_id, secret_access_key) values (?,?,?)", (awsCred.name, awsCred.access_key_id, awsCred.secret_access_key))
+        self.__getConn().commit()
+        c.close()  
+        
+    def getAWSCred(self, id):
+        
+        c = self.__getConn().cursor()
+        c.execute("select * from aws_cred where id = ? limit 1", (id,))
+        row = c.fetchone()
+        c.close()
+        
+        return AWSCred(row['id'], row['access_key_id'], row['secret_access_key'])
     
     def saveDeployment(self, deployment):
         print "Saving new deployment"
         c = self.__getConn().cursor()
-        c.execute("insert into deploy (name, state) values (?, ?)", 
-                      (deployment.id, deployment.state))
+        c.execute("insert into deploy (name, state, cloud, aws_cred) values (?,?,?,?)", 
+                      (deployment.id, deployment.state, deployment.cloud.name, deployment.awsCred.name))
     
         for role in deployment.roles:
             c.execute("insert into deploy_role (name, deploy, ami, count, instance_type) values (?,?,?,?,?)", 
@@ -345,8 +361,11 @@ class DAO:
         deploys = {}
         
         for row in c:
-            deploys[row['name']] = self.rowToDeployment(row)
-        
+            d = self.rowToDeployment(row)
+            d.setCloud(self.getCloud(row['cloud']))
+            d.awsCred = self.getAWSCred(row['aws_cred'])
+            deploys[row['name']] = d
+
         c.execute("select * from deploy_role")
         
         for row in c:
@@ -357,8 +376,6 @@ class DAO:
         
         c.close()
       
-        for d in deploys.values():
-            print d
         return deploys.values()
              
     def rowToDeployment(self, row):
@@ -366,7 +383,7 @@ class DAO:
         return Deployment(row['name'])
         
     def rowToRole(self, row):
-        return Role(row['deploy'], row['name'], 
+        return Role(row['name'], 
                     row['ami'], row['count'], 
                     self.__instanceType(row['instance_type']))
     
@@ -521,6 +538,21 @@ class DAO:
         c.close()
         
         return clouds
+    
+    def getCloud(self, name):
+        
+        c = self.__getConn().cursor()
+        
+        c.execute("select * from cloud where name = ?", (name,))
+    
+        clouds = [Cloud(row['name'], row['service_url'], row['storage_url'], row['ec2cert']) for row in c]
+        
+        c.close()
+        
+        return clouds[0]
+    
+    def __mapCloud(self, row):
+        return Cloud(row['name'], row['service_url'], row['storage_url'], row['ec2cert'])
         
     def saveKernel(self, kernel):
         

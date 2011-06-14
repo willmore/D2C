@@ -5,6 +5,9 @@ from d2c.model.AWSCred import AWSCred
 from urlparse import urlparse
 import boto
 from boto.ec2.regioninfo import RegionInfo
+from d2c.util import synchronous
+import threading
+
 
 class Cloud:
     '''
@@ -19,6 +22,8 @@ class Cloud:
         assert isinstance(serviceURL, basestring)
         assert isinstance(storageURL, basestring)
         assert isinstance(ec2Cert, basestring)
+        
+        self.mylock = threading.RLock()
         
         self.name = name
         self.serviceURL = serviceURL
@@ -64,19 +69,26 @@ class Cloud:
     def bundleUploader(self):
         return self.storage.bundleUploader()
     
+    @synchronous('mylock')
     def getConnection(self, awsCred):
         
         assert isinstance(awsCred, AWSCred)
         
         if not hasattr(self, "__ec2Conn"):
             self.__ec2Conn = boto.connect_ec2(aws_access_key_id=awsCred.access_key_id,
-                                aws_secret_access_key=awsCred.secret_access_key,
-                                is_secure=self.parsedEndpoint.scheme == "https",
-                                region=self.regionInfo,
-                                port=self.parsedEndpoint.port,
-                                path=self.parsedEndpoint.path)
+                                              aws_secret_access_key=awsCred.secret_access_key,
+                                              is_secure=self.parsedEndpoint.scheme == "https",
+                                              region=self.regionInfo,
+                                              port=self.parsedEndpoint.port,
+                                              path=self.parsedEndpoint.path)
         
         return self.__ec2Conn
+    
+    def __eq__(self, other):
+        return self.name == other.name
+    
+    def __ne__(self, other): 
+        return not self == other
 
 
         

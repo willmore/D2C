@@ -144,9 +144,7 @@ class DeploymentTest(unittest.TestCase):
         connFactory = DummyConnFactory()
             
         self.deployment.cloud = connFactory
-        
-        
-             
+              
         listeners = {}
         
         for state in (DeploymentState.INSTANCES_LAUNCHED, 

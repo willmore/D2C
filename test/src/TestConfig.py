@@ -14,7 +14,6 @@ class TestConfig(Configuration):
     file for testing purposes.
     '''
     
-    
     def __init__(self, confFile):
         settings = {}
         for l in open(confFile, "r"):
@@ -25,7 +24,8 @@ class TestConfig(Configuration):
                           settings['cert'], 
                           settings['privateKey'])
     
-        awsCred = AWSCred(settings['accessKey'],
+        awsCred = AWSCred("mainKey",
+                          settings['accessKey'],
                           settings['secretKey'])
         
         Configuration.__init__(self,

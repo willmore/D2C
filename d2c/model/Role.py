@@ -2,15 +2,17 @@ from d2c.logger import StdOutLogger
 from d2c.model.InstanceType import InstanceType
 from d2c.model.Action import Action
 from d2c.model.Deployment import Deployment
+from d2c.model.AWSCred import AWSCred
 import string
 
 import time   
 
 class Role:
     
-    def __init__(self, deployment, 
+    def __init__(self,  
                  name, ami, count,
                  instanceType, 
+                 deployment=None,
                  reservationId=None,
                  startActions=(), 
                  stopActions=(),
@@ -22,8 +24,8 @@ class Role:
                  logger=StdOutLogger()):
         
         assert count > 0, "Count must be int > 0"
-        assert isinstance(instanceType, InstanceType)
-        assert isinstance(deployment, Deployment)
+        assert isinstance(instanceType, InstanceType), "Type is %s" % type(instanceType)
+        assert deployment is None or isinstance(deployment, Deployment)
         
         self.name = name
         self.ami = ami  
@@ -32,6 +34,7 @@ class Role:
         self.pollRate = pollRate
         self.reservationId = reservationId
         self.reservation = None #lazy loaded
+        self.deployment = deployment
         
         self.startActions = list(startActions)
         self.stopActions = list(stopActions)
@@ -58,9 +61,11 @@ class Role:
     def costPerHour(self):
         return self.count * self.instanceType.costPerHour
        
-    def launch(self):
+    def launch(self, awsCred):
         
-        ec2Conn = self.deployment.cloud.getConnection()
+        assert isinstance(awsCred, AWSCred)
+        
+        ec2Conn = self.deployment.cloud.getConnection(awsCred)
        
         launchKey = self.launchCred.id if self.launchCred is not None else None
        
@@ -78,7 +83,7 @@ class Role:
         
         self.reservationId = self.reservation.id
         
-        self.logger.write("Instance(s) reserved")    
+        self.logger.write("Instance(s) reserved with ID: %s" % self.reservationId)    
      
     def __executeActions(self, actions): 
         '''
@@ -186,10 +191,14 @@ class Role:
         
         if self.reservation is None:
             self.reservation = self.__getReservation()
-          
+        
+        
+        import boto.ec2.instance
         #Request the instances be terminated  
         for instance in self.reservation.instances:
-            instance.terminate()
+            instance.stop()
+            #Boto 2.0
+            #instance.terminate()
         
         #Monitor until all are terminated
         monitorInstances = self.reservation.instances
@@ -202,8 +211,8 @@ class Role:
                   
             monitorInstances = filter(lambda inst: inst.state != 'terminated', monitorInstances) 
             
-            for instance in self.reservation.instances:
-                instance.terminate()
+            #for instance in self.reservation.instances:
+            #    instance.terminate()
                 
             time.sleep(self.pollRate)
         

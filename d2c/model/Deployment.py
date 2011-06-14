@@ -94,7 +94,8 @@ class Deployment:
     
     def __init__(self, 
                  id, 
-                 cloud=None, 
+                 awsCred=None,
+                 cloud=None,
                  roles=(),
                  reservations=(), 
                  state=DeploymentState.NOT_RUN, 
@@ -106,6 +107,7 @@ class Deployment:
         self.cloud = cloud
         self.roles = list()
         self.addRoles(roles)
+        self.awsCred = awsCred
         
         self.state = state
         self.monitor = Monitor(self, listeners, pollRate)
@@ -198,7 +200,7 @@ class Deployment:
         self.logger.write("Launching instances")
                         
         for role in self.roles:
-            role.launch()    
+            role.launch(self.awsCred)    
         
         reservationIds = [r.getReservationId() for r in self.roles]
     
@@ -248,18 +250,23 @@ class Deployment:
     def __getInstanceStates(self, reservationIds):
         '''
         Return a iterable of string states for all instances
-        for the reservation ids.
+        for the reservation IDs.
         '''  
+        
         self.logger.write("Getting instances states for reservation-id(s): %s" % str(reservationIds))
         
-        res = self.cloud.getConnection().get_all_instances(filters={'reservation-id':reservationIds})
+        # Filter only works in boto 2.0. Add back when we move from 1.9 to 2.0
+        #res = self.cloud.getConnection(self.awsCred).get_all_instances(filters={'reservation-id':reservationIds})
+        
+        res = self.cloud.getConnection(self.awsCred).get_all_instances()
         
         self.logger.write("Got reservations: %s" % str(res))
         
         states = []
         for r in res:
-            for i in r.instances:
-                states.append(i.state)
+            if r.id in reservationIds:
+                for i in r.instances:
+                    states.append(i.state)
         
         self.logger.write("Instance states for reservations %s are %s" % (str(reservationIds), str(states)))
         
