@@ -30,7 +30,9 @@ class AMICreator:
                  ec2Cred, awsCred,
                  userId, s3Bucket,
                  cloud, kernel,
-                 dao, outputDir=None,
+                 dao, 
+                 amiToolsFactory,
+                 outputDir=None,
                  logger=StdOutLogger()):
         
         assert isinstance(srcImg, basestring)
@@ -39,13 +41,14 @@ class AMICreator:
         assert isinstance(cloud, Cloud)
         assert isinstance(kernel, Kernel)
         assert isinstance(dao, DAO)
+        assert outputDir is None or isinstance(outputDir, basestring)
         
         self.__srcImg = srcImg
         self.__ec2Cred = ec2Cred
         self.__awsCred = awsCred
         self.__userId = userId
         self.__s3Bucket = s3Bucket
-        self.__amiTools = AMITools(logger)
+        self.__amiTools = amiToolsFactory.getAMITools(logger)
         self.__logger = logger
         self.__cloud = cloud
         self.__kernel = kernel
@@ -65,8 +68,9 @@ class AMICreator:
         if not os.path.exists(self.__outputDir):
             os.makedirs(self.__outputDir)
        
-        if not self.__kernel in self.__cloud.getKernels():
-            raise Exception("Kernel %s not in cloud kernels" % str(self.__kernel))
+        cloudKernels = self.__dao.getKernels(self.__cloud.name)
+        if not self.__kernel in cloudKernels:
+            raise Exception("Kernel %s not in cloud kernels %s" % (str(self.__kernel), str(cloudKernels)))
        
         arch = self.__amiTools.getArch(self.__srcImg)
         
@@ -93,7 +97,7 @@ class AMICreator:
                                                       self.__s3Bucket, 
                                                       manifest, self.__awsCred)
     
-        self.__logger.write("Registering AMI: " + s3ManifestPath)
+        self.__logger.write("Registering AMI: %s" % s3ManifestPath)
         amiId = self.__amiTools.registerAMI(s3ManifestPath, self.__cloud, self.__awsCred)     
         
         self.__dao.addAMI(amiId, self.__srcImg)

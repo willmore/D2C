@@ -12,6 +12,7 @@ from d2c.model.Kernel import Kernel
 from d2c.model.Storage import WalrusStorage
 from d2c.EC2ConnectionFactory import EC2ConnectionFactory
 from d2c.data.CredStore import CredStore
+from d2c.AMITools import AMITools, AMIToolsFactory
 from TestConfig import TestConfig
 from mockito import *
 
@@ -106,7 +107,12 @@ def main(argv=None):
         
     dao.addImageStore(WalrusStorage("SciCloud Storage", "http://172.17.36.21:8773/services/Walrus"))
     
-    app = Application(dao, AMIToolsFactoryStub())
+    mockAMIFactory = mock(AMIToolsFactory)
+    mockAMITools = mock(AMITools)
+    when(mockAMIFactory).getAMITools(any()).thenReturn(mockAMITools)
+    when(mockAMITools).getArch(any()).thenReturn(Kernel.ARCH_X86_64)
+    assert mockAMIFactory.getAMITools(1) is not None
+    app = Application(dao, mockAMIFactory)
     app.MainLoop()
 
 if __name__ == "__main__":

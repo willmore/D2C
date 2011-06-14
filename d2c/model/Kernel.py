@@ -1,8 +1,5 @@
-'''
-Created on Jun 7, 2011
 
-@author: willmore
-'''
+
 class Kernel:
     
     
@@ -14,3 +11,14 @@ class Kernel:
         self.arch = arch
         self.contents = contents
         self.cloudName = cloudName
+        
+    def __str__(self):
+        return self.aki
+    
+    def __eq__(self, other):
+        return (self.aki, self.cloudName) == (other.aki, other.cloudName)
+    
+    def __ne__(self, other):
+        return not self.__eq__(other)
+    
+    

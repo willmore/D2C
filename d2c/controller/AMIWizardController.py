@@ -28,12 +28,6 @@ class AMIWizardController:
       
     def showPanel(self, label):
         return lambda _: self._view.showPanel(label)
-    
-    class Message:
-        
-        def __init__(self, img, store):
-            self.img = img
-            self.store = store
             
     def selectCloud(self, _):
         clouds = self._view.container.getPanel("CLOUD").cloudList.getSelectedItems()

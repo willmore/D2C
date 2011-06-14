@@ -15,7 +15,7 @@ class AMIPanel(wx.Panel):
         
         vbox = wx.BoxSizer(wx.VERTICAL)
  
-        self._list = wx.ListCtrl(self.splitter, -1, style=wx.LC_REPORT, size=(110,250))
+        self._list = wx.ListCtrl(self.splitter, -1, style=wx.LC_REPORT, size=(110,110))
         
         hbox1 = wx.BoxSizer(wx.HORIZONTAL)
         hbox1.Add(self.splitter, 1, wx.EXPAND)
@@ -35,11 +35,12 @@ class AMIPanel(wx.Panel):
         
         self.Layout()   
         
-        self.Bind(wx.EVT_RIGHT_DOWN, self.OnRightDown)
-        self.Bind(wx.EVT_LEFT_DOWN, self.OnRightDown)
+        #self.Bind(wx.EVT_RIGHT_DOWN, self.OnRightDown)
+        #self.Bind(wx.EVT_LEFT_DOWN, self.OnRightDown)
         
-        self._list.Bind(wx.EVT_RIGHT_DOWN, self.OnRightDown)
-
+        #self._list.Bind(wx.EVT_RIGHT_DOWN, self.OnRightDown)
+    
+    '''
     def OnRightDown(self, event):
         item, flags = self._list.HitTest(event.GetPosition())
         if flags == wx.NOT_FOUND:
@@ -47,6 +48,7 @@ class AMIPanel(wx.Panel):
             return
         self._list.Select(item)
         self.PopupMenu(MyPopupMenu('Test'), event.GetPosition())
+    '''
          
     def addLogPanel(self, id):
         self._logPanel.addPanel(id, wx.TextCtrl(self._logPanel, -1, size=(100,100), style=wx.TE_MULTILINE )) #style=wx.TE_READONLY

@@ -21,13 +21,8 @@ class UnsupportedPlatformError(Exception):
 
 class AMIToolsFactory:
     
-    def __init__(self):
-        # TODO refactor when possible to inject ec2ConnFactory
-        #self.ec2ConnFactory = ec2ConnFactory
-        pass
-    
-    def getAMITools(self, accessKey, secretKey, logger):
-        return AMITools(accessKey, secretKey, logger)
+    def getAMITools(self, logger):
+        return AMITools(logger)
 
 class AMITools:
 

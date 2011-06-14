@@ -41,8 +41,7 @@ class AMIThread(Thread):
             
     def run(self):
         try:
-            
-            ami =AMICreator(self.__img, 
+            amiCreator = AMICreator(self.__img, 
                  self.__conf.ec2Cred, 
                  self.__conf.awsCred,
                  self.__conf.awsUserId, 
@@ -50,10 +49,11 @@ class AMIThread(Thread):
                  self.__cloud,
                  self.__kernel,
                  self.__dao,
-                 self.__dao,
+                 self.__amiToolsFactory,
                  logger=self.__logger)  
             
-
+            ami = amiCreator.createAMI()
+            
             self._sendFinishMessage(self.__img, ami, code=Codes.JOB_CODE_SUCCESS, exception=None)
                                    
         except:
@@ -68,25 +68,28 @@ class AMIController:
         self.__amiToolsFactory = amiToolsFactory
     
         self.__refreshAMIList()
-        
+        self.__amiView._list.Bind(wx.EVT_LIST_ITEM_SELECTED, self.showAMI)
         Publisher.subscribe(self.__createAMI, "CREATE AMI")
-        Publisher.subscribe(self._handleAMILog, "AMI LOG")
         Publisher.subscribe(self._handleAMIJobDone, "AMI JOB DONE")
+    
+    def showAMI(self, _):
+        
+        if self.__amiView._list.GetSelectedItemCount() == 1:
+            i = self.__amiView._list.GetFirstSelected()
+            print i
+            #self.__amiView.showLogPanel()
     
     def __refreshAMIList(self):
         self.__amiView.setAMIs(self.__dao.getAMIs())
     
     def _handleAMIJobDone(self, msg):
         (_, ami, _, _) = msg.data
-        self.__amiView.addAMIEntry(ami)   
+        #self.__amiView.addAMIEntry(ami)   
+        print "TODO handle done"
     
-    def _handleAMILog(self, msg):
-        
-        self.__amiView.appendLogPanelText(msg.data.img, msg.data.msg)              
-        
     def __createAMI(self, msg):
         '''
-        Listens for AMI creation request, which are generally sent from ImageController.
+        Listens for AMI creation request, which are currently sent from ImageController.
         1. Create and display a new log panel which display AMI creation log.
         2. Spawn an AMIThread which creates the AMI.
         3. Add a new entry into the AMI list with the in-creation-progress AMI information.
@@ -94,8 +97,10 @@ class AMIController:
         
         rawImg,cloud,kernel,s3Bucket = msg.data
         
-        self.__amiView.addLogPanel(rawImg)
-        self.__amiView.showLogPanel(rawImg)
+        logId = rawImg
+        logger = self.__createLogger(rawImg)
+        self.__amiView.addLogPanel(logger._channelId)
+        self.__amiView.showLogPanel(logger._channelId)
 
         amiThread = AMIThread(rawImg, 
                               self.__dao.getConfiguration(),
@@ -104,8 +109,8 @@ class AMIController:
                               kernel,
                               s3Bucket,
                               self.__dao,
-                              self.__createLogger(rawImg),
-                              )
+                              logger)
+        
         amiThread.start()
         
         self.__amiView.addAMIEntry(name=rawImg)
@@ -114,10 +119,18 @@ class AMIController:
         
         def __init__(self, img):
             self._img = img
-        
+            self._channelId = "AMI_LOG:%s" % img
+            
         def write(self, msg):
-            wx.CallAfter(Publisher().sendMessage, "AMI LOG", _AmiLogMsg(self._img, msg))
+            print msg
+            wx.CallAfter(Publisher().sendMessage, "AMI_LOG", msg)
     
     def __createLogger(self, img):
-        return self.__CreationLogger(img)
+        logger = self.__CreationLogger(img)
+        
+        print "Subscribing to " + logger._channelId
+        
+        Publisher.subscribe(lambda msg: self.__amiView.appendLogPanelText(msg.data.img, msg.data.msg), 
+                            logger._channelId)
+        return logger
         

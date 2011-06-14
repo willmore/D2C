@@ -9,10 +9,7 @@ Created on Feb 15, 2011
 @author: willmore
 '''
 import wx
-from wx.lib.pubsub import Publisher as pub
 
-from d2c.model.SourceImage import SourceImage
-import d2c.AMICreator
 from .AMIWizardController import AMIWizardController
 from d2c.gui.NewAMIWizard import NewAMIWizard
 
