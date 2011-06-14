@@ -143,7 +143,7 @@ class DeploymentTest(unittest.TestCase):
         pollRate = 2
         connFactory = DummyConnFactory()
             
-        self.deployment.setEC2ConnFactory(connFactory)
+        self.deployment.cloud = connFactory
         
         
              
@@ -184,7 +184,7 @@ class DeploymentTest(unittest.TestCase):
         Assert that the lifecycle properly continues after re-attaching.
         '''
         connFactory = DummyConnFactory()
-        self.deployment.setEC2ConnFactory(connFactory)
+        self.deployment.cloud = connFactory
         
         
         for role in self.deployment.roles:
@@ -239,15 +239,14 @@ class DeploymentTest(unittest.TestCase):
         Simulate re-attaching to an already started deployment, which is at stage ROLES_STARTED.
         Assert that the lifecycle properly continues after re-attaching.
         '''
-        connFactory = DummyConnFactory()
-        self.deployment.setEC2ConnFactory(connFactory)
-        
+        cloud = DummyConnFactory()
+        self.deployment.cloud = cloud
         
         for role in self.deployment.roles:
             reservationId = 'r-%s' % role.getName() 
-            connFactory.conn.reservations[reservationId] = mock(Reservation)
+            cloud.conn.reservations[reservationId] = mock(Reservation)
         
-        connFactory.setState('running')
+        cloud.setState('running')
         pollRate = 2
         hits = {}
                      

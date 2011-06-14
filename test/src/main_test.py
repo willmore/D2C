@@ -9,6 +9,7 @@ from d2c.model.InstanceType import InstanceType
 from d2c.AMITools import AMIToolsFactory
 from d2c.EC2ConnectionFactory import EC2ConnectionFactory
 from d2c.data.CredStore import CredStore
+from d2c.model.Cloud import Cloud
 
 from TestConfig import TestConfig
 
@@ -36,6 +37,17 @@ def main(argv=None):
     
     dao.saveDeployment(Deployment("dummyDep", 
                                   roles=[Role("dummyDep", "loner", ami, 1, InstanceType.T1_MICRO)]))
+   
+    for cloud in [Cloud("SciCloud", 
+                        "http://172.17.36.21:8773/services/Eucalyptus",
+                        "/home/willmore/Downloads/cloud-cert.pem",
+                        "http://172.17.36.21:8773/services/Eucalyptus",
+                        [Kernel("aki-123", Kernel.ARCH_X86_64, "/foo/bar")]
+                        ),
+                Cloud("eu-west-1", "https://eu-west-1.amazonaws.com", "https://s3.amazonaws.com","/opt/EC2_TOOLS/etc/ec2/amitools/cert-ec2.pem"),
+                Cloud("us-west-1", "https://us-west-1.amazonaws.com", "https://s3.amazonaws.com", "/opt/EC2_TOOLS/etc/ec2/amitools/cert-ec2.pem")]:
+        dao.saveCloud(cloud)
+   
    
     app = Application(dao, AMIToolsFactory())
     app.MainLoop()

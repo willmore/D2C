@@ -92,8 +92,9 @@ class Deployment:
         which may be in various states (requested, running, terminated, etc.)
     '''  
     
-    def __init__(self, id, 
-                 ec2ConnFactory=None, 
+    def __init__(self, 
+                 id, 
+                 cloud=None, 
                  roles=(),
                  reservations=(), 
                  state=DeploymentState.NOT_RUN, 
@@ -102,26 +103,35 @@ class Deployment:
                  pollRate=30):
                         
         self.id = id
-        self.ec2ConnFactory = ec2ConnFactory
-        self.roles = list(roles)
+        self.cloud = cloud
+        self.roles = list()
+        self.addRoles(roles)
         
         self.state = state
         self.monitor = Monitor(self, listeners, pollRate)
         self.logger = logger
         self.pollRate = pollRate
     
-    def setEC2ConnFactory(self, ec2ConnFactory):
+    def setCloud(self, cloud):
 
-        self.ec2ConnFactory = ec2ConnFactory
-        
-        for role in self.roles:
-            role.setEC2ConnFactory(ec2ConnFactory)
-    
-    def getState(self):
-        pass
-    
+        if self.cloud is not cloud:
+            self.cloud = cloud
+            
+        if self not in cloud.deployments:
+            cloud.deployments.append(self)
+          
+    def addRoles(self, roles):
+        for r in roles:
+            self.addRole(r)
+
     def addRole(self, role):
-        self.roles.append(role)
+        print "Add role"
+        if role not in self.roles:
+            print "Adding role"
+            self.roles.append(role)
+            
+        if self is not role.deployment:
+            role.deployment = self
        
     def costPerHour(self):
         sum = 0
@@ -186,12 +196,8 @@ class Deployment:
         self.__setState(DeploymentState.LAUNCHING_INSTANCES)
         
         self.logger.write("Launching instances")
-        
-        assert self.ec2ConnFactory is not None
-                
-        #print "Roles = %s" % str(self.roles)
+                        
         for role in self.roles:
-            role.setEC2ConnFactory(self.ec2ConnFactory)  
             role.launch()    
         
         reservationIds = [r.getReservationId() for r in self.roles]
@@ -246,7 +252,7 @@ class Deployment:
         '''  
         self.logger.write("Getting instances states for reservation-id(s): %s" % str(reservationIds))
         
-        res = self.ec2ConnFactory.getConnection().get_all_instances(filters={'reservation-id':reservationIds})
+        res = self.cloud.getConnection().get_all_instances(filters={'reservation-id':reservationIds})
         
         self.logger.write("Got reservations: %s" % str(res))
         
@@ -262,9 +268,7 @@ class Deployment:
         
     def __startRoles(self):
         self.logger.write("Starting roles")
-        
-        self.__attachEC2ConnToRoles()
-        
+                
         for role in self.roles:
             role.executeStartCommands()
             
@@ -274,9 +278,7 @@ class Deployment:
         
     def __stopRoles(self):
         self.logger.write("Stopping roles")
-        
-        self.__attachEC2ConnToRoles()
-        
+                
         for role in self.roles:
             role.executeStopCommands()
             
@@ -284,14 +286,8 @@ class Deployment:
             
         self.logger.write("Roles stopped")
         
-    def __attachEC2ConnToRoles(self):
-        assert self.ec2ConnFactory is not None
-        for r in self.roles: 
-            r.ec2ConnFactory = self.ec2ConnFactory
         
     def __monitorForDone(self):
-        
-        self.__attachEC2ConnToRoles()
         
         monitorRoles = list(self.roles)
         

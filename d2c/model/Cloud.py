@@ -30,9 +30,17 @@ class Cloud:
         self.storage = WalrusStorage("placeholder_name", storageURL)
         self.parsedEndpoint = urlparse(serviceURL)
         self.regionInfo = RegionInfo(name=name, endpoint=self.parsedEndpoint.hostname)
+        self.deployments = list()
         
     def getName(self):
         return self.name
+    
+    def addDeployment(self, deployment):
+        if self.deployments not in deployment:
+            self.deployments.addpend(deployment)
+        
+        if deployment.cloud is not self:
+            deployment.cloud = self
     
     def addKernels(self, kernels):
         
@@ -60,12 +68,15 @@ class Cloud:
         
         assert isinstance(awsCred, AWSCred)
         
-        return boto.connect_ec2(aws_access_key_id=awsCred.access_key_id,
+        if not hasattr(self, "__ec2Conn"):
+            self.__ec2Conn = boto.connect_ec2(aws_access_key_id=awsCred.access_key_id,
                                 aws_secret_access_key=awsCred.secret_access_key,
                                 is_secure=self.parsedEndpoint.scheme == "https",
                                 region=self.regionInfo,
                                 port=self.parsedEndpoint.port,
                                 path=self.parsedEndpoint.path)
+        
+        return self.__ec2Conn
 
 
         

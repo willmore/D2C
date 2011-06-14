@@ -58,7 +58,6 @@ class AMIPanel(wx.Panel):
         self.Layout()
         self.Refresh()
         
-        
     def appendLogPanelText(self, logPanelId, text):
         self._logPanel.getPanel(logPanelId).AppendText(str(text) + "\n")
         

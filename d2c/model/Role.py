@@ -1,13 +1,14 @@
 from d2c.logger import StdOutLogger   
 from d2c.model.InstanceType import InstanceType
 from d2c.model.Action import Action
+from d2c.model.Deployment import Deployment
 import string
 
 import time   
 
 class Role:
     
-    def __init__(self, deploymentId, 
+    def __init__(self, deployment, 
                  name, ami, count,
                  instanceType, 
                  reservationId=None,
@@ -15,17 +16,15 @@ class Role:
                  stopActions=(),
                  finishedChecks=(),
                  dataCollectors=(), 
-                 ec2ConnFactory=None,
                  contextCred=None,
-                 #credStore=None,
                  launchCred=None,
                  pollRate=15,
                  logger=StdOutLogger()):
         
         assert count > 0, "Count must be int > 0"
         assert isinstance(instanceType, InstanceType)
+        assert isinstance(deployment, Deployment)
         
-        self.deploymentId = deploymentId
         self.name = name
         self.ami = ami  
         self.count = count
@@ -39,7 +38,6 @@ class Role:
         self.finishedChecks = list(finishedChecks)
         self.dataCollectors = list(dataCollectors)
         
-        self.ec2ConnFactory = ec2ConnFactory
         self.launchCred = launchCred
         self.contextCred = contextCred
           
@@ -56,16 +54,13 @@ class Role:
     
     def getCount(self):
         return self.count
-    
-    def setEC2ConnFactory(self, ec2ConnFactory):
-        self.ec2ConnFactory = ec2ConnFactory  
      
     def costPerHour(self):
         return self.count * self.instanceType.costPerHour
        
     def launch(self):
         
-        ec2Conn = self.ec2ConnFactory.getConnection()
+        ec2Conn = self.deployment.cloud.getConnection()
        
         launchKey = self.launchCred.id if self.launchCred is not None else None
        
