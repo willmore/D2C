@@ -68,7 +68,7 @@ class AMIPanel(wx.Panel):
         self._list.DeleteAllItems()
         
         for ami in images:
-            self._list.Append((ami.amiId,ami.srcImg))
+            self._list.Append((ami.id,ami.srcImg))
     
 class MyPopupMenu(wx.Menu):
     def __init__(self, WinName):

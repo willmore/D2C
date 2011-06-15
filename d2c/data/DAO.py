@@ -4,7 +4,6 @@ from d2c.model.SourceImage import SourceImage
 from d2c.model.EC2Cred import EC2Cred
 from d2c.model.AWSCred import AWSCred
 from d2c.model.Configuration import Configuration
-from d2c.model.AMI import AMI
 from d2c.model.Deployment import Deployment
 from d2c.model.Role import Role
 from d2c.data.InstanceMetrics import InstanceMetrics, Metric, MetricList, MetricValue
@@ -338,7 +337,7 @@ class DAO:
         row = c.fetchone()
         c.close()
         
-        return AWSCred(row['id'], row['access_key_id'], row['secret_access_key'])
+        return AWSCred(row['id'], row['access_key_id'], row['secret_access_key']) if row is not None else None
     
     def saveDeployment(self, deployment):
         print "Saving new deployment"
@@ -365,7 +364,7 @@ class DAO:
         
         amis = {}
         for a in self.getAMIs():
-            amis[a.amiId] = a
+            amis[a.id] = a
         
         c = self.__getConn().cursor()
         

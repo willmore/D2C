@@ -27,7 +27,7 @@ class RoleList(wx.ListCtrl):
             self.setRoles(roles) 
                    
     def addRole(self, role):
-        idx = self.Append((role.name,role.ami.amiId, role.count, role.instanceType.name))
+        idx = self.Append((role.name,role.ami.id, role.count, role.instanceType.name))
         self.roles[idx] = role
     
     def setRoles(self, roles): 

@@ -2,15 +2,13 @@ import sys
 import os
 
 from d2c.Application import Application
-from AMIToolsStub import AMIToolsFactoryStub
 from d2c.data.DAO import DAO
 from d2c.model.Role import Role
 from d2c.model.InstanceType import InstanceType
 from d2c.model.Deployment import Deployment
 from d2c.model.Cloud import Cloud
 from d2c.model.Kernel import Kernel
-from d2c.model.Storage import WalrusStorage
-from d2c.EC2ConnectionFactory import EC2ConnectionFactory
+from d2c.model.AMI import AMI
 from d2c.data.CredStore import CredStore
 from d2c.AMITools import AMITools, AMIToolsFactory
 from TestConfig import TestConfig
@@ -76,25 +74,18 @@ def main(argv=None):
         os.unlink(sqlFile)
     dao = DAO(sqlFile)
     
-    conf = TestConfig("/home/willmore/scicloud.conf")   
+    conf = TestConfig("/home/willmore/test.conf")   
     dao.saveConfiguration(conf)
     
-    ec2ConnFactory = mock(EC2ConnectionFactory)
-    when(ec2ConnFactory).getConnection().thenReturn(DummyConn())
+    #ec2ConnFactory = mock(EC2ConnectionFactory)
+    #when(ec2ConnFactory).getConnection().thenReturn(DummyConn())
     
-    dao.setEC2ConnectionFactory(ec2ConnFactory)
+    dao.addAWSCred(conf.awsCred)
+    
     dao.setCredStore(CredStore(dao))
     
     dao.addSourceImage("/foobar/vm.vdi")
-    amiId = "ami-47cefa33"
-    dao.createAmi(amiId, "/foobar/vm.vdi")
-    ami = dao.getAMIById(amiId)
-    
-    deployment = Deployment("dummyDep", 
-                            roles=[Role("dummyDep", "loner", ami, 1, InstanceType.T1_MICRO)])
-    
-    dao.saveDeployment(deployment)
-    
+     
     for cloud in [Cloud("SciCloud", 
                         "http://172.17.36.21:8773/services/Eucalyptus",
                         "/home/willmore/Downloads/cloud-cert.pem",
@@ -104,14 +95,24 @@ def main(argv=None):
                 Cloud("eu-west-1", "https://eu-west-1.amazonaws.com", "https://s3.amazonaws.com","/opt/EC2_TOOLS/etc/ec2/amitools/cert-ec2.pem"),
                 Cloud("us-west-1", "https://us-west-1.amazonaws.com", "https://s3.amazonaws.com", "/opt/EC2_TOOLS/etc/ec2/amitools/cert-ec2.pem")]:
         dao.saveCloud(cloud)
-        
-    dao.addImageStore(WalrusStorage("SciCloud Storage", "http://172.17.36.21:8773/services/Walrus"))
+    
+    cloud = dao.getClouds()[0]
+    ami = AMI("ami-47cefa33", "/foobar/vm.vdi", cloud)
+    dao.addAMI(ami)
+    
+    deployment = Deployment("dummyDep", 
+                            roles=[Role("loner", ami, 1, InstanceType.T1_MICRO)],
+                            awsCred=conf.awsCred,
+                            cloud=cloud)
+    
+    dao.saveDeployment(deployment)
+       
     
     mockAMIFactory = mock(AMIToolsFactory)
     mockAMITools = mock(AMITools)
     when(mockAMIFactory).getAMITools(any()).thenReturn(mockAMITools)
     when(mockAMITools).getArch(any()).thenReturn(Kernel.ARCH_X86_64)
-    assert mockAMIFactory.getAMITools(1) is not None
+    
     app = Application(dao, mockAMIFactory)
     app.MainLoop()
 

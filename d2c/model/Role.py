@@ -69,10 +69,10 @@ class Role:
        
         launchKey = self.launchCred.id if self.launchCred is not None else None
        
-        self.logger.write("Reserving %d instance(s) of %s with launchKey %s" % (self.count, self.ami.amiId, launchKey))
+        self.logger.write("Reserving %d instance(s) of %s with launchKey %s" % (self.count, self.ami.id, launchKey))
        
         #TODO catch exceptions
-        self.reservation = ec2Conn.run_instances(self.ami.amiId, 
+        self.reservation = ec2Conn.run_instances(self.ami.id, 
                                                  key_name=launchKey,
                                                  min_count=self.count, 
                                                  max_count=self.count, 
