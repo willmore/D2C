@@ -10,6 +10,7 @@ from d2c.model.Role import Role
 from d2c.model.Deployment import Deployment
 from d2c.model.InstanceType import InstanceType
 from wx.lib.pubsub import Publisher
+from .util import createEmptyChecker
 
 class DeploymentWizardController:
     
@@ -22,6 +23,9 @@ class DeploymentWizardController:
         
         self.wizard.container.getPanel("ROLES").getPanel("ADD_ROLE").addRoleButton.Bind(wx.EVT_BUTTON, self.addRole)
         self.wizard.container.getPanel("ROLES").getPanel("ROLES").finishButton.Bind(wx.EVT_BUTTON, self.addDeployment)
+        
+        p = self.wizard.container.getPanel("ROLES").getPanel("ADD_ROLE")
+        createEmptyChecker(p.addRoleButton, p.roleName, p.instanceType, p.amiList)
         
         self.wizard.container.getPanel("COMPLETION").okButton.Bind(wx.EVT_BUTTON, self.done)
         

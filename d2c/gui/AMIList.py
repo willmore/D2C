@@ -21,7 +21,7 @@ class AMIList(wx.ListCtrl):
             self.setAMIs(kwargs['amis'])
         
     def addAMIEntry(self, ami):
-        idx = self.Append((ami.amiId,ami.srcImg))
+        idx = self.Append((ami.id,ami.srcImg))
         self.amis[idx] = ami
     
     def getAMIs(self):
