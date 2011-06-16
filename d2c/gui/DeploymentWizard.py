@@ -7,6 +7,7 @@ from .RoleList import RoleList
 class RolePanel(wx.Panel):
     def __init__(self, *args, **kwargs):
         wx.Panel.__init__(self, *args, **kwargs)
+
         self.sizer = wx.BoxSizer(wx.VERTICAL)
         
         self.roleList = RoleList(self, -1, style=wx.LC_REPORT)
@@ -20,6 +21,7 @@ class RolePanel(wx.Panel):
         self.sizer.Add(self.finishButton, 0, wx.ALIGN_RIGHT|wx.ALL, 2)
         
         self.SetSizer(self.sizer)
+        self.Layout()
 
 class AddRolePanel(wx.Panel):
     
@@ -32,7 +34,7 @@ class AddRolePanel(wx.Panel):
         self.sizer.Add(addRoleTxt, 0)
         
         self.amiList = AMIList(self, -1, style=wx.LC_REPORT)
-        self.sizer.Add(self.amiList, 1, wx.EXPAND | wx.ALL, 5)
+        self.sizer.Add(self.amiList, 0, wx.EXPAND | wx.ALL, 5)
         
         self.roleName = wx.TextCtrl(self)
         
@@ -40,37 +42,50 @@ class AddRolePanel(wx.Panel):
         self.hostCount.SetRange(1, 1000)
         
         self.instanceType = wx.ComboBox(self, style=wx.CB_READONLY)
-        self.startScript = wx.TextCtrl(self)
-        self.endCheck = wx.TextCtrl(self)
-        self.data = wx.TextCtrl(self);
         
-        fgs = wx.FlexGridSizer(7,2,0,0)
-        fgs.AddGrowableCol(1, 1)
-        
-        fgs.AddMany([   (wx.StaticText(self, -1, 'Role Name'),0, wx.ALIGN_RIGHT|wx.ALL, 2),
+        self.fgs = wx.FlexGridSizer(3,2,0,0)
+        self.fgs.AddGrowableCol(1, 1)
+        self.fgs.AddMany([   (wx.StaticText(self, -1, 'Role Name'),0, wx.ALIGN_RIGHT|wx.ALL, 2),
                         (self.roleName, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL|wx.EXPAND|wx.ALL, 2),
                         
                         (wx.StaticText(self, -1, 'Host Count'),0, wx.ALIGN_RIGHT|wx.ALL, 2),
                         (self.hostCount, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 2),
-                        
+                         
                         (wx.StaticText(self, -1, 'Instance Type'),0, wx.ALIGN_RIGHT|wx.ALL, 2),
-                        (self.instanceType, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL|wx.EXPAND|wx.ALL, 2),
-                        (wx.StaticText(self, -1, 'Start Script'),0, wx.ALIGN_RIGHT|wx.ALL, 2),
-                        (self.startScript, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL|wx.EXPAND|wx.ALL, 2),
-                        
-                        (wx.StaticText(self, -1, 'End Check'),0, wx.ALIGN_RIGHT|wx.ALL, 2),
-                        (self.endCheck, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL|wx.EXPAND|wx.ALL, 2),
-                     
-                        (wx.StaticText(self, -1, 'Data to Collect'),0, wx.ALIGN_RIGHT|wx.ALL, 2),
-                        (self.data, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL|wx.EXPAND|wx.ALL, 2)
-                           ])
+                        (self.instanceType, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL|wx.EXPAND|wx.ALL, 2)]
+                       )
         
-        self.sizer.Add(fgs, 0, wx.ALL | wx.EXPAND, 5)
+        self.sizer.Add(self.fgs, 0, wx.ALL | wx.EXPAND, 5)
+        
+        self.sw = wx.ScrolledWindow(self, style=wx.VSCROLL, size=(-1,200))
+        #self.sw.SetScrollbars(20,20,100,100)
+        self.sizer.Add(self.sw, 0, wx.ALL | wx.EXPAND, 5)
+ 
+        self.sw.sizer = wx.BoxSizer(wx.VERTICAL)
+        
+        self.sw.startScriptBox = wx.StaticBox(self.sw, label="Start Scripts")
+        self.sw.startScriptBox.boxSizer = wx.StaticBoxSizer(self.sw.startScriptBox, wx.VERTICAL)
+        
+        self.sw.sizer.Add(self.sw.startScriptBox.boxSizer, 0, wx.EXPAND| wx.ALL, 2)
+        
+        #####
+        self.sw.endScriptBox = wx.StaticBox(self.sw, label="File Done Check")
+        self.sw.endScriptBox.boxSizer = wx.StaticBoxSizer(self.sw.endScriptBox, wx.VERTICAL)
+        self.sw.sizer.Add(self.sw.endScriptBox.boxSizer, 0, wx.EXPAND| wx.ALL, 2)
+        
+        ####
+        self.sw.dataBox = wx.StaticBox(self.sw, label="Data to Collect")
+        self.sw.dataBox.boxSizer = wx.StaticBoxSizer(self.sw.dataBox, wx.VERTICAL)      
+        self.sw.sizer.Add(self.sw.dataBox.boxSizer, 0, wx.EXPAND | wx.ALL, 2)
+        
+        
+        self.sw.SetSizer(self.sw.sizer)
         
         self.addRoleButton = wx.Button(self, wx.ID_ANY, 'Add New Role', size=(110, -1))
         self.sizer.Add(self.addRoleButton, 0, wx.ALIGN_RIGHT | wx.ALL, 5)
         
         self.SetSizer(self.sizer)
+        self.Layout()
 
 class RoleWizardContainer(ContainerPanel):
     
@@ -150,7 +165,7 @@ class CloudPanel(wx.Panel):
 class DeploymentWizard(wx.Dialog):
     
     def __init__(self, *args, **kwargs):
-        wx.Dialog.__init__(self, *args, **kwargs)
+        wx.Dialog.__init__(self, size=(400, 300), *args, **kwargs)
         
         self.vsizer = wx.BoxSizer(wx.VERTICAL)
         self.SetSizer(self.vsizer)

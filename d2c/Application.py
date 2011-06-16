@@ -60,8 +60,7 @@ class Application:
         self.deplomentControllers[deployment.id] = DeploymentController(deployPanel, self._dao)
     
     def addDeployment(self, event):
-        mywiz = DeploymentWizard(None, -1, 'Deployment Creation Wizard', size=(600,400))
-    
+        mywiz = DeploymentWizard(None, -1, 'Deployment Creation Wizard')
         DeploymentWizardController(mywiz, self._dao)
         mywiz.ShowModal()
         mywiz.Destroy()

@@ -7,15 +7,12 @@ class DataCollector():
 
     def __init__(self, 
                  source, 
-                 destination, 
                  sshCred,
                  logger=StdOutLogger()):
         
         assert source is not None
-        assert destination is not None
         
         self.source = source
-        self.destinationDir = destination
         self.logger = logger
         self.sshCred = sshCred
      

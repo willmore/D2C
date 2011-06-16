@@ -340,7 +340,6 @@ class DAO:
         return AWSCred(row['id'], row['access_key_id'], row['secret_access_key']) if row is not None else None
     
     def saveDeployment(self, deployment):
-        print "Saving new deployment"
         c = self.__getConn().cursor()
         c.execute("insert into deploy (name, state, cloud, aws_cred) values (?,?,?,?)", 
                       (deployment.id, deployment.state, deployment.cloud.name, deployment.awsCred.name))

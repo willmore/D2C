@@ -5,10 +5,8 @@ def activateOnNotEmpty(control, *fields):
         Iterates through all fields.
         If all fields' values are not empty, control is enabled, else disabled.
         '''
-        print "Check"
         for f in fields:
             if empty(f):
-                print "Field empty: %s" %str(f)
                 control.Disable()
                 return False
            
