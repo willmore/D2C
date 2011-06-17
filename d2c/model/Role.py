@@ -192,8 +192,6 @@ class Role:
         if self.reservation is None:
             self.reservation = self.__getReservation()
         
-        
-        import boto.ec2.instance
         #Request the instances be terminated  
         for instance in self.reservation.instances:
             instance.stop()

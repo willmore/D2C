@@ -18,8 +18,6 @@ class ConfController:
         conf = dao.getConfiguration()
         
         if conf is not None: 
-            if conf.ec2ToolHome is not None:
-                self._credView.ec2_tool_home.WriteText(conf.ec2ToolHome)
             
             if conf.awsUserId is not None:
                 self._credView.aws_user_id.WriteText(conf.awsUserId)
@@ -43,11 +41,9 @@ class ConfController:
         ec2Cred = EC2Cred("defaultEC2Cred", self._credView._ec2_cert.GetValue(),
                 self._credView._ec2_private_key.GetValue())
         
-        ec2ToolHome = self._credView.ec2_tool_home.GetValue();
         awsUserId = self._credView.aws_user_id.GetValue();
         
-        conf = Configuration(ec2ToolHome=ec2ToolHome,
-                             awsUserId=awsUserId,
+        conf = Configuration(awsUserId=awsUserId,
                              ec2Cred=ec2Cred,
                              awsCred=awsCred)
         
