@@ -11,6 +11,8 @@ from wx.lib.pubsub import Publisher
 from d2c.model.Action import Action
 from d2c.model.FileExistsFinishedCheck import FileExistsFinishedCheck
 from d2c.model.DataCollector import DataCollector
+from d2c.model.SSHCred import SSHCred
+from d2c.model.UploadAction import UploadAction
 from .util import createEmptyChecker
 
 class DeploymentWizardController:
@@ -37,6 +39,7 @@ class DeploymentWizardController:
         
         for c in self.dao.getClouds():
             self.wizard.cloudPanel.clouds.Append(c.name)
+            
         self.wizard.cloudPanel.nextButton.Bind(wx.EVT_BUTTON, self.showRolesWizard)
         
         self.uploadScripts = []
@@ -54,8 +57,9 @@ class DeploymentWizardController:
     def setupFlexList(self, parent, boxsizer, textControls, fieldCount=1, labels=()):
         
         def handleRemove(evt): 
-            #for c in evt.GetEventObject().GetChildren():
-            #    c.GetParent().Remove(c)
+            for c in evt.GetEventObject().GetParent().GetChildren():
+                if c in textControls:
+                    textControls.remove(c)
 
             sizer = evt.GetEventObject().GetContainingSizer()
             sizer.Clear(deleteWindows=True)
@@ -73,17 +77,18 @@ class DeploymentWizardController:
                 evtBtn.Bind(wx.EVT_BUTTON, handleRemove)
             sizer = wx.BoxSizer(wx.HORIZONTAL)
             
-            
+            fields = []
             for i in range(fieldCount): 
                 
                 if len(labels) > i:
                     label = wx.StaticText(parent, -1, label=labels[i])
-                    textControls.append(label)
                     sizer.Add(label,0)
                 
                 field = wx.TextCtrl(parent, -1)
-                textControls.append(field)
                 sizer.Add(field, 1)
+                fields.append(field)
+                textControls.append(field)
+                
                 
             btn = wx.Button(parent, -1, "Add")
             btn.Bind(wx.EVT_BUTTON, handleAdd)
@@ -91,7 +96,7 @@ class DeploymentWizardController:
             
             boxsizer.Add(sizer, 0, wx.EXPAND)
             
-            createEmptyChecker(btn, field)
+            createEmptyChecker(btn, *fields)
             self.wizard.Layout()
             
         handleAdd(None)
@@ -138,11 +143,18 @@ class DeploymentWizardController:
         instanceType = InstanceType.TYPES[p.instanceType.GetValue()]
         
         assert len(amis) == 1, "Only one AMI at a time supported"
-            
-        startActions = [Action(s, None) for s in self.uploadScripts]
-        startActions.append([Action(s, None) for s in self.startScripts])
-        finishedChecks = [FileExistsFinishedCheck(f, None) for f in self.endScripts]
-        dataCollectors = [DataCollector(d) for d in self.dataCollectors]
+        
+        tmpCred = SSHCred("foobar", "foobar")
+    
+        startActions = []
+        for i in range(0, len(self.uploadScripts), 2):
+            startActions.append(UploadAction(self.uploadScripts[i].GetValue(), 
+                                             self.uploadScripts[i+1].GetValue(),
+                                             tmpCred))        
+        
+        startActions.append([Action(s.GetValue(), tmpCred) for s in self.startScripts])
+        finishedChecks = [FileExistsFinishedCheck(f.GetValue(), tmpCred) for f in self.endScripts]
+        dataCollectors = [DataCollector(d.GetValue(), tmpCred) for d in self.dataCollectors]
         
         role = Role(roleName, amis[0], hostCount, instanceType,startActions=startActions,
                     finishedChecks=finishedChecks,
@@ -174,5 +186,5 @@ class DeploymentWizardController:
         
         self.wizard.container.getPanel("ROLES").showPanel("ADD_ROLE")
         self.prevSize = self.wizard.GetSize()
-        self.wizard.SetMinSize((500,600))
+        self.wizard.SetMinSize((600,600))
         self.wizard.Fit()

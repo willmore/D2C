@@ -8,7 +8,7 @@ class Action():
                  sshCred,
                  logger=StdOutLogger()):
         
-        assert isinstance(command, str)
+        assert isinstance(command, basestring)
         
         self.command = command
         self.sshCred = sshCred
