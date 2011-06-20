@@ -20,6 +20,10 @@ class ConfPanel(wx.Dialog):
         self._ec2_cert = wx.TextCtrl(self);
         self._ec2_private_key = wx.TextCtrl(self);   
         self._updateButton = wx.Button(self, wx.ID_ANY, 'Save Credentials')
+        self._closeButton = wx.Button(self, wx.ID_ANY, 'Close')
+        self._hsizer = wx.BoxSizer(wx.HORIZONTAL)
+        self._hsizer.Add(self._updateButton,1,wx.RIGHT,5)
+        self._hsizer.Add(self._closeButton,0,wx.RIGHT,3)
         
         
         fgs = wx.FlexGridSizer(7,2,0,0)
@@ -41,6 +45,6 @@ class ConfPanel(wx.Dialog):
                            (self._ec2_private_key,0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL|wx.EXPAND|wx.ALL, 2),
                           
                            (wx.StaticText(self), wx.EXPAND), 
-                           (self._updateButton, 1, wx.ALIGN_RIGHT|wx.ALL, 5)])
+                           (self._hsizer, 1, wx.ALIGN_RIGHT|wx.ALL, 5)])
         
         self.SetSizer(fgs)
