@@ -74,7 +74,7 @@ class Application:
         
     def showCloudWizard(self, event):
         
-        cloudWiz = CloudWizard(None, -1, 'Clouds', size=(600,400))
+        cloudWiz = CloudWizard(None, -1, 'Manage Clouds', size=(500,400))
         NewCloudController(cloudWiz, self._dao)
         cloudWiz.ShowModal()
         cloudWiz.Destroy()
