@@ -13,14 +13,16 @@ from d2c.model.Storage import WalrusStorage
 from d2c.model.Cloud import Cloud
 from d2c.model.Kernel import Kernel
 from d2c.model.AMI import AMI
+import boto
 
 import string
 import sqlite3
 
 class DAO:
     
-    def __init__(self, fileName="~/.d2c/db.sqlite"):
+    def __init__(self, fileName="~/.d2c/db.sqlite", botoModule=boto):
     
+        self.botoModule = botoModule
         self.fileName = fileName
         baseDir = os.path.dirname(self.fileName)
 
@@ -572,7 +574,7 @@ class DAO:
         return clouds[0]
     
     def __mapCloud(self, row):
-        return Cloud(row['name'], row['service_url'], row['storage_url'], row['ec2cert'])
+        return Cloud(row['name'], row['service_url'], row['storage_url'], row['ec2cert'], self.botoModule)
         
     def saveKernel(self, kernel):
         

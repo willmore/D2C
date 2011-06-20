@@ -163,6 +163,8 @@ class Deployment:
         #Ordered mapping of existing stage to transition.
         #Used for restarting an already running deployment.
     
+        self.logger.write("Starting deployment")
+    
         #TODO Rework state model - make it more OO
         stageList = ((DeploymentState.NOT_RUN, None),
                      (DeploymentState.LAUNCHING_INSTANCES, self.__launchInstances),

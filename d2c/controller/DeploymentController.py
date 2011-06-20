@@ -5,6 +5,8 @@ Created on Feb 15, 2011
 '''
 import wx
 from threading import Thread
+from wx.lib.pubsub import Publisher
+
 
 class DeploymentThread(Thread):
         
@@ -47,16 +49,49 @@ class DeploymentController:
         
     def handleLaunch(self, evt):
         
-        ret = wx.MessageBox('Are you sure you want to start? AWS charges will start at the rate of $%.2f per hour' % self.deployment.costPerHour(), 'Question', wx.YES_NO)
+        ret = wx.MessageBox('Are you sure you want to start? \
+                            AWS charges will start at the rate of $%.2f per hour' 
+                            % self.deployment.costPerHour(), 'Question', wx.YES_NO)
         
         if wx.YES == ret:
             
             self.deploymentView.deployButton.Hide()
             
+            
+            self.deploymentView.showLogPanel()
+            
+            self.__createLogger()
+            
             self.deployment.addAnyStateChangeListener(PersistenceListener(self.dao))
             self.deployment.addAnyStateChangeListener(ViewListener(self.deploymentView))
             self.deploymentThread = DeploymentThread(self.deployment)
             self.deploymentThread.start()
+    
+    def __createLogger(self):
+        channelId = self.deployment.id
+        
+        logger = self.__DeploymentLogger(channelId, self.deploymentView)
+        
+        Publisher.subscribe(logger.receiveMsg, 
+                            channelId)
+                
+        self.deployment.logger = logger
+        
+        return logger
+    
+    class __DeploymentLogger:
+        
+        def __init__(self, channel, logPanel):
+            self.channel = channel
+            self.logPanel = logPanel
+            
+        def write(self, msg):
+            print "Send message to channel %s " % self.channel
+            wx.CallAfter(Publisher.sendMessage, self.channel, msg)
+           
+        def receiveMsg(self, msg):
+            print "Receive msg"
+            self.logPanel.appendLogPanelText(msg.data) 
     
     def handleStart(self, evt):
         pass

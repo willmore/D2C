@@ -14,7 +14,9 @@ from d2c.AMITools import AMITools, AMIToolsFactory
 from TestConfig import TestConfig
 from mockito import *
 from copy import copy
-
+import boto
+from threading import Thread
+import time
     
 class DummyConn:
     
@@ -31,6 +33,19 @@ class DummyConn:
     def run_instances(self, *args, **kwargs):
         r = DummyReservation(kwargs['min_count'])
         self.reservations[r.id] = r
+        
+        class RunThread(Thread):
+        
+            def __init__(self, dummyConn):
+                Thread.__init__(self)
+                self.dummyConn = dummyConn
+            
+            def run(self):
+                for state in ['running']:
+                    time.sleep(1)
+                    self.dummyConn.setState(state)
+        
+        RunThread(self).start()
         return r
     
     def setState(self, state):
@@ -73,13 +88,19 @@ def main(argv=None):
     if os.path.exists(sqlFile):
         print "Deleting existing DB"
         os.unlink(sqlFile)
-    dao = DAO(sqlFile)
+        
+    mockBoto = mock(boto)
+    #when(mockBoto).connect_ec2(any(),any(),any(),any(),any(),any()).thenReturn(DummyConn())
+    
+    def mock_connect_ec2(*args, **kwargs):
+        return DummyConn()
+    
+    mockBoto.connect_ec2 = mock_connect_ec2
+   
+    dao = DAO(sqlFile, mockBoto)
     
     conf = TestConfig("/home/willmore/test.conf")   
     dao.saveConfiguration(conf)
-    
-    #ec2ConnFactory = mock(EC2ConnectionFactory)
-    #when(ec2ConnFactory).getConnection().thenReturn(DummyConn())
     
     dao.addAWSCred(conf.awsCred)
     

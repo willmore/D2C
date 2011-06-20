@@ -43,6 +43,14 @@ class DeploymentPanel(wx.Panel):
         self.logPanel.Hide() # logPanel will be shown later on demand
         self.GetSizer().Add(self.logPanel, 0, wx.BOTTOM | wx.EXPAND, 5)
     
+        
+    def showLogPanel(self):
+        self.logPanel.Show()
+        self.Layout()
+        
+    def appendLogPanelText(self, text):
+        self.logPanel.AppendText(str(text) + "\n")
+    
     def update(self):
         '''
         Update the panel to reflect the current Deployment

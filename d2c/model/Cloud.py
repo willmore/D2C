@@ -16,7 +16,7 @@ class Cloud:
     '''
     
     def __init__(self, name, serviceURL, 
-                 storageURL, ec2Cert, 
+                 storageURL, ec2Cert, botoModule=boto, 
                  kernels=list(), 
                  instanceTypes=list()):
         
@@ -26,7 +26,7 @@ class Cloud:
         assert isinstance(ec2Cert, basestring)
         
         self.mylock = threading.RLock()
-        
+        self.botoModule = botoModule
         self.name = name
         self.serviceURL = serviceURL
         self.storageURL = storageURL
@@ -83,7 +83,7 @@ class Cloud:
         assert isinstance(awsCred, AWSCred)
         
         if not hasattr(self, "__ec2Conn"):
-            self.__ec2Conn = boto.connect_ec2(aws_access_key_id=awsCred.access_key_id,
+            self.__ec2Conn = self.botoModule.connect_ec2(aws_access_key_id=awsCred.access_key_id,
                                               aws_secret_access_key=awsCred.secret_access_key,
                                               is_secure=self.parsedEndpoint.scheme == "https",
                                               region=self.regionInfo,

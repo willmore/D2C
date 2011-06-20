@@ -119,7 +119,7 @@ class AMIController:
             
         def write(self, msg):
             wx.CallAfter(Publisher().sendMessage, self._channelId, msg)
-    
+            
     
     def receiveLogMessage(self, msg):
         self.__amiView.appendLogPanelText(msg.topic[0], msg.data)
