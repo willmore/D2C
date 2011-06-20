@@ -22,11 +22,12 @@ class DeploymentThread(Thread):
             
 class PersistenceListener:
     
-    def __init__(self, dao):
+    def __init__(self, dao, deployment):
         self.dao = dao
+        self.deployment = deployment
 
     def notify(self, event):
-        print "Deployment changed"
+        self.dao.updateDeployment(self.deployment)
         
 class ViewListener:
     
@@ -62,7 +63,7 @@ class DeploymentController:
             
             self.__createLogger()
             
-            self.deployment.addAnyStateChangeListener(PersistenceListener(self.dao))
+            self.deployment.addAnyStateChangeListener(PersistenceListener(self.dao, self.deployment))
             self.deployment.addAnyStateChangeListener(ViewListener(self.deploymentView))
             self.deploymentThread = DeploymentThread(self.deployment)
             self.deploymentThread.start()
@@ -75,7 +76,7 @@ class DeploymentController:
         Publisher.subscribe(logger.receiveMsg, 
                             channelId)
                 
-        self.deployment.logger = logger
+        self.deployment.setLogger(logger)
         
         return logger
     
@@ -86,11 +87,9 @@ class DeploymentController:
             self.logPanel = logPanel
             
         def write(self, msg):
-            print "Send message to channel %s " % self.channel
             wx.CallAfter(Publisher.sendMessage, self.channel, msg)
            
         def receiveMsg(self, msg):
-            print "Receive msg"
             self.logPanel.appendLogPanelText(msg.data) 
     
     def handleStart(self, evt):

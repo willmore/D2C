@@ -41,19 +41,18 @@ class DummyConn:
                 self.dummyConn = dummyConn
             
             def run(self):
-                for state in ['running']:
-                    time.sleep(1)
+                print "Starting thread"
+                for state in ['running', 'terminated']:
+                    time.sleep(60)
                     self.dummyConn.setState(state)
         
         RunThread(self).start()
         return r
     
     def setState(self, state):
-        for i in self.instances:
-            i.state = state 
         
         for r in self.reservations.values():
-            r.state = state
+            r.setState(state)
             
 class DummyReservation:
     
@@ -77,10 +76,13 @@ class DummyInstance():
         self.id = id
         self.state = 'pending'
         self.key_name = 'dummy_key_name'
+        self.private_ip_address = "0.0.0.0"
         
     def update(self):
         pass
 
+    def stop(self):
+        pass
 
 def main(argv=None):
     

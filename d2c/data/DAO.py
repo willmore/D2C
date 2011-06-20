@@ -343,6 +343,19 @@ class DAO:
     
     def saveDeployment(self, deployment):
         c = self.__getConn().cursor()
+        
+        c.execute("select count(*) from deploy where name=?", (deployment.id,))
+        row = c.fetchone()
+        c.close()
+                
+        if row[0] == 0:
+            self.addDeployment(deployment)
+        else:
+            self.updateDeployment(deployment)     
+        
+    def addDeployment(self, deployment):
+        c = self.__getConn().cursor()
+        
         c.execute("insert into deploy (name, state, cloud, aws_cred) values (?,?,?,?)", 
                       (deployment.id, deployment.state, deployment.cloud.name, deployment.awsCred.name))
     
@@ -351,7 +364,18 @@ class DAO:
                   (role.name, deployment.id, role.ami.id, role.count, role.instanceType.name))
             
         self.__getConn().commit()
-        c.close()  
+        c.close()
+    
+    def updateDeployment(self, deployment):  
+        #Only updates state field now. TODO update rest of fields.
+        
+        c = self.__getConn().cursor()
+        
+        c.execute("update deploy set state = ? where name = ?", 
+                      (deployment.state, deployment.id))
+        
+        self.__getConn().commit()
+        c.close()
     
     def addRoleInstance(self, roleDeployment, roleName, instanceId):
         c = self.__getConn().cursor()

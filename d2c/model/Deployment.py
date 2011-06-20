@@ -114,6 +114,13 @@ class Deployment:
         self.logger = logger
         self.pollRate = pollRate
     
+    def setLogger(self, logger, cascade=True):
+        self.logger = logger
+        
+        if cascade:
+            for role in self.roles:
+                role.logger = logger
+    
     def setCloud(self, cloud):
 
         if self.cloud is not cloud:
