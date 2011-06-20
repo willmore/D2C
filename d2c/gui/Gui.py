@@ -28,7 +28,7 @@ class Gui(wx.Frame):
     def __init__(self, parent=None, id=-1, title='D2C'):
         wx.Frame.__init__(self, parent, id, title, size=(750, 450))
 
-	self.Center()
+        self.Center()
 
         self.__initMenuBar()
         
