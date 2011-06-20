@@ -45,7 +45,8 @@ class AddRolePanel(wx.Panel):
         
         self.fgs = wx.FlexGridSizer(3,2,0,0)
         self.fgs.AddGrowableCol(1, 1)
-        self.fgs.AddMany([   (wx.StaticText(self, -1, 'Role Name'),0, wx.ALIGN_RIGHT|wx.ALL, 2),
+        self.fgs.AddMany([
+                        (wx.StaticText(self, -1, 'Role Name'),0, wx.ALIGN_RIGHT|wx.ALL, 2),
                         (self.roleName, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL|wx.EXPAND|wx.ALL, 2),
                         
                         (wx.StaticText(self, -1, 'Host Count'),0, wx.ALIGN_RIGHT|wx.ALL, 2),
@@ -57,11 +58,19 @@ class AddRolePanel(wx.Panel):
         
         self.sizer.Add(self.fgs, 0, wx.ALL | wx.EXPAND, 5)
         
-        self.sw = wx.ScrolledWindow(self, style=wx.VSCROLL, size=(-1,200))
-        #self.sw.SetScrollbars(20,20,100,100)
+        
+        
+        self.sw = wx.ScrolledWindow(self, style=wx.VSCROLL)
+        self.sw.SetMinSize((-1, 300))
+        self.SetScrollbar(1,1,1,1)
         self.sizer.Add(self.sw, 0, wx.ALL | wx.EXPAND, 5)
- 
         self.sw.sizer = wx.BoxSizer(wx.VERTICAL)
+        
+        self.sw.uploadScriptBox = wx.StaticBox(self.sw, label="Uploads")
+        self.sw.uploadScriptBox.boxSizer = wx.StaticBoxSizer(self.sw.uploadScriptBox, wx.VERTICAL)
+        
+        self.sw.sizer.Add(self.sw.uploadScriptBox.boxSizer, 0, wx.EXPAND| wx.ALL, 2)
+        ###
         
         self.sw.startScriptBox = wx.StaticBox(self.sw, label="Start Scripts")
         self.sw.startScriptBox.boxSizer = wx.StaticBoxSizer(self.sw.startScriptBox, wx.VERTICAL)

@@ -20,6 +20,9 @@ class DeploymentWizardController:
         self.dao = dao
         self.wizard = deploymentWizard
         
+        createEmptyChecker(self.wizard.namePanel.nextButton,
+                          self.wizard.namePanel.name)
+        
         self.wizard.container.getPanel("ROLES").getPanel("ROLES").addRoleButton.Bind(wx.EVT_BUTTON, self.showAddRolePanel)
         
         self.wizard.container.getPanel("ROLES").getPanel("ADD_ROLE").addRoleButton.Bind(wx.EVT_BUTTON, self.addRole)
@@ -36,23 +39,24 @@ class DeploymentWizardController:
             self.wizard.cloudPanel.clouds.Append(c.name)
         self.wizard.cloudPanel.nextButton.Bind(wx.EVT_BUTTON, self.showRolesWizard)
         
-        
+        self.uploadScripts = []
         self.startScripts = []
         self.endScripts = []
         self.dataCollectors = []
-        
-        
+           
+        self.setupFlexList(p.sw, p.sw.uploadScriptBox.boxSizer,self.uploadScripts, 2, ("Source", "Destination"))   
         self.setupFlexList(p.sw, p.sw.startScriptBox.boxSizer,self.startScripts)
         self.setupFlexList(p.sw, p.sw.endScriptBox.boxSizer, self.endScripts)
         self.setupFlexList(p.sw, p.sw.dataBox.boxSizer, self.dataCollectors)
         
         self.wizard.container.showPanel("NAME")  
     
-    def setupFlexList(self, parent, boxsizer, textControls):
+    def setupFlexList(self, parent, boxsizer, textControls, fieldCount=1, labels=()):
         
         def handleRemove(evt): 
-            
-            textControls.remove(evt.GetEventObject().assocTxt)
+            #for c in evt.GetEventObject().GetChildren():
+            #    c.GetParent().Remove(c)
+
             sizer = evt.GetEventObject().GetContainingSizer()
             sizer.Clear(deleteWindows=True)
             
@@ -63,32 +67,34 @@ class DeploymentWizardController:
             self.wizard.Layout()
         
         def handleAdd(evt):
-            evtBtn = evt.GetEventObject()
-            evtBtn.SetLabel("Remove")
-            evtBtn.Bind(wx.EVT_BUTTON, handleRemove)
+            if (evt is not None):
+                evtBtn = evt.GetEventObject()
+                evtBtn.SetLabel("Remove")
+                evtBtn.Bind(wx.EVT_BUTTON, handleRemove)
             sizer = wx.BoxSizer(wx.HORIZONTAL)
+            
+            
+            for i in range(fieldCount): 
+                
+                if len(labels) > i:
+                    label = wx.StaticText(parent, -1, label=labels[i])
+                    textControls.append(label)
+                    sizer.Add(label,0)
+                
+                field = wx.TextCtrl(parent, -1)
+                textControls.append(field)
+                sizer.Add(field, 1)
+                
             btn = wx.Button(parent, -1, "Add")
             btn.Bind(wx.EVT_BUTTON, handleAdd)
-             
-            field = wx.TextCtrl(parent, -1)
-            btn.assocTxt = field
-            textControls.append(field)
-            
-            sizer.Add(field, 1)
             sizer.Add(btn, 0)
+            
             boxsizer.Add(sizer, 0, wx.EXPAND)
+            
+            createEmptyChecker(btn, field)
             self.wizard.Layout()
-        
-        sizer = wx.BoxSizer(wx.HORIZONTAL)
-        btn = wx.Button(parent, -1, "Add")
-        btn.Bind(wx.EVT_BUTTON, handleAdd)
-             
-        field = wx.TextCtrl(parent, -1)
-        btn.assocTxt = field
-        textControls.append(field)
-        sizer.Add(field, 1)
-        sizer.Add(btn, 0)
-        boxsizer.Add(sizer, 0, wx.EXPAND)
+            
+        handleAdd(None)
     
     def showRolesWizard(self, _):
         self.cloudName = self.wizard.cloudPanel.clouds.GetValue()      
@@ -132,20 +138,20 @@ class DeploymentWizardController:
         instanceType = InstanceType.TYPES[p.instanceType.GetValue()]
         
         assert len(amis) == 1, "Only one AMI at a time supported"
-        
-        
-        self.startScripts = []
-        self.endScripts = []
-        self.dataCollectors = []
-        
-        startActions = [Action(s, None) for s in self.startScripts]
-        
+            
+        startActions = [Action(s, None) for s in self.uploadScripts]
+        startActions.append([Action(s, None) for s in self.startScripts])
         finishedChecks = [FileExistsFinishedCheck(f, None) for f in self.endScripts]
         dataCollectors = [DataCollector(d) for d in self.dataCollectors]
         
         role = Role(roleName, amis[0], hostCount, instanceType,startActions=startActions,
                     finishedChecks=finishedChecks,
                     dataCollectors=dataCollectors )
+        # Zero-out holders
+        self.uploadScripts = []
+        self.startScripts = []
+        self.endScripts = []
+        self.dataCollectors = []
         
         self.wizard.container.getPanel("ROLES").getPanel("ROLES").roleList.addRole(role)
         
@@ -168,5 +174,5 @@ class DeploymentWizardController:
         
         self.wizard.container.getPanel("ROLES").showPanel("ADD_ROLE")
         self.prevSize = self.wizard.GetSize()
-        self.wizard.SetMinSize((500,500))
+        self.wizard.SetMinSize((500,600))
         self.wizard.Fit()
