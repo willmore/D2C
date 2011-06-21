@@ -139,6 +139,7 @@ class NamePanel(wx.Panel):
         self.sizer.Add(hbox, 0, wx.ALL, 5)
         
         self.nextButton = wx.Button(self, wx.ID_ANY, 'Next', size=(110, -1))
+        self.nextButton.Disable()
         
         hbox = wx.BoxSizer(wx.HORIZONTAL)
         hbox.Add(self.nextButton, 0, wx.ALIGN_RIGHT|wx.ALL, 5)
@@ -162,10 +163,14 @@ class CloudPanel(wx.Panel):
         hbox.Add(self.clouds) 
         self.sizer.Add(hbox, 0, wx.ALL, 5)
         
+        self.backButton = wx.Button(self, wx.ID_ANY, 'Back', size=(110, -1))
         self.nextButton = wx.Button(self, wx.ID_ANY, 'Next', size=(110, -1))
         
+        
         hbox = wx.BoxSizer(wx.HORIZONTAL)
+        hbox.Add(self.backButton, 0, wx.ALIGN_RIGHT|wx.ALL, 5)
         hbox.Add(self.nextButton, 0, wx.ALIGN_RIGHT|wx.ALL, 5)
+        
         self.sizer.Add(hbox, 0, wx.ALIGN_RIGHT)
         
         self.SetSizer(self.sizer)
