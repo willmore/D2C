@@ -88,11 +88,9 @@ class NewCloudPanel(wx.Panel):
         self.saveButton = wx.Button(self, wx.ID_ANY, 'Save')
         self.saveButton.Disable()
         
-        #self.hsizer.Add(wx.StaticText(self),wx.EXPAND)
-        
         self.hsizer.Add(self.saveButton, 0, wx.ALIGN_RIGHT | wx.ALL, 5)
         
-        self.closeButton = wx.Button(self, wx.ID_ANY, 'Close')
+        self.closeButton = wx.Button(self, wx.ID_ANY, 'Cancel')
         self.hsizer.Add(self.closeButton, 0, wx.ALIGN_RIGHT | wx.ALL, 5)
         self.sizer.Add(self.hsizer,0,wx.ALIGN_RIGHT|wx.ALL,5)
         
