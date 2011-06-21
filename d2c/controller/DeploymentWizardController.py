@@ -13,6 +13,12 @@ from d2c.model.FileExistsFinishedCheck import FileExistsFinishedCheck
 from d2c.model.DataCollector import DataCollector
 from .util import createEmptyChecker
 
+def fieldsNotEmpty(self, *fields):
+    for f in fields:
+        if len(f.GetValue()) == 0:
+            return False         
+    return True
+
 class DeploymentWizardController:
     
     def __init__(self, deploymentWizard, dao):
@@ -31,6 +37,7 @@ class DeploymentWizardController:
         self.wizard.container.getPanel("COMPLETION").okButton.Bind(wx.EVT_BUTTON, self.done)
         
         self.wizard.namePanel.nextButton.Bind(wx.EVT_BUTTON, self.showClouds)
+        self.wizard.cloudPanel.backButton.Bind(wx.EVT_BUTTON,self.showName)
         
         for c in self.dao.getClouds():
             self.wizard.cloudPanel.clouds.Append(c.name)
@@ -46,7 +53,8 @@ class DeploymentWizardController:
         self.setupFlexList(p.sw, p.sw.endScriptBox.boxSizer, self.endScripts)
         self.setupFlexList(p.sw, p.sw.dataBox.boxSizer, self.dataCollectors)
         
-        self.wizard.container.showPanel("NAME")  
+        self.wizard.container.showPanel("NAME")
+        self.wizard.container.getPanel("NAME").name.Bind(wx.EVT_TEXT, self.checkNameDeployment)
     
     def setupFlexList(self, parent, boxsizer, textControls):
         
@@ -101,6 +109,10 @@ class DeploymentWizardController:
         self.wizard.container.getPanel("ROLES").getPanel("ADD_ROLE").amiList.setAMIs(self.dao.getAMIs())
         
         self.wizard.container.showPanel("ROLES")
+        
+    def showName(self,_):
+        self.newName = self.wizard.namePanel.name.GetValue()      
+        self.wizard.container.showPanel("NAME")
         
     def showClouds(self, _):
         #TODO validation
@@ -170,3 +182,13 @@ class DeploymentWizardController:
         self.prevSize = self.wizard.GetSize()
         self.wizard.SetMinSize((500,500))
         self.wizard.Fit()
+        
+
+        
+    def checkNameDeployment(self, _):
+        panel = self.wizard.container.getPanel("NAME")
+        
+        if fieldsNotEmpty(panel.name):
+            panel.nextButton.Enable()
+        else:
+            panel.nextButton.Disable()
