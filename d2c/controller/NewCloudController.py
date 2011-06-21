@@ -32,6 +32,8 @@ class NewCloudController:
         
         self._view.container.getPanel("NEW_CLOUD").addKernelButton.Bind(wx.EVT_BUTTON, self.addKernel)
         self._view.container.getPanel("NEW_CLOUD").saveButton.Bind(wx.EVT_BUTTON, self.save)
+        self._view.container.getPanel("NEW_CLOUD").closeButton.Bind(wx.EVT_BUTTON, self.close)
+        
         
         self._view.container.showPanel("MAIN")
     
@@ -40,6 +42,9 @@ class NewCloudController:
     
     def done(self, _):
         self._view.EndModal(wx.ID_OK)
+        
+    def close(self,_):
+        self._view.container.showPanel("MAIN")
     
     def save(self, _):
         
