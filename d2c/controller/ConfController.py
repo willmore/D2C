@@ -31,6 +31,10 @@ class ConfController:
                 self._credView._ec2_private_key.WriteText(conf.ec2Cred.private_key)  
         
         credView._updateButton.Bind(wx.EVT_BUTTON, self._onSave)
+        credView._closeButton.Bind(wx.EVT_BUTTON, self._onClose)
+        
+    def _onClose(self,event):
+        self._credView.close()
         
     def _onSave(self, event):
         
