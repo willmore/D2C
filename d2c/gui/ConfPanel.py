@@ -48,3 +48,8 @@ class ConfPanel(wx.Dialog):
                            (self._hsizer, 1, wx.ALIGN_RIGHT|wx.ALL, 5)])
         
         self.SetSizer(fgs)
+        
+        
+        
+    def close(self):
+        self.Close()
