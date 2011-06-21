@@ -14,6 +14,7 @@ from d2c.model.SSHCred import SSHCred
 import random
 from mockito import *
 
+
 def get_username():
     return pwd.getpwuid( os.getuid() )[ 0 ]
 
