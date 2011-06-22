@@ -75,7 +75,7 @@ class DAO:
                                     })
       
         deploymentTable = Table('deploy', metadata,
-                            Column('name', String, primary_key=True),
+                            Column('id', String, primary_key=True),
                             Column('cloud_id', String, ForeignKey('cloud.name')),
                             Column('aws_cred_id', String, ForeignKey("aws_cred.name")),
                             Column('state', String)
@@ -88,7 +88,7 @@ class DAO:
         
         roleTable = Table('deploy_role', metadata,
                             Column('name', String, primary_key=True),
-                            Column('deploy_id', String, ForeignKey('deploy.name'), primary_key=True),
+                            Column('deploy_id', String, ForeignKey('deploy.id'), primary_key=True),
                             Column('ami_id', String, ForeignKey('ami.id')),
                             Column('count', Integer),
                             Column('instance_type', String)
@@ -121,7 +121,7 @@ class DAO:
                             )
         
         mapper(AMI, amiTable, properties={
-                        'deployments': relationship(Deployment, backref='ami')
+                        'roles': relationship(Role, backref='ami')
                     })
         
         metadata.create_all(self.engine)
@@ -183,14 +183,9 @@ class DAO:
         
         return out   
     
-    def addSourceImage(self, srcImgPath):
-                
-        c = self.__getConn().cursor()
-
-        c.execute("insert into src_img values (?)", (srcImgPath,))
-        
-        self.__getConn().commit()
-        c.close()
+    def addSourceImage(self, srcImg):
+        self.session.add(srcImg)
+        self.session.flush()
         
     def saveConfiguration(self, conf):
         c = self.__getConn().cursor()
@@ -291,15 +286,9 @@ class DAO:
     
     def addAMI(self, ami):
         
-        assert isinstance(ami, AMI)
-             
-        c = self.__getConn().cursor()
-
-        c.execute("insert into ami(id, src_img, cloud) values (?,?,?)", (ami.id, ami.srcImg, ami.cloud.name))
-        
-        self.__getConn().commit()
-        c.close()  
-        
+        self.session.add(ami)
+        self.session.flush()
+       
     def addAWSCred(self, awsCred):     
         self.session.add(awsCred)
         self.session.commit()

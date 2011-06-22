@@ -20,6 +20,7 @@ from threading import Thread
 import time
 from d2c.model.SSHCred import SSHCred
 from d2c.model.DataCollector import DataCollector
+from d2c.model.SourceImage import SourceImage
     
 class DummyConn:
     
@@ -110,8 +111,8 @@ def main(argv=None):
     dao.addAWSCred(conf.awsCred)
     
     dao.setCredStore(CredStore(dao))
-    
-    dao.addSourceImage("/foobar/vm.vdi")
+    srcImg = SourceImage("/foobar/vm.vdi")
+    dao.addSourceImage(srcImg)
      
     clouds = [Cloud("SciCloud", 
                         "http://172.17.36.21:8773/services/Eucalyptus",
@@ -129,7 +130,7 @@ def main(argv=None):
         dao.saveCloud(cloud)
     
     cloud = dao.getClouds()[0]
-    ami = AMI("ami-47cefa33", "/foobar/vm.vdi", cloud)
+    ami = AMI("ami-47cefa33", srcImg, cloud)
     dao.addAMI(ami)
     
     deployment = Deployment("dummyDep", 
