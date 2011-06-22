@@ -111,7 +111,7 @@ class AddRolePanel(wx.Panel):
         self.cancelButton = wx.Button(self, wx.ID_ANY, 'Cancel')
         self.hsizer.Add(self.cancelButton,wx.ALIGN_RIGHT)
         
-        self.sizer.Add(self.hsizer,wx.ALIGN_RIGHT)
+        self.sizer.Add(self.hsizer, 0, wx.ALIGN_RIGHT|wx.ALL, 2)
         
         self.SetSizer(self.sizer)
         self.Layout()
