@@ -2,7 +2,7 @@
 from d2c.logger import StdOutLogger
 import time
 
-class Instance:
+class Instance(object):
     '''
     Minimum storage of locally stored instance information. The rest of the instance attributes 
     should be fetched dynamically from AWS via boto.
@@ -85,7 +85,7 @@ class DeploymentState:
     COMPLETED = 'COMPLETED'
           
 
-class Deployment:
+class Deployment(object):
     '''
     Represents an instance of a Deployment.
     A deployment consists of one or more reservations, 

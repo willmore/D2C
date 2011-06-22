@@ -11,12 +11,15 @@ from d2c.model.Kernel import Kernel
 from d2c.model.AMI import AMI
 from d2c.data.CredStore import CredStore
 from d2c.AMITools import AMITools, AMIToolsFactory
+from d2c.model.UploadAction import UploadAction
 from TestConfig import TestConfig
 from mockito import *
 from copy import copy
 import boto
 from threading import Thread
 import time
+from d2c.model.SSHCred import SSHCred
+from d2c.model.DataCollector import DataCollector
     
 class DummyConn:
     
@@ -130,7 +133,11 @@ def main(argv=None):
     dao.addAMI(ami)
     
     deployment = Deployment("dummyDep", 
-                            roles=[Role("loner", ami, 1, InstanceType.T1_MICRO)],
+                            roles=[Role("loner", ami, 1, InstanceType.T1_MICRO,
+                                        startActions=[UploadAction("/tmp/foobar", "/tmp/foobar", mock(SSHCred))], 
+                                        dataCollectors=[DataCollector("/tmp", mock(SSHCred))]
+                                        
+                                        )],
                             awsCred=conf.awsCred,
                             cloud=cloud)
     

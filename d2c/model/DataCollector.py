@@ -16,9 +16,9 @@ class DataCollector():
         self.logger = logger
         self.sshCred = sshCred
      
-    def collect(self, instance): 
+    def collect(self, instance, destinationDir): 
         
-        dest = "%s/%s/" % (self.destinationDir, instance.id)
+        dest = "%s/%s/" % (destinationDir, instance.id)
         
         if not os.path.exists(os.path.dirname(dest)):
             os.makedirs(os.path.dirname(dest))

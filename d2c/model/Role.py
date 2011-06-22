@@ -7,7 +7,7 @@ import string
 
 import time   
 
-class Role:
+class Role(object):
     
     def __init__(self,  
                  name, ami, count,

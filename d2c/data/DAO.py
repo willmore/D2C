@@ -13,6 +13,11 @@ from d2c.model.Storage import WalrusStorage
 from d2c.model.Cloud import Cloud
 from d2c.model.Kernel import Kernel
 from d2c.model.AMI import AMI
+from d2c.model.Action import StartAction
+
+from sqlalchemy import Table, Column, Integer, String, MetaData, ForeignKey, create_engine
+from sqlalchemy.orm import sessionmaker, mapper, relationship
+
 import boto
 
 import string
@@ -31,6 +36,10 @@ class DAO:
         
         self.__conn = None
         
+        self.engine = create_engine('sqlite:///' + self.fileName, echo=True)
+        self.session = sessionmaker(bind=self.engine)()
+        self.metadata = MetaData()
+        
         self._init_db()
         
     def setCredStore(self, credStore):
@@ -44,6 +53,38 @@ class DAO:
         return self.__conn
         
     def _init_db(self):
+        
+        metadata = self.metadata
+      
+        deploymentTable = Table('deploy', metadata,
+                            Column('name', String, primary_key=True),
+                            Column('cloud', String),
+                            Column('aws_cred', String),
+                            Column('state', String)
+                            )  
+        mapper(Deployment, deploymentTable, properties={
+                                    'children': relationship(Role)
+                                    })
+        
+        roleTable = Table('deploy_role', metadata,
+                            Column('name', String, primary_key=True),
+                            Column('deploy', String, ForeignKey('deploy.name'), primary_key=True),
+                            Column('ami', String),
+                            Column('count', Integer),
+                            Column('instance_type', String)
+                            )  
+        mapper(Role, roleTable)
+        
+        startActionTable = Table('start_actions', metadata,
+                            Column('id', Integer, primary_key=True),
+                            Column('action', String),
+                            Column('role', String),
+                            Column('deploy', String)
+                            )
+        
+        mapper(StartAction, startActionTable)
+        
+        metadata.create_all(self.engine)
         
         c = self.__getConn().cursor()
         
@@ -70,24 +111,7 @@ class DAO:
         c.execute('''create table if not exists conf
                     (key text, value text)''')
         
-        c.execute('''create table if not exists deploy
-                    (name text primary key,
-                    cloud text not null,
-                    aws_cred text not null,
-                    state text,
-                    foreign key(cloud) references cloud(name),
-                    foreign key(aws_cred) references awc_cred(id))''')
-                     
-        c.execute('''create table if not exists deploy_role
-                    (name text,
-                    deploy text,
-                    ami text,
-                    count integer,
-                    instance_type text,
-                    primary key (name, deploy)
-                    foreign key(deploy) references deploy(name),
-                    foreign key(ami) references ami(id),
-                    foreign key(instance_type) references instance_type(name))''')
+       
         
         c.execute('''create table if not exists deploy_role_instance
                     (instance text primary key, -- AWS instance ID
@@ -153,6 +177,8 @@ class DAO:
         c.execute('''create table if not exists image_store
                     (name string primary key, 
                     service_url text not null)''')
+        
+         
         
         for name, unit in [('CPUUtilization', 'Percent'),
                            ("NetworkIn", "Bytes"),
@@ -342,16 +368,9 @@ class DAO:
         return AWSCred(row['id'], row['access_key_id'], row['secret_access_key']) if row is not None else None
     
     def saveDeployment(self, deployment):
-        c = self.__getConn().cursor()
         
-        c.execute("select count(*) from deploy where name=?", (deployment.id,))
-        row = c.fetchone()
-        c.close()
-                
-        if row[0] == 0:
-            self.addDeployment(deployment)
-        else:
-            self.updateDeployment(deployment)     
+        self.session.add(deployment)
+        self.session.commit()
         
     def addDeployment(self, deployment):
         c = self.__getConn().cursor()

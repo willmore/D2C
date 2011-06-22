@@ -135,7 +135,7 @@ class DeploymentWizardController:
     
     def addDeployment(self, event):
         
-        roles = self.wizard.roleWizard.getPanel("ROLES").roleList.getRoles()
+        roles = self.wizard.roleWizard.getPanel("ROLES").roleList.getItems()
         
         deployment = Deployment(self.newName, roles=roles, awsCred=self.dao.getAWSCred("mainKey"))
         deployment.setCloud(self.cloud)
@@ -177,7 +177,7 @@ class DeploymentWizardController:
         self.endScripts = []
         self.dataCollectors = []
         
-        self.wizard.container.getPanel("ROLES").getPanel("ROLES").roleList.addRole(role)
+        self.wizard.container.getPanel("ROLES").getPanel("ROLES").roleList.addItem(role)
         
         self.wizard.container.getPanel("ROLES").showPanel("ROLES")
         

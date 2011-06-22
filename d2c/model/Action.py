@@ -1,7 +1,7 @@
 from d2c.logger import StdOutLogger
 from d2c.RemoteShellExecutor import RemoteShellExecutor
 
-class Action():
+class Action(object):
 
     def __init__(self, 
                  command, 
@@ -19,3 +19,15 @@ class Action():
         RemoteShellExecutor(self.sshCred.username, 
                             instance.public_dns_name, 
                             self.sshCred.privateKey).run(self.command)
+                            
+                            
+class StartAction(Action):
+
+    def __init__(self, 
+                 command, 
+                 sshCred,
+                 logger=StdOutLogger()):
+        
+        Action.__init__(self, command, 
+                 sshCred,
+                 logger)
