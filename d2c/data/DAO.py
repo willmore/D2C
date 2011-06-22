@@ -70,14 +70,14 @@ class DAO:
                             )  
         
         mapper(Cloud, cloudTable, properties={
-                                    'deploys': relationship(Deployment, backref='parent'),
-                                    'amis': relationship(AMI, backref='parent')             
+                                    'deploys': relationship(Deployment, backref='cloud'),
+                                    'amis': relationship(AMI, backref='cloud')             
                                     })
       
         deploymentTable = Table('deploy', metadata,
                             Column('name', String, primary_key=True),
-                            Column('cloud', String, ForeignKey('cloud.name')),
-                            Column('aws_cred', String, ForeignKey("aws_cred.name")),
+                            Column('cloud_id', String, ForeignKey('cloud.name')),
+                            Column('aws_cred_id', String, ForeignKey("aws_cred.name")),
                             Column('state', String)
                             )  
         
@@ -88,8 +88,8 @@ class DAO:
         
         roleTable = Table('deploy_role', metadata,
                             Column('name', String, primary_key=True),
-                            Column('deploy', String, ForeignKey('deploy.name'), primary_key=True),
-                            Column('ami', String),
+                            Column('deploy_id', String, ForeignKey('deploy.name'), primary_key=True),
+                            Column('ami_id', String, ForeignKey('ami.id')),
                             Column('count', Integer),
                             Column('instance_type', String)
                             )  
@@ -110,17 +110,19 @@ class DAO:
                             )
         
         mapper(SourceImage, srcImgTable, properties={
-                                'amis': relationship(AMI, backref='parent')}
+                                'amis': relationship(AMI, backref='srcImg')}
                                 )
         
         
         amiTable = Table('ami', metadata,
                             Column('id', String, primary_key=True),
-                            Column('srcImg', String, ForeignKey('src_img.path')),
-                            Column('cloud', String, ForeignKey('cloud.name'))
+                            Column('src_img_id', String, ForeignKey('src_img.path')),
+                            Column('cloud_id', String, ForeignKey('cloud.name'))
                             )
         
-        mapper(AMI, amiTable)
+        mapper(AMI, amiTable, properties={
+                        'deployments': relationship(Deployment, backref='ami')
+                    })
         
         metadata.create_all(self.engine)
         
