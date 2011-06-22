@@ -17,8 +17,8 @@ class CloudPanel(wx.Panel):
         self.cloudList = ItemList(self, -1, style=wx.LC_REPORT, size=(-1, 200),
                                    mappers=[ColumnMapper('Name', lambda c: c.name)])
         
-        self.chooseButton = wx.Button(self, wx.ID_ANY, 'Choose Cloud', size=(190, -1))
-        self.cancelButton = wx.Button(self, wx.ID_ANY, 'Cancel', size=(190, -1))
+        self.chooseButton = wx.Button(self, wx.ID_ANY, 'Next')
+        self.cancelButton = wx.Button(self, wx.ID_ANY, 'Cancel')
         
         self.sizer = wx.BoxSizer(wx.VERTICAL) 
         self.SetSizer(self.sizer)
@@ -28,8 +28,13 @@ class CloudPanel(wx.Panel):
         self.sizer.Add(addStoreTxt, 0)
         
         self.sizer.Add(self.cloudList, 0, wx.EXPAND|wx.ALL, 5)
-        self.sizer.Add(self.chooseButton, 0, wx.ALIGN_RIGHT|wx.ALL, 2)
-        self.sizer.Add(self.cancelButton, 0, wx.ALIGN_RIGHT|wx.ALL, 2)     
+       
+        self.hsizer = wx.BoxSizer(wx.HORIZONTAL)
+       
+        self.hsizer.Add(self.cancelButton, 0, wx.ALIGN_RIGHT|wx.ALL, 2)  
+        self.hsizer.Add(self.chooseButton, 0, wx.ALIGN_RIGHT|wx.ALL, 2)
+        
+        self.sizer.Add(self.hsizer, 0, wx.ALIGN_RIGHT|wx.ALL, 2)   
         
     def setClouds(self, clouds):
         self.cloudList.setItems(clouds)
@@ -43,8 +48,8 @@ class KernelPanel(wx.Panel):
         self.kernelList = ItemList(self, -1, style=wx.LC_REPORT, size=(-1, 100),
                                      mappers=[ColumnMapper('AKI', lambda k: k.aki),
                                               ColumnMapper('Architecture', lambda k: k.arch)])
-        self.chooseButton = wx.Button(self, wx.ID_ANY, 'Select', size=(190, -1))
-        self.cancelButton = wx.Button(self, wx.ID_ANY, 'Cancel', size=(190, -1))
+        self.chooseButton = wx.Button(self, wx.ID_ANY, 'Next')
+        self.backButton = wx.Button(self, wx.ID_ANY, 'Back')
         
         self.sizer = wx.BoxSizer(wx.VERTICAL) 
         self.SetSizer(self.sizer)
@@ -54,8 +59,13 @@ class KernelPanel(wx.Panel):
         self.sizer.Add(addStoreTxt, 0)
         
         self.sizer.Add(self.kernelList, 0, wx.EXPAND|wx.ALL, 5)
-        self.sizer.Add(self.chooseButton, 0, wx.ALIGN_RIGHT|wx.ALL, 2)
-        self.sizer.Add(self.cancelButton, 0, wx.ALIGN_RIGHT|wx.ALL, 2) 
+        
+        self.hsizer = wx.BoxSizer(wx.HORIZONTAL)
+        
+        self.hsizer.Add(self.backButton, 0, wx.ALIGN_RIGHT|wx.ALL, 2)
+        self.hsizer.Add(self.chooseButton, 0, wx.ALIGN_RIGHT|wx.ALL, 2)
+             
+        self.sizer.Add(self.hsizer, 0, wx.ALIGN_RIGHT|wx.ALL, 2)
         
 class BucketPanel(wx.Panel):    
     
