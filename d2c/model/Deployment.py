@@ -113,13 +113,15 @@ class Deployment:
         self.monitor = Monitor(self, listeners, pollRate)
         self.logger = logger
         self.pollRate = pollRate
+        
+        self.stopInstances = False
     
     def setLogger(self, logger, cascade=True):
         self.logger = logger
         
         if cascade:
             for role in self.roles:
-                role.logger = logger
+                role.setLogger(logger)
     
     def setCloud(self, cloud):
 
@@ -155,6 +157,14 @@ class Deployment:
         This will NOT stop or terminate any running instances.
         '''
         self.runLifecycle = False
+        
+    def stop(self):
+        '''
+        Stop any running instances and end lifecycle.
+        '''
+        self.runLifecycle = False
+        self.stopInstances = True
+        self.logger.write("Canceling deployment")
         
     def run(self):
         '''
@@ -193,6 +203,9 @@ class Deployment:
         
         for (_, transition) in stageList[startIdx:]:
             if not self.runLifecycle: # Extra check to see we are still alive.
+                if self.stopInstances:
+                    self.__shutdown()
+                
                 return
             
             if transition is None:
@@ -218,6 +231,9 @@ class Deployment:
         while self.runLifecycle and not allRunning:
             time.sleep(self.pollRate)
             
+            if not self.runLifecycle:
+                return
+           
             instStates = self.__getInstanceStates(reservationIds)
             
             allRunning = True

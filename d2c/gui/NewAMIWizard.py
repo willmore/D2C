@@ -12,6 +12,9 @@ from .ItemList import ItemList, ColumnMapper
 class CloudPanel(wx.Panel):    
     
     def __init__(self, *args, **kwargs):
+        
+        
+        
         wx.Panel.__init__(self, *args, **kwargs)
  
         self.cloudList = ItemList(self, -1, style=wx.LC_REPORT, size=(-1, 200),

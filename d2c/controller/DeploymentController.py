@@ -37,7 +37,6 @@ class ViewListener:
     def notify(self, event):
         self.deploymentView.update()
         
-    
 class DeploymentController:
     
     def __init__(self, deploymentView, dao):
@@ -45,9 +44,23 @@ class DeploymentController:
         self.dao = dao
         self.deploymentView = deploymentView
         self.deploymentView.deployButton.Bind(wx.EVT_BUTTON, self.handleLaunch)
+        self.deploymentView.cancelButton.Bind(wx.EVT_BUTTON, self.handleCancel)
         
         self.deployment = deploymentView.deployment
+
+    def handleCancel(self, evt):
         
+        ret = wx.MessageBox('Are you sure you want to cancel?',
+                            'Question', wx.YES_NO)
+        
+        if wx.YES == ret:
+               
+            self.deploymentView.showLogPanel()
+            
+            self.deployment.stop()
+            self.deploymentView.cancelButton.Hide()
+            
+
     def handleLaunch(self, evt):
         
         ret = wx.MessageBox('Are you sure you want to start? \
@@ -58,7 +71,6 @@ class DeploymentController:
             
             self.deploymentView.deployButton.Hide()
             
-            
             self.deploymentView.showLogPanel()
             
             self.__createLogger()
@@ -67,6 +79,8 @@ class DeploymentController:
             self.deployment.addAnyStateChangeListener(ViewListener(self.deploymentView))
             self.deploymentThread = DeploymentThread(self.deployment)
             self.deploymentThread.start()
+            self.deploymentView.cancelButton.Show()
+            self.deploymentView.Layout()
     
     def __createLogger(self):
         channelId = self.deployment.id
@@ -92,11 +106,7 @@ class DeploymentController:
         def receiveMsg(self, msg):
             self.logPanel.appendLogPanelText(msg.data) 
     
-    def handleStart(self, evt):
-        pass
-        
-    def handleKill(self, evt):
-        pass
+    
     
     
     

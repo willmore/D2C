@@ -20,18 +20,21 @@ class ItemList(wx.ListCtrl):
             raise Exception("No Mappers")
         
         self.mappers = kwargs['mappers']
-        
         del kwargs['mappers']
+        
+        items = []
+        if kwargs.has_key('items'):
+            items = kwargs['items']
+            del kwargs['items']
         
         wx.ListCtrl.__init__(self, *args, **kwargs)
                                            
         for i,colMapper in enumerate(self.mappers):
-            self.InsertColumn(i, colMapper.name, colMapper.defaultWidth) 
-     
+            self.InsertColumn(i, colMapper.name, width=colMapper.defaultWidth) 
+
         self.items = {}
         
-        if kwargs.has_key('items'):
-            self.setItems(kwargs['items'])
+        self.setItems(items)
         
     def addItem(self, item):
         idx = self.Append([colMapper.map(item) for colMapper in self.mappers])

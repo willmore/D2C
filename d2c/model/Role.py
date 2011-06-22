@@ -45,6 +45,14 @@ class Role:
         self.contextCred = contextCred
           
         self.logger = logger
+     
+    def setLogger(self, logger): 
+    
+        self.logger = logger
+        
+        for actions in [self.startActions, self.stopActions, self.finishedChecks, self.dataCollectors]:
+            for a in actions:
+                a.logger = logger
       
     def getReservationId(self):  
         return self.reservationId
