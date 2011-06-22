@@ -47,6 +47,8 @@ class DeploymentWizardController:
         for c in self.dao.getClouds():
             self.wizard.cloudPanel.clouds.Append(c.name)
             
+        self.wizard.cloudPanel.clouds.Bind(wx.EVT_COMBOBOX,self.checkClouds)
+            
         self.wizard.cloudPanel.nextButton.Bind(wx.EVT_BUTTON, self.showRolesWizard)
         
         self.uploadScripts = []
@@ -61,6 +63,15 @@ class DeploymentWizardController:
         
         self.wizard.container.showPanel("NAME")
         self.wizard.container.getPanel("NAME").name.Bind(wx.EVT_TEXT, self.checkNameDeployment)
+        
+        self.wizard.container.getPanel("ROLES").getPanel("ROLES").backButton.Bind(wx.EVT_BUTTON,self.showClouds)
+        self.wizard.container.getPanel("ROLES").getPanel("ADD_ROLE").cancelButton.Bind(wx.EVT_BUTTON,self.showRoles)
+    
+    def checkClouds(self,event):
+        if(event.GetSelection()+1):
+            self.wizard.cloudPanel.nextButton.Enable()
+        else:
+            self.wizard.cloudPanel.nextButton.Disable()
     
     def setupFlexList(self, parent, boxsizer, textControls, fieldCount=1, labels=()):
         
@@ -129,6 +140,10 @@ class DeploymentWizardController:
         #TODO validation
         self.newName = self.wizard.namePanel.name.GetValue()      
         self.wizard.container.showPanel("CLOUD")
+        
+    def showRoles(self,_):
+        self.newName = self.wizard.namePanel.name.GetValue()      
+        self.wizard.container.getPanel("ROLES").showPanel("ROLES")
 
     def done(self, event):
         self.wizard.EndModal(wx.ID_OK)
