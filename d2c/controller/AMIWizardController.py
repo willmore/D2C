@@ -38,7 +38,7 @@ class AMIWizardController:
         clouds = self._view.container.getPanel("CLOUD").cloudList.getSelectedItems()
         
         if len(clouds) != 1:
-            wx.MessageBox("Select one Cloud.", 'Info')
+            wx.MessageBox("Please select one Cloud", 'Info')
             return
             
         self.cloud = clouds[0]
@@ -46,6 +46,11 @@ class AMIWizardController:
         self._view.showPanel("KERNEL")
     
     def selectKernel(self, _):
+        
+        self.kernels = self._view.container.getPanel("KERNEL").kernelList.getSelectedItems()
+        if len(self.kernels) != 1:
+            wx.MessageBox("Please select one Kernel", 'Info')
+            return
         
         self.kernel = self._view.container.getPanel("KERNEL").kernelList.getSelectedItems()[0]
         self._view.showPanel("BUCKET")
