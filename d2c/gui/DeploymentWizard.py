@@ -10,15 +10,28 @@ class RolePanel(wx.Panel):
 
         self.sizer = wx.BoxSizer(wx.VERTICAL)
         
+        self.rolesText= wx.StaticText(self, -1, 'Roles:')
+        
+        self.sizer.Add(self.rolesText,0,wx.ALIGN_LEFT|wx.ALL,5)
+        
         self.roleList = RoleList(self, -1, style=wx.LC_REPORT)
 
         self.sizer.Add(self.roleList, 0, wx.EXPAND|wx.ALL, 5)
         
-        self.addRoleButton = wx.Button(self, wx.ID_ANY, 'Add New Role', size=(110, -1))
-        self.sizer.Add(self.addRoleButton, 0, wx.ALIGN_RIGHT|wx.ALL, 2)
+        self.hsizer = wx.BoxSizer(wx.HORIZONTAL)
         
-        self.finishButton = wx.Button(self, wx.ID_ANY, 'Finish', size=(110, -1))
-        self.sizer.Add(self.finishButton, 0, wx.ALIGN_RIGHT|wx.ALL, 2)
+        self.addRoleButton = wx.Button(self, wx.ID_ANY, 'Add New Role')
+        self.hsizer.Add(self.addRoleButton, 0, wx.ALIGN_LEFT|wx.ALL, 2)
+        
+        
+        
+        self.backButton = wx.Button(self, wx.ID_ANY, 'Back')
+        self.hsizer.Add(self.backButton,0, wx.ALIGN_RIGHT|wx.ALL, 2)
+        
+        self.finishButton = wx.Button(self, wx.ID_ANY, 'Finish')
+        self.hsizer.Add(self.finishButton,0, wx.ALIGN_RIGHT|wx.ALL, 2)
+        
+        self.sizer.Add(self.hsizer,0, wx.ALIGN_RIGHT)
         
         self.SetSizer(self.sizer)
         self.Layout()
@@ -90,8 +103,15 @@ class AddRolePanel(wx.Panel):
         
         self.sw.SetSizer(self.sw.sizer)
         
-        self.addRoleButton = wx.Button(self, wx.ID_ANY, 'Add New Role', size=(110, -1))
-        self.sizer.Add(self.addRoleButton, 0, wx.ALIGN_RIGHT | wx.ALL, 5)
+        self.hsizer = wx.BoxSizer(wx.HORIZONTAL)
+        
+        self.addRoleButton = wx.Button(self, wx.ID_ANY, 'Add New Role')
+        self.hsizer.Add(self.addRoleButton,0, wx.ALIGN_RIGHT)
+        
+        self.cancelButton = wx.Button(self, wx.ID_ANY, 'Cancel')
+        self.hsizer.Add(self.cancelButton,wx.ALIGN_RIGHT)
+        
+        self.sizer.Add(self.hsizer,wx.ALIGN_RIGHT)
         
         self.SetSizer(self.sizer)
         self.Layout()
@@ -165,6 +185,7 @@ class CloudPanel(wx.Panel):
         
         self.backButton = wx.Button(self, wx.ID_ANY, 'Back', size=(110, -1))
         self.nextButton = wx.Button(self, wx.ID_ANY, 'Next', size=(110, -1))
+        self.nextButton.Disable()
         
         
         hbox = wx.BoxSizer(wx.HORIZONTAL)
