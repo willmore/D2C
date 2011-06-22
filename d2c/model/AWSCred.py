@@ -1,6 +1,6 @@
 
 
-class AWSCred:
+class AWSCred(object):
     """
     Stores Amazon Web Service credentials. These are used in all requests with AWS-compliant services.
     See: http://docs.amazonwebservices.com/AmazonS3/latest/dev/index.html?S3_Authentication.html

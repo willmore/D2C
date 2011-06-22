@@ -9,7 +9,7 @@ from d2c.util import synchronous
 import threading
 
 
-class Cloud:
+class Cloud(object):
     '''
     Region represents the EC2 concept of a region, which is an isolated instance of 
     a cloud system.

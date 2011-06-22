@@ -1,4 +1,3 @@
-import time
 import os
 from d2c.model.SourceImage import SourceImage
 from d2c.model.EC2Cred import EC2Cred
@@ -6,7 +5,6 @@ from d2c.model.AWSCred import AWSCred
 from d2c.model.Configuration import Configuration
 from d2c.model.Deployment import Deployment
 from d2c.model.Role import Role
-from d2c.data.InstanceMetrics import InstanceMetrics, Metric, MetricList, MetricValue
 from d2c.model.InstanceType import InstanceType
 from d2c.model.Region import Region
 from d2c.model.Storage import WalrusStorage
@@ -56,14 +54,36 @@ class DAO:
         
         metadata = self.metadata
       
+        awsCredTable = Table('aws_cred', metadata,
+                            Column('name', String, primary_key=True),
+                            Column('access_key_id', String),
+                            Column('secret_access_key', String)
+                            )  
+      
+        mapper(AWSCred, awsCredTable)
+      
+        cloudTable = Table('cloud', metadata,
+                            Column('name', String, primary_key=True),
+                            Column('service_url', String),
+                            Column('storage_url', String),
+                            Column('ec2cert', String)
+                            )  
+        
+        mapper(Cloud, cloudTable, properties={
+                                    'deploys': relationship(Deployment, backref='parent'),
+                                    'amis': relationship(AMI, backref='parent')             
+                                    })
+      
         deploymentTable = Table('deploy', metadata,
                             Column('name', String, primary_key=True),
-                            Column('cloud', String),
-                            Column('aws_cred', String),
+                            Column('cloud', String, ForeignKey('cloud.name')),
+                            Column('aws_cred', String, ForeignKey("aws_cred.name")),
                             Column('state', String)
                             )  
+        
         mapper(Deployment, deploymentTable, properties={
-                                    'children': relationship(Role)
+                                    'roles': relationship(Role),
+                                    'awsCred' : relationship(AWSCred)
                                     })
         
         roleTable = Table('deploy_role', metadata,
@@ -73,6 +93,7 @@ class DAO:
                             Column('count', Integer),
                             Column('instance_type', String)
                             )  
+        
         mapper(Role, roleTable)
         
         startActionTable = Table('start_actions', metadata,
@@ -84,24 +105,28 @@ class DAO:
         
         mapper(StartAction, startActionTable)
         
+        srcImgTable = Table('src_img', metadata,
+                            Column('path', String, primary_key=True)
+                            )
+        
+        mapper(SourceImage, srcImgTable, properties={
+                                'amis': relationship(AMI, backref='parent')}
+                                )
+        
+        
+        amiTable = Table('ami', metadata,
+                            Column('id', String, primary_key=True),
+                            Column('srcImg', String, ForeignKey('src_img.path')),
+                            Column('cloud', String, ForeignKey('cloud.name'))
+                            )
+        
+        mapper(AMI, amiTable)
+        
         metadata.create_all(self.engine)
         
         c = self.__getConn().cursor()
         
-        c.execute('''create table if not exists aws_cred
-                    (id text primary key, 
-                    access_key_id text not null, 
-                    secret_access_key text not null)''')
         
-        c.execute('''create table if not exists src_img
-                    (path text primary key)''')
-        
-        c.execute('''create table if not exists ami
-                    (id text primary key,
-                    src_img text,
-                    cloud text not null,
-                    foreign key(cloud) references cloud(name),
-                    foreign key(src_img) REFERENCES src_img(path))''')
         
         c.execute('''create table if not exists ec2_cred
                     (id string primary key, 
@@ -110,9 +135,7 @@ class DAO:
         
         c.execute('''create table if not exists conf
                     (key text, value text)''')
-        
-       
-        
+          
         c.execute('''create table if not exists deploy_role_instance
                     (instance text primary key, -- AWS instance ID
                     role_name text,
@@ -131,41 +154,6 @@ class DAO:
                      foreign key(cloud) references cloud(name),
                      primary key(name, cloud))''')
         
-    
-        c.execute('''create table if not exists ami_creation_job
-                    (id integer primary key, 
-                    src_img text,
-                    log text,
-                    start_time integer, 
-                    end_time integer, 
-                    return_code integer,
-                    foreign key(src_img) references src_img(path))''')
-        
-        c.execute('''create table if not exists metric
-                    (name text primary key,
-                     unit text not null)''')
-        
-        c.execute('''
-                    create table if not exists instance_metric
-                    (instance_id text not null,
-                    metric text not null,
-                    time integer not null,
-                    value float not null,
-                    primary key (instance_id, metric, time)
-                    foreign key(instance_id) references deploy_role_instance(instance))''')
-        
-        
-        c.execute('''create table if not exists region
-                    (name string primary key, 
-                    endpoint text not null, 
-                    ec2cert text not null)''')
-        
-        c.execute('''create table if not exists cloud
-                    (name string primary key, 
-                    service_url text not null, 
-                    storage_url text not null,
-                    ec2cert text not null)''')
-        
         c.execute('''create table if not exists amikernel
                     (aki string not null, 
                     cloud text not null, 
@@ -178,50 +166,8 @@ class DAO:
                     (name string primary key, 
                     service_url text not null)''')
         
-         
-        
-        for name, unit in [('CPUUtilization', 'Percent'),
-                           ("NetworkIn", "Bytes"),
-                           ("NetworkOut", "Bytes"),
-                           ("DiskWriteBytes", "Bytes"),
-                           ("DiskReadBytes", "Bytes"),
-                           ("DiskReadOps", "Count"),
-                           ("DiskWriteOps", "Count")]:
-            c.execute("insert or replace into metric (name, unit) values (?,?)",
-                      (name, unit))
-        
         self.__getConn().commit()
         c.close()
-          
-    def createAmiJob(self, srcImg, startTime=time.time()):
-        c = self.__getConn().cursor()
-
-        c.execute("insert into ami_creation_job (src_img, start_time) values (?,?)", (srcImg,startTime))
-        newId = c.lastrowid
-        self.__getConn().commit()
-        c.close()
-        
-        return newId
-    
-    def setAmiJobFinishTime(self, jobId, endTime):        
-        c = self.__getConn().cursor()
-
-        c.execute("update ami_creation_job set end_time=? where id=?", (endTime,jobId))
-        newId = c.lastrowid
-        self.__getConn().commit()
-        c.close()
-        
-        return newId
-    
-    def setAmiJobLog(self, jobId, log):        
-        c = self.__getConn().cursor()
-
-        c.execute("update ami_creation_job set log=? where id=?", (log,jobId))
-        newId = c.lastrowid
-        self.__getConn().commit()
-        c.close()
-        
-        return newId
     
     def getSourceImages(self):
         c = self.__getConn().cursor()
@@ -353,10 +299,8 @@ class DAO:
         c.close()  
         
     def addAWSCred(self, awsCred):     
-        c = self.__getConn().cursor()
-        c.execute("insert into aws_cred(id, access_key_id, secret_access_key) values (?,?,?)", (awsCred.name, awsCred.access_key_id, awsCred.secret_access_key))
-        self.__getConn().commit()
-        c.close()  
+        self.session.add(awsCred)
+        self.session.commit()
         
     def getAWSCred(self, id):
         
@@ -368,33 +312,16 @@ class DAO:
         return AWSCred(row['id'], row['access_key_id'], row['secret_access_key']) if row is not None else None
     
     def saveDeployment(self, deployment):
-        
-        self.session.add(deployment)
-        self.session.commit()
+        #TODO deprecate
+        self.addDeployment(deployment)
         
     def addDeployment(self, deployment):
-        c = self.__getConn().cursor()
-        
-        c.execute("insert into deploy (name, state, cloud, aws_cred) values (?,?,?,?)", 
-                      (deployment.id, deployment.state, deployment.cloud.name, deployment.awsCred.name))
-    
-        for role in deployment.roles:
-            c.execute("insert into deploy_role (name, deploy, ami, count, instance_type) values (?,?,?,?,?)", 
-                  (role.name, deployment.id, role.ami.id, role.count, role.instanceType.name))
-            
-        self.__getConn().commit()
-        c.close()
+        self.session.add(deployment)
+        self.session.flush()
     
     def updateDeployment(self, deployment):  
-        #Only updates state field now. TODO update rest of fields.
-        
-        c = self.__getConn().cursor()
-        
-        c.execute("update deploy set state = ? where name = ?", 
-                      (deployment.state, deployment.id))
-        
-        self.__getConn().commit()
-        c.close()
+        #TODO Deprecate
+        self.session.flush()
     
     def addRoleInstance(self, roleDeployment, roleName, instanceId):
         c = self.__getConn().cursor()
@@ -464,65 +391,7 @@ class DAO:
                  (ec2Cred.id, ec2Cred.cert, ec2Cred.private_key))
         self.__getConn().commit()
         c.close()
-        
-    def saveInstanceMetrics(self, instanceMetrics):
-        assert isinstance(instanceMetrics, InstanceMetrics)
-        
-        c = self.__getConn().cursor()
-                
-        for mList in instanceMetrics.metricLists:
-            for v in mList.values:
-                c.execute("insert into instance_metric (instance_id, metric, time, value)" +
-                          "values (?,?,?,?)",
-                          (mList.instanceId, mList.metric.name,
-                          v.time, v.value))
-        
-        self.__getConn().commit()
-        
-        c.close()
-    
-    def getMetrics(self):
-        
-        c = self.__getConn().cursor()
-        
-        c.execute("select * from metric")
-        
-        out = []
-        
-        for row in c:
-            out.append(Metric(row['name'], row['unit']))
-        
-        c.close()
-        
-        return out
-        
-    def getInstanceMetrics(self, instanceId):
-        
-        metrics = self.getMetrics()
-        
-        c = self.__getConn().cursor()
-        
-        c.execute('''select * from instance_metric
-                     where instance_id = ?''', 
-                           (instanceId,))
-        
-        mLists = {}
-        mMap = {}
-        
-        for m in metrics:
-            mLists[m.name] = []
-            mMap[m.name] = m
-        
-        for row in c:
-            mLists[row['metric']].append(MetricValue(row['value'], row['time']))
-            
-        c.close()
-        
-        lists = []
-        for mName, metrics in mLists.iteritems():
-            lists.append(MetricList(instanceId, mMap[mName], metrics))
-            
-        return InstanceMetrics(instanceId, lists)
+  
     
     def __instanceType(self, name):
         '''
@@ -571,53 +440,14 @@ class DAO:
         
     def saveCloud(self, cloud):
         
-        assert isinstance(cloud, Cloud)
-        
-        c = self.__getConn().cursor()
-
-        c.execute("insert into cloud (name, service_url, storage_url, ec2cert) values (?,?,?,?)", 
-                      (cloud.name, cloud.serviceURL, cloud.storageURL, cloud.ec2Cert))
-        self.__getConn().commit()
-        c.close() 
-        
-        for k in cloud.kernels:
-            self.saveKernel(k)
+        self.session.add(cloud)
+        self.session.flush()
             
-        for i in cloud.instanceTypes:
-            self.saveInstanceType(i)
-            
-    def getClouds(self):
-        
-        c = self.__getConn().cursor()
-        
-        c.execute("select * from cloud")
+    def getClouds(self):    
+        return self.session.query(Cloud)
     
-        clouds = [self.__mapCloud(row) for row in c]
-
-        c.close()
-        
-        for c in clouds:
-            c.addInstanceTypes(self.getInstanceTypes(c.name))
-        
-        return clouds
-    
-    def getCloud(self, name):
-        
-        c = self.__getConn().cursor()
-        
-        c.execute("select * from cloud where name = ?", (name,))
-    
-        clouds = [self.__mapCloud(row) for row in c]
-        
-        c.close()
-        
-        for c in clouds:
-            c.addInstanceTypes(self.getInstanceTypes(c.name))
-        
-        return clouds[0]
-    
-    def __mapCloud(self, row):
-        return Cloud(row['name'], row['service_url'], row['storage_url'], row['ec2cert'], self.botoModule)
+    def getCloud(self, name):       
+        return self.session.query(Cloud).filter_by(name=name)     
         
     def saveKernel(self, kernel):
         
