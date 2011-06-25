@@ -39,9 +39,8 @@ class ImageController:
         self._imageView.SetImages(self._dao.getSourceImages())
         
     def _createAMIImage(self, event):
-        i = self._imageView._list.GetFirstSelected();
-        img = self._imageView._list.GetItem(i).GetText()
         
+        img = self._imageView._list.getSelectedItems()[0]
         amiWiz = NewAMIWizard(None, -1, 'Create AMI', size=(600,300))
         
         controller = AMIWizardController(amiWiz, self._dao)

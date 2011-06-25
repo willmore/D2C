@@ -7,13 +7,14 @@ Created on Feb 16, 2011
 import os
 import tempfile
 
-from d2c.AMITools import AMITools
+from d2c.model.AMI import AMI
 from d2c.logger import StdOutLogger
 from d2c.model.EC2Cred import EC2Cred
 from d2c.model.AWSCred import AWSCred
 from d2c.model.Kernel import Kernel
 from d2c.data.DAO import DAO
 from d2c.model.Cloud import Cloud
+from d2c.model.SourceImage import SourceImage
 
 class UnsupportedImageError(Exception):
     def __init__(self, value):
@@ -35,7 +36,7 @@ class AMICreator:
                  outputDir=None,
                  logger=StdOutLogger()):
         
-        assert isinstance(srcImg, basestring)
+        assert isinstance(srcImg, SourceImage)
         assert isinstance(ec2Cred, EC2Cred)
         assert isinstance(awsCred, AWSCred)
         assert isinstance(cloud, Cloud)
@@ -68,7 +69,7 @@ class AMICreator:
         if not os.path.exists(self.__outputDir):
             os.makedirs(self.__outputDir)
        
-        cloudKernels = self.__dao.getKernels(self.__cloud.name)
+        cloudKernels = self.__cloud.kernels
         if not self.__kernel in cloudKernels:
             raise Exception("Kernel %s not in cloud kernels %s" % (str(self.__kernel), str(cloudKernels)))
        
@@ -100,8 +101,8 @@ class AMICreator:
         self.__logger.write("Registering AMI: %s" % s3ManifestPath)
         amiId = self.__amiTools.registerAMI(s3ManifestPath, self.__cloud, self.__awsCred)     
         
-        self.__dao.addAMI(amiId, self.__srcImg)
-        ami = self.__dao.getAMIById(amiId)
+        ami = AMI(amiId, self.__srcImg)
+        self.__dao.add(ami)
         
         return ami    
     

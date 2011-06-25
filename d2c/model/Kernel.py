@@ -1,6 +1,6 @@
 
 
-class Kernel:
+class Kernel(object):
     
     
     ARCH_X86 = 'i386'

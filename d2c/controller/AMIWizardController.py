@@ -42,7 +42,7 @@ class AMIWizardController:
             return
             
         self.cloud = clouds[0]
-        self._view.container.getPanel("KERNEL").kernelList.setItems(self._dao.getKernels(self.cloud.name))
+        self._view.container.getPanel("KERNEL").kernelList.setItems(self.cloud.kernels)
         self._view.showPanel("KERNEL")
     
     def selectKernel(self, _):

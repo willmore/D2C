@@ -5,7 +5,7 @@ from d2c.model.AWSCred import AWSCred
 from d2c.model.Configuration import Configuration
 from d2c.model.Deployment import Deployment
 from d2c.model.Role import Role
-from d2c.model.InstanceType import InstanceType
+from d2c.model.InstanceType import InstanceType, Architecture
 from d2c.model.Region import Region
 from d2c.model.Storage import WalrusStorage
 from d2c.model.Cloud import Cloud
@@ -34,7 +34,9 @@ class DAO:
         
         self.__conn = None
         
-        self.engine = create_engine('sqlite:///' + self.fileName, echo=True)
+        self.engine = create_engine('sqlite:///' + self.fileName, 
+                                    connect_args={'check_same_thread':False},
+                                    echo=True)
         self.session = sessionmaker(bind=self.engine)()
         self.metadata = MetaData()
         
@@ -71,7 +73,8 @@ class DAO:
         
         mapper(Cloud, cloudTable, properties={
                                     'deploys': relationship(Deployment, backref='cloud'),
-                                    'amis': relationship(AMI, backref='cloud')             
+                                    'amis': relationship(AMI, backref='cloud')        ,
+                                    'instanceTypes': relationship(InstanceType, backref='cloud')     
                                     })
       
         deploymentTable = Table('deploy', metadata,
@@ -91,10 +94,37 @@ class DAO:
                             Column('deploy_id', String, ForeignKey('deploy.id'), primary_key=True),
                             Column('ami_id', String, ForeignKey('ami.id')),
                             Column('count', Integer),
-                            Column('instance_type', String)
+                            Column('instance_type_id', String, ForeignKey('instance_type.name'))
                             )  
         
-        mapper(Role, roleTable)
+        mapper(Role, roleTable, properties={
+                                    'instanceType': relationship(InstanceType)
+                                    })
+        
+        instanceTypeTable = Table('instance_type', metadata,
+                            Column('name', String, primary_key=True),
+                            Column('cloud_id', String, ForeignKey('cloud.name'), primary_key=True),
+                            Column('cpu', Integer),
+                            Column('cpu_count', Integer),
+                            Column('memory', Integer),
+                            Column('disk', Integer),
+                            Column('cost_per_hour', Integer)
+                            )
+        
+        archTable = Table('architecture', metadata,
+                            Column('arch', String, primary_key=True)
+                         )
+        
+        instanceArchTable = Table('instance_arch_assoc', metadata,
+                                  Column('instance', Integer, ForeignKey('instance_type.name')),
+                                  Column('arch', Integer, ForeignKey('architecture.arch')),
+                                  )
+        
+        mapper(InstanceType, instanceTypeTable, 
+               properties={'architectures': relationship(Architecture, secondary=instanceArchTable)}
+               )
+        
+        mapper(Architecture, archTable)
         
         startActionTable = Table('start_actions', metadata,
                             Column('id', Integer, primary_key=True),
@@ -123,6 +153,25 @@ class DAO:
         mapper(AMI, amiTable, properties={
                         'roles': relationship(Role, backref='ami')
                     })
+        
+        
+        '''create table if not exists amikernel
+                    (aki string not null, 
+                    cloud text not null, 
+                    arch string not null,
+                    contents string not null,
+                    primary key (aki, cloud),
+                    foreign key(cloud) references cloud(name))'''
+        
+        kernelTable = Table('kernel', metadata,
+                            Column('aki', String, primary_key=True),
+                            Column('contents', String),
+                            Column('cloud_id', String, ForeignKey('cloud.name')),
+                            Column('arch_id', String, ForeignKey('architecture.arch'))
+                            )
+        
+        mapper(Kernel, kernelTable, properties={'cloud':relationship(Cloud),
+                                                'architecture':relationship(Architecture)})
         
         metadata.create_all(self.engine)
         
@@ -156,13 +205,7 @@ class DAO:
                      foreign key(cloud) references cloud(name),
                      primary key(name, cloud))''')
         
-        c.execute('''create table if not exists amikernel
-                    (aki string not null, 
-                    cloud text not null, 
-                    arch string not null,
-                    contents string not null,
-                    primary key (aki, cloud),
-                    foreign key(cloud) references cloud(name))''')
+        
         
         c.execute('''create table if not exists image_store
                     (name string primary key, 
@@ -170,22 +213,19 @@ class DAO:
         
         self.__getConn().commit()
         c.close()
+        
+    def add(self, entity):   
+        self.session.add(entity)
+        self.session.commit()
+        
+    def getArchitectures(self):
+        return self.session.query(Architecture)
+    
+    def getArchitecture(self, id):
+        return self.session.query(Architecture).filter_by(arch=id).first()
     
     def getSourceImages(self):
-        c = self.__getConn().cursor()
-
-        out = []
-
-        for r in c.execute("select path from src_img"):
-            out.append(SourceImage(r[0]))
-        
-        c.close()
-        
-        return out   
-    
-    def addSourceImage(self, srcImg):
-        self.session.add(srcImg)
-        self.session.flush()
+        return self.session.query(SourceImage)
         
     def saveConfiguration(self, conf):
         c = self.__getConn().cursor()
@@ -244,50 +284,13 @@ class DAO:
         else:
             cursor.execute("update conf set value=? where key=?", (value, key))
     
-    def __rowToAMI(self, row):
-        
-        return AMI(id=row['id'], srcImg=row['src_img'])
-    
-    def getAMIBySrcImg(self, srcImg):
-        c = self.__getConn().cursor()
-        
-        h = c.execute("select * from ami where src_img=? limit 1", (srcImg,))
-        
-        row = h.fetchone()
-        
-        c.close()
-    
-        return self.__rowToAMI(row) if row is not None else None
-    
-    def getAMIById(self, id):
-        c = self.__getConn().cursor()
-        
-        h = c.execute("select * from ami where id=? limit 1", (id,))
-        
-        row = h.fetchone()
-        
-        c.close()
-    
-        return self.__rowToAMI(row) if row is not None else None
-    
     def getAMIs(self):
-        c = self.__getConn().cursor()
-        
-        c.execute("select * from ami")
-        
-        out = []
-        
-        for row in c:
-            out.append(self.__rowToAMI(row))
-        
-        c.close()
-    
-        return out
+        return self.session.query(AMI)
     
     def addAMI(self, ami):
         
         self.session.add(ami)
-        self.session.flush()
+        self.session.commit()
        
     def addAWSCred(self, awsCred):     
         self.session.add(awsCred)
@@ -308,11 +311,11 @@ class DAO:
         
     def addDeployment(self, deployment):
         self.session.add(deployment)
-        self.session.flush()
+        self.session.commit()
     
     def updateDeployment(self, deployment):  
         #TODO Deprecate
-        self.session.flush()
+        self.session.commit()
     
     def addRoleInstance(self, roleDeployment, roleName, instanceId):
         c = self.__getConn().cursor()
@@ -323,44 +326,8 @@ class DAO:
         c.close()  
     
     def getDeployments(self):
-        
-        amis = {}
-        for a in self.getAMIs():
-            amis[a.id] = a
-        
-        c = self.__getConn().cursor()
-        
-        c.execute("select * from deploy")
-        
-        deploys = {}
-        
-        for row in c:
-            d = self.rowToDeployment(row)
-            d.setCloud(self.getCloud(row['cloud']))
-            d.awsCred = self.getAWSCred(row['aws_cred'])
-            deploys[row['name']] = d
-
-        c.execute("select * from deploy_role")
-        
-        for row in c:
-            role = self.rowToRole(row)
-            role.ami = amis[role.ami] #hack
-            assert deploys.has_key(row['deploy'])
-            deploys[row['deploy']].addRole(role)
-        
-        c.close()
-      
-        return deploys.values()
+        return self.session.query(Deployment)
              
-    def rowToDeployment(self, row):
-        print self
-        return Deployment(row['name'])
-        
-    def rowToRole(self, row):
-        return Role(row['name'], 
-                    row['ami'], row['count'], 
-                    self.__instanceType(row['instance_type']))
-    
     def getEC2Cred(self, id):
         
         c = self.__getConn().cursor()
@@ -432,7 +399,7 @@ class DAO:
     def saveCloud(self, cloud):
         
         self.session.add(cloud)
-        self.session.flush()
+        self.session.commit()
             
     def getClouds(self):    
         return self.session.query(Cloud)
@@ -451,45 +418,6 @@ class DAO:
         self.__getConn().commit()
         c.close() 
 
-    def saveInstanceType(self, instanceType):
-        
-        assert isinstance(instanceType, InstanceType), "Object is %s" % str(instanceType)
-                
-        c = self.__getConn().cursor()
-
-        c.execute("insert into instance_type (name, cloud, cpu, cpu_count, memory, disk, cost_per_hour, architecture) values (?,?,?,?,?,?,?,?)", 
-                      (instanceType.name, instanceType.cloud.name, 
-                       instanceType.cpu, instanceType.cpuCount,
-                       instanceType.memory, instanceType.disk, 
-                       instanceType.costPerHour, ":".join(str(x) for x in instanceType.architectures)))
-        
-        self.__getConn().commit()
-        c.close() 
-        
-    def getKernels(self, cloudName):
-        
-        c = self.__getConn().cursor()
-        
-        c.execute("select * from amikernel where cloud = ?", (cloudName,))
-    
-        kernels = [Kernel(row['aki'], row['arch'], row['contents'], row['cloud']) for row in c]
-        
-        c.close()
-        
-        return kernels
-    
-    def getInstanceTypes(self, cloudName):
-        
-        c = self.__getConn().cursor()
-        
-        c.execute("select * from instance_type where cloud = ?", (cloudName,))
-        
-        instanceTypes = [InstanceType(row['name'], row['cpu'], 
-                                      row['cpu_count'], row['memory'],
-                                      row['disk'], string.split(row['architecture'], ":"), 
-                                      row['cost_per_hour']) for row in c]
-        
-        c.close()
-        
-        return instanceTypes
+    def addInstanceType(self, instanceType):
+        self.session.add(instanceType)
         

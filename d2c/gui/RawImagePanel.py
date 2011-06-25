@@ -5,6 +5,7 @@ Created on Mar 10, 2011
 '''
 import wx
 import os
+from .ItemList import ColumnMapper, ItemList
 
 class RawImagePanel(wx.Panel):    
     
@@ -15,11 +16,11 @@ class RawImagePanel(wx.Panel):
         
         self._list = wx.ListCtrl(self, -1, style=wx.LC_REPORT, size=(110,200))
         
+        self._list = ItemList(self, -1, style=wx.LC_REPORT, size=(110, 200),
+                              mappers=[ColumnMapper('Path', lambda r: r.path, defaultWidth=wx.LIST_AUTOSIZE)])
+        
         hbox1 = wx.BoxSizer(wx.HORIZONTAL)
         hbox1.Add(self._list, 1, wx.EXPAND)
-        
-        self._list.InsertColumn(0, 'Name')
-        self._list.SetColumnWidth(0, 340)
       
         hbox2 = wx.BoxSizer(wx.HORIZONTAL)
 
@@ -41,10 +42,8 @@ class RawImagePanel(wx.Panel):
         self.SetSizer(vbox)
         
     def SetImages(self, images): 
-        self._list.DeleteAllItems()
-        
-        for i in images:
-            self._list.Append((i.path,))
+      
+        self._list.setItems(images)
     
     def _OnFindImage(self, event):
         dlg = wx.FileDialog(self, "Choose an image", os.getcwd(), "", "*.*", wx.OPEN)

@@ -4,7 +4,7 @@ import os
 from d2c.Application import Application
 from d2c.data.DAO import DAO
 from d2c.model.Role import Role
-from d2c.model.InstanceType import InstanceType
+from d2c.model.InstanceType import InstanceType, Architecture
 from d2c.model.Deployment import Deployment
 from d2c.model.Cloud import Cloud
 from d2c.model.Kernel import Kernel
@@ -112,19 +112,23 @@ def main(argv=None):
     
     dao.setCredStore(CredStore(dao))
     srcImg = SourceImage("/foobar/vm.vdi")
-    dao.addSourceImage(srcImg)
+    dao.add(srcImg)
+    
+    
+     
+    
      
     clouds = [Cloud("SciCloud", 
                         "http://172.17.36.21:8773/services/Eucalyptus",
                         "/home/willmore/Downloads/cloud-cert.pem",
                         "http://172.17.36.21:8773/services/Eucalyptus",
-                        [Kernel("aki-123", Kernel.ARCH_X86_64, "/foo/bar")],
-                        instanceTypes=[copy(InstanceType.T1_MICRO)]
+                        kernels=[Kernel("aki-123", Kernel.ARCH_X86_64, "/foo/bar")],
+                        instanceTypes=get_instance_types(dao)
                         ),
                 Cloud("eu-west-1", "https://eu-west-1.ec2.amazonaws.com", "https://s3.amazonaws.com","/opt/EC2_TOOLS/etc/ec2/amitools/cert-ec2.pem",
-                      instanceTypes=[copy(InstanceType.T1_MICRO), copy(InstanceType.M1_SMALL), copy(InstanceType.M1_LARGE), copy(InstanceType.M1_XLARGE)]),
+                      instanceTypes=get_instance_types(dao)),
                 Cloud("us-west-1", "https://us-west-1.ec2.amazonaws.com", "https://s3.amazonaws.com", "/opt/EC2_TOOLS/etc/ec2/amitools/cert-ec2.pem",
-                      instanceTypes=[copy(InstanceType.T1_MICRO), copy(InstanceType.M1_SMALL), copy(InstanceType.M1_LARGE), copy(InstanceType.M1_XLARGE)])]
+                      get_instance_types(dao))]
 
     for cloud in clouds:
         dao.saveCloud(cloud)
@@ -133,8 +137,17 @@ def main(argv=None):
     ami = AMI("ami-47cefa33", srcImg, cloud)
     dao.addAMI(ami)
     
+    for a in [Architecture('x86'), Architecture('x86_64')]:
+        dao.add(a)
+        
+        
+    for instance in []:
+        for cloud in clouds:
+            instance.cloud = cloud
+            dao.addInstanceType(instance)
+    
     deployment = Deployment("dummyDep", 
-                            roles=[Role("loner", ami, 1, InstanceType.T1_MICRO,
+                            roles=[Role("loner", ami, 1, cloud.instanceTypes[0],
                                         startActions=[UploadAction("/tmp/foobar", "/tmp/foobar", mock(SSHCred))], 
                                         dataCollectors=[DataCollector("/tmp", mock(SSHCred))]
                                         
@@ -149,9 +162,22 @@ def main(argv=None):
     mockAMITools = mock(AMITools)
     when(mockAMIFactory).getAMITools(any()).thenReturn(mockAMITools)
     when(mockAMITools).getArch(any()).thenReturn(Kernel.ARCH_X86_64)
+    when(mockAMITools).registerAMI(any(), any(), any()).thenReturn("foobarami")
+    
+    print dao.getAMIs()
     
     app = Application(dao, mockAMIFactory)
     app.MainLoop()
+    
+def get_instance_types(dao):
+        
+    X86 = dao.getArchitecture('X86')
+    X86_64 = dao.getArchitecture('X86_64')
+    
+    return [InstanceType('t1.micro', 2, 2, 613, 0, (X86, X86_64), 0.025),
+            InstanceType('m1.small', 2, 1, 1700, 160, (X86,), 0.095),
+            InstanceType('m1.large', 2, 2, 7500, 850, (X86_64,), 0.038),
+            InstanceType('m1.xlarge', 2, 4, 15000, 850, (X86_64,), 0.76)]
 
 if __name__ == "__main__":
     sys.exit(main())

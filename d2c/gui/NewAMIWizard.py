@@ -1,9 +1,3 @@
-'''
-Created on Mar 10, 2011
-
-@author: willmore
-'''
-
 import wx
 from .ContainerPanel import ContainerPanel
 from .ItemList import ItemList, ColumnMapper

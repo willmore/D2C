@@ -32,7 +32,9 @@ class Application:
         self._frame = Gui()
         
         self._imageController = ImageController(self._frame.getImagePanel(), self._dao)
-        self._amiController = AMIController(self._frame.getAMIPanel(), self._dao, self._amiToolsFactory)
+        self._amiController = AMIController(self._frame.getAMIPanel(), 
+                                            self._dao,
+                                            self._amiToolsFactory)
         self.loadDeploymentPanels()
         
         self._frame.bindAddDeploymentTool(self.addDeployment)

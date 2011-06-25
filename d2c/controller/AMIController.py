@@ -14,7 +14,10 @@ class Codes:
     JOB_CODE_SUCCESS=0
 
 class AMIThread(Thread):
-            
+    '''
+    Thread that encapsulates creation of a new AMI from a source VM image.
+    '''
+             
     def __init__(self, img, conf, amiToolsFactory, 
                   cloud, kernel, s3Bucket, dao, logger):
         
@@ -93,12 +96,12 @@ class AMIController:
         rawImg,cloud,kernel,s3Bucket = msg.data
 
         #Create a logger that will capture process output and display in a GUI panel        
-        logger = self.__createLogger(rawImg)
+        logger = self.__createLogger(rawImg.path)
         self.__amiView.addLogPanel(logger._channelId)
         self.__amiView.showLogPanel(logger._channelId)
         self.__amiView.Refresh()
 
-        amiThread = AMIThread(rawImg, 
+        amiThread = AMIThread(rawImg,
                               self.__dao.getConfiguration(),
                               self.__amiToolsFactory,
                               cloud,
