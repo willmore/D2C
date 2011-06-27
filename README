@@ -27,7 +27,7 @@ easy_install mockito
 
 libvirt installation:
 Since libvirt in ubuntu repository does not support VirtualBox drivers, libvirt should be downloaded from 
-ftp://libvirt.org/libvirt/ and libxml2-dev package should be installed for compiling 
+ftp://libvirt.org/libvirt/ and libxml2-dev,libgnutls-dev,libdevmapper-dev,libnl-dev packages should be installed for compiling 
 
 --------------------
 - Installation
