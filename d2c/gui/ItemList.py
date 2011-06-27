@@ -30,7 +30,8 @@ class ItemList(wx.ListCtrl):
         wx.ListCtrl.__init__(self, *args, **kwargs)
                                            
         for i,colMapper in enumerate(self.mappers):
-            self.InsertColumn(i, colMapper.name, width=colMapper.defaultWidth) 
+            self.InsertColumn(i, colMapper.name)
+            
 
         self.items = {}
         
@@ -38,7 +39,14 @@ class ItemList(wx.ListCtrl):
         
     def addItem(self, item):
         idx = self.Append([colMapper.map(item) for colMapper in self.mappers])
+        
+        for i,m in enumerate(self.mappers):
+            self.SetColumnWidth(i, m.defaultWidth) 
+            print "adjust " + str(item) + str(m.defaultWidth) 
+        
         self.items[idx] = item
+        self.Layout()
+        
     
     def getItems(self):
         return self.items.values()

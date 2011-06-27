@@ -5,6 +5,7 @@ Created on Mar 10, 2011
 '''
 
 import wx
+from .ItemList import ColumnMapper, ItemList
 from .ContainerPanel import ContainerPanel
 
 class AMIPanel(wx.Panel):    
@@ -14,16 +15,18 @@ class AMIPanel(wx.Panel):
         self.splitter = wx.SplitterWindow(self, -1)
         
         vbox = wx.BoxSizer(wx.VERTICAL)
- 
-        self._list = wx.ListCtrl(self.splitter, -1, style=wx.LC_REPORT, size=(110,110))
+
+        self._list = ItemList(self.splitter, -1, style=wx.LC_REPORT, size=(110,110),
+                                 mappers=[ColumnMapper('AMI', lambda r: r.id, defaultWidth=wx.LIST_AUTOSIZE),
+                                          ColumnMapper('SourceImage', lambda r: r.srcImg.path, defaultWidth=wx.LIST_AUTOSIZE),
+                                          ColumnMapper('Status', lambda r: '', defaultWidth=wx.LIST_AUTOSIZE_USEHEADER),
+                                          ColumnMapper('Created', lambda r: '', defaultWidth=wx.LIST_AUTOSIZE_USEHEADER)]
+                                 )
         
         hbox1 = wx.BoxSizer(wx.HORIZONTAL)
         hbox1.Add(self.splitter, 1, wx.EXPAND)
         
-        self._list.InsertColumn(0, 'AMI', width=75)
-        self._list.InsertColumn(1, 'Source Image', width=200)
-        self._list.InsertColumn(2, 'Status', width=110)
-        self._list.InsertColumn(3, 'Created', width=110)
+       
         
         vbox.Add(hbox1, 0, wx.EXPAND)
         
@@ -61,14 +64,12 @@ class AMIPanel(wx.Panel):
     def appendLogPanelText(self, logPanelId, text):
         self._logPanel.getPanel(logPanelId).AppendText(str(text) + "\n")
         
-    def addAMIEntry(self, name):
-        self._list.Append((name,))
+    def addAMIEntry(self, ami):
+        self._list.addItem(ami)
+        
     
     def setAMIs(self, images): 
-        self._list.DeleteAllItems()
-        
-        for ami in images:
-            self._list.Append((ami.id,ami.srcImg))
+        self._list.setItems(images)
     
 class MyPopupMenu(wx.Menu):
     def __init__(self, WinName):

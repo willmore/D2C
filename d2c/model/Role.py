@@ -225,4 +225,4 @@ class Role(object):
         self.logger.write("Reservation %s terminated" % self.reservation.id)
         
     def __str__(self):
-        return "{name:%s, ami: %s, instances: %s}" % (self.name, self.ami, str(self.instances))
+        return "{name:%s, ami: %s}" % (self.name, self.ami)
