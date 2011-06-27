@@ -3,7 +3,7 @@ from d2c.ShellExecutor import ShellExecutor
 
 import os
 
-class UploadAction():
+class UploadAction(object):
 
     def __init__(self, 
                  source, 

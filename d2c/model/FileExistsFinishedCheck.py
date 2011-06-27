@@ -1,6 +1,6 @@
 from d2c.RemoteShellExecutor import RemoteShellExecutor
 
-class FileExistsFinishedCheck:
+class FileExistsFinishedCheck(object):
 
     def __init__(self, fileName, sshCred):
         

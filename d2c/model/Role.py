@@ -4,6 +4,7 @@ from d2c.model.Action import Action
 from d2c.model.Deployment import Deployment
 from d2c.model.AWSCred import AWSCred
 import string
+from sqlalchemy.orm import reconstructor
 
 import time   
 
@@ -15,6 +16,7 @@ class Role(object):
                  deployment=None,
                  reservationId=None,
                  startActions=(), 
+                 uploadActions=(),
                  stopActions=(),
                  finishedChecks=(),
                  dataCollectors=(), 
@@ -37,6 +39,7 @@ class Role(object):
         self.deployment = deployment
         
         self.startActions = list(startActions)
+        self.uploadActions = list(uploadActions)
         self.stopActions = list(stopActions)
         self.finishedChecks = list(finishedChecks)
         self.dataCollectors = list(dataCollectors)
@@ -45,12 +48,17 @@ class Role(object):
         self.contextCred = contextCred
           
         self.logger = logger
-     
+    
+    @reconstructor
+    def init_on_load(self):
+        self.stopActions = []
+        self.startActions = []
+    
     def setLogger(self, logger): 
     
         self.logger = logger
         
-        for actions in [self.startActions, self.stopActions, self.finishedChecks, self.dataCollectors]:
+        for actions in [self.startActions, self.uploadActions, self.stopActions, self.finishedChecks, self.dataCollectors]:
             for a in actions:
                 a.logger = logger
       
@@ -73,18 +81,20 @@ class Role(object):
         
         assert isinstance(awsCred, AWSCred)
         
+        #Using str() because boto does not support unicode type
         ec2Conn = self.deployment.cloud.getConnection(awsCred)
        
-        launchKey = self.launchCred.id if self.launchCred is not None else None
+        #launchKey = self.launchCred.id if self.launchCred is not None else None
+        launchKey = None
        
         self.logger.write("Reserving %d instance(s) of %s with launchKey %s" % (self.count, self.ami.id, launchKey))
        
-        #TODO catch exceptions
-        self.reservation = ec2Conn.run_instances(self.ami.id, 
-                                                 key_name=launchKey,
+        #TODO catch exceptions     
+        self.reservation = ec2Conn.run_instances(str(self.ami.id), 
+                                                 key_name=str(launchKey),
                                                  min_count=self.count, 
                                                  max_count=self.count, 
-                                                 instance_type=self.instanceType.name) 
+                                                 instance_type=str(self.instanceType.name)) 
         
         #TODO introduce abstraction appropriate exception
         assert self.reservation is not None and self.reservation.id is not None
@@ -145,7 +155,7 @@ class Role(object):
         '''
         Execute the start action(s) on each instance within the role.
         '''
-        
+        self.__executeActions(self.uploadActions)
         self.__executeActions(self.startActions)
                 
     def executeStopCommands(self):

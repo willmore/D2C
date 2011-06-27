@@ -35,8 +35,10 @@ class ViewListener:
         self.deploymentView = deploymentView
         
     def notify(self, event):
-        self.deploymentView.update()
+        wx.CallAfter(self.deploymentView.update)
         
+    
+    
 class DeploymentController:
     
     def __init__(self, deploymentView, dao):

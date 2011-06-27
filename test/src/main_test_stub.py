@@ -148,7 +148,7 @@ def main(argv=None):
     
     deployment = Deployment("dummyDep", 
                             roles=[Role("loner", ami, 1, cloud.instanceTypes[0],
-                                        startActions=[UploadAction("/tmp/foobar", "/tmp/foobar", mock(SSHCred))], 
+                                        uploadActions=[UploadAction("/tmp/foobar", "/tmp/foobar", mock(SSHCred))], 
                                         dataCollectors=[DataCollector("/tmp", mock(SSHCred))]
                                         
                                         )],

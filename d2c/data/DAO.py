@@ -12,6 +12,9 @@ from d2c.model.Cloud import Cloud
 from d2c.model.Kernel import Kernel
 from d2c.model.AMI import AMI
 from d2c.model.Action import StartAction
+from d2c.model.UploadAction import UploadAction
+from d2c.model.DataCollector import DataCollector
+from d2c.model.FileExistsFinishedCheck import FileExistsFinishedCheck
 
 from sqlalchemy import Table, Column, Integer, String, MetaData, ForeignKey, create_engine
 from sqlalchemy.orm import sessionmaker, mapper, relationship
@@ -85,7 +88,7 @@ class DAO:
                             )  
         
         mapper(Deployment, deploymentTable, properties={
-                                    'roles': relationship(Role),
+                                    'roles': relationship(Role, backref='deployment'),
                                     'awsCred' : relationship(AWSCred)
                                     })
         
@@ -98,17 +101,21 @@ class DAO:
                             )  
         
         mapper(Role, roleTable, properties={
-                                    'instanceType': relationship(InstanceType)
+                                    'instanceType': relationship(InstanceType),
+                                    'startActions': relationship(StartAction),
+                                    'uploadActions': relationship(UploadAction),
+                                    'dataCollectors': relationship(DataCollector),
+                                    'finishedChecks': relationship(FileExistsFinishedCheck)
                                     })
         
         instanceTypeTable = Table('instance_type', metadata,
                             Column('name', String, primary_key=True),
                             Column('cloud_id', String, ForeignKey('cloud.name'), primary_key=True),
                             Column('cpu', Integer),
-                            Column('cpu_count', Integer),
+                            Column('cpuCount', Integer),
                             Column('memory', Integer),
                             Column('disk', Integer),
-                            Column('cost_per_hour', Integer)
+                            Column('costPerHour', Integer)
                             )
         
         archTable = Table('architecture', metadata,
@@ -126,14 +133,43 @@ class DAO:
         
         mapper(Architecture, archTable)
         
-        startActionTable = Table('start_actions', metadata,
+        startActionTable = Table('start_action', metadata,
                             Column('id', Integer, primary_key=True),
                             Column('action', String),
-                            Column('role', String),
-                            Column('deploy', String)
+                            Column('role_id', ForeignKey('deploy_role.name')),
+                            Column('deploy_id', ForeignKey('deploy.id'))
                             )
         
         mapper(StartAction, startActionTable)
+        
+        startActionTable = Table('upload_action', metadata,
+                            Column('id', Integer, primary_key=True),
+                            Column('source', String),
+                            Column('destination', String),
+                            Column('role_id', ForeignKey('deploy_role.name')),
+                            Column('deploy_id', ForeignKey('deploy.id'))
+                            )
+        
+        mapper(UploadAction, startActionTable)
+        
+        
+        dataCollectorTable = Table('data_collector', metadata,
+                            Column('id', Integer, primary_key=True),
+                            Column('source', String),
+                            Column('role_id', ForeignKey('deploy_role.name')),
+                            Column('deploy_id', ForeignKey('deploy.id'))
+                            )
+        
+        mapper(DataCollector, dataCollectorTable)
+        
+        finishedCheckTable = Table('finished_check', metadata,
+                            Column('id', Integer, primary_key=True),
+                            Column('fileName', String),
+                            Column('role_id', ForeignKey('deploy_role.name')),
+                            Column('deploy_id', ForeignKey('deploy.id'))
+                            )
+        
+        mapper(FileExistsFinishedCheck, finishedCheckTable)
         
         srcImgTable = Table('src_img', metadata,
                             Column('path', String, primary_key=True)
@@ -153,15 +189,6 @@ class DAO:
         mapper(AMI, amiTable, properties={
                         'roles': relationship(Role, backref='ami')
                     })
-        
-        
-        '''create table if not exists amikernel
-                    (aki string not null, 
-                    cloud text not null, 
-                    arch string not null,
-                    contents string not null,
-                    primary key (aki, cloud),
-                    foreign key(cloud) references cloud(name))'''
         
         kernelTable = Table('kernel', metadata,
                             Column('aki', String, primary_key=True),
@@ -192,25 +219,7 @@ class DAO:
                     role_name text,
                     role_deploy text,
                     foreign key(role_name, role_deploy) references deploy_role(name, deploy))''')
-
-        c.execute('''create table if not exists instance_type
-                    (name text not null,
-                     cloud text not null,
-                     cpu integer not null, --mhz
-                     cpu_count integer not null,
-                     memory integer not null, --GB
-                     disk integer not null, --GB
-                     cost_per_hour integer not null, --USD cents
-                     architecture string not null, --colon delimited list
-                     foreign key(cloud) references cloud(name),
-                     primary key(name, cloud))''')
-        
-        
-        
-        c.execute('''create table if not exists image_store
-                    (name string primary key, 
-                    service_url text not null)''')
-        
+    
         self.__getConn().commit()
         c.close()
         

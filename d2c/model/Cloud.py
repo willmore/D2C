@@ -37,7 +37,7 @@ class Cloud(object):
         self.addInstanceTypes(instanceTypes)
         self.storage = WalrusStorage("placeholder_name", storageURL)
         self.parsedEndpoint = urlparse(serviceURL)
-        self.regionInfo = RegionInfo(name=name, endpoint=self.parsedEndpoint.hostname)
+        self.regionInfo = RegionInfo(name=str(name), endpoint=str(self.parsedEndpoint.hostname))
         self.deployments = list()
         
     def getName(self):
@@ -80,15 +80,16 @@ class Cloud(object):
     @synchronous('mylock')
     def getConnection(self, awsCred):
         
-        assert isinstance(awsCred, AWSCred)
+        assert isinstance(awsCred, AWSCred), "AWSCred is type=%s" % type(awsCred)
         
         if not hasattr(self, "__ec2Conn"):
-            self.__ec2Conn = self.botoModule.connect_ec2(aws_access_key_id=awsCred.access_key_id,
-                                              aws_secret_access_key=awsCred.secret_access_key,
+            #Use string type because boto does not support unicode type
+            self.__ec2Conn = self.botoModule.connect_ec2(aws_access_key_id=str(awsCred.access_key_id),
+                                              aws_secret_access_key=str(awsCred.secret_access_key),
                                               is_secure=self.parsedEndpoint.scheme == "https",
                                               region=self.regionInfo,
                                               port=self.parsedEndpoint.port,
-                                              path=self.parsedEndpoint.path)
+                                              path=str(self.parsedEndpoint.path))
         
         return self.__ec2Conn
     

@@ -173,17 +173,19 @@ class DeploymentWizardController:
         
         tmpCred = SSHCred("foobar", "foobar")
     
-        startActions = []
+        uploadActions = []
         for i in range(0, len(self.uploadScripts), 2):
-            startActions.append(UploadAction(self.uploadScripts[i].GetValue(), 
+            uploadActions.append(UploadAction(self.uploadScripts[i].GetValue(), 
                                              self.uploadScripts[i+1].GetValue(),
                                              tmpCred))        
         
-        startActions.append([Action(s.GetValue(), tmpCred) for s in self.startScripts])
+        startActions = [Action(s.GetValue(), tmpCred) for s in self.startScripts] 
         finishedChecks = [FileExistsFinishedCheck(f.GetValue(), tmpCred) for f in self.endScripts]
         dataCollectors = [DataCollector(d.GetValue(), tmpCred) for d in self.dataCollectors]
         
-        role = Role(roleName, amis[0], hostCount, instanceType,startActions=startActions,
+        role = Role(roleName, amis[0], hostCount, instanceType,
+                    startActions=startActions,
+                    uploadActions=uploadActions,
                     finishedChecks=finishedChecks,
                     dataCollectors=dataCollectors )
         # Zero-out holders

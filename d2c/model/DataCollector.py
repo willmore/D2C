@@ -3,7 +3,7 @@ from d2c.logger import StdOutLogger
 import os
 
 
-class DataCollector():
+class DataCollector(object):
 
     def __init__(self, 
                  source, 
