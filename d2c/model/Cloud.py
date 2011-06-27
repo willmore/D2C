@@ -5,8 +5,9 @@ from d2c.model.AWSCred import AWSCred
 from urlparse import urlparse
 import boto
 from boto.ec2.regioninfo import RegionInfo
-from d2c.util import synchronous
 import threading
+from sqlalchemy.orm import reconstructor
+
 
 
 class Cloud(object):
@@ -36,9 +37,12 @@ class Cloud(object):
         self.instanceTypes = list()
         self.addInstanceTypes(instanceTypes)
         self.storage = WalrusStorage("placeholder_name", storageURL)
-        self.parsedEndpoint = urlparse(serviceURL)
-        self.regionInfo = RegionInfo(name=str(name), endpoint=str(self.parsedEndpoint.hostname))
         self.deployments = list()
+        
+    
+    @reconstructor
+    def init_on_load(self):    
+        self.botoModule = boto
         
     def getName(self):
         return self.name
@@ -77,19 +81,34 @@ class Cloud(object):
     def bundleUploader(self):
         return self.storage.bundleUploader()
     
-    @synchronous('mylock')
+    def instanceTypeByName(self, name):
+        for i in self.instanceTypes:
+            if i.name == name:
+                return i
+            
+        return None
+    
+    def _getParsedEndPoint(self):
+        if not hasattr(self, '__parsedEndPoint'):
+            self.__parsedEndPoint = urlparse(self.serviceURL)
+            
+        return self.__parsedEndPoint
+    
     def getConnection(self, awsCred):
         
         assert isinstance(awsCred, AWSCred), "AWSCred is type=%s" % type(awsCred)
         
         if not hasattr(self, "__ec2Conn"):
             #Use string type because boto does not support unicode type
+            parsedEndpoint = self._getParsedEndPoint()
+            regionInfo = RegionInfo(name=str(self.name), endpoint=str(parsedEndpoint.hostname))
+
             self.__ec2Conn = self.botoModule.connect_ec2(aws_access_key_id=str(awsCred.access_key_id),
                                               aws_secret_access_key=str(awsCred.secret_access_key),
-                                              is_secure=self.parsedEndpoint.scheme == "https",
-                                              region=self.regionInfo,
-                                              port=self.parsedEndpoint.port,
-                                              path=str(self.parsedEndpoint.path))
+                                              is_secure=parsedEndpoint.scheme == "https",
+                                              region=regionInfo,
+                                              port=parsedEndpoint.port,
+                                              path=str(parsedEndpoint.path))
         
         return self.__ec2Conn
     

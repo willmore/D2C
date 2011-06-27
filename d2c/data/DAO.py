@@ -14,6 +14,7 @@ from d2c.model.AMI import AMI
 from d2c.model.Action import StartAction
 from d2c.model.UploadAction import UploadAction
 from d2c.model.DataCollector import DataCollector
+from d2c.model.SSHCred import SSHCred
 from d2c.model.FileExistsFinishedCheck import FileExistsFinishedCheck
 
 from sqlalchemy import Table, Column, Integer, String, MetaData, ForeignKey, create_engine
@@ -69,8 +70,8 @@ class DAO:
       
         cloudTable = Table('cloud', metadata,
                             Column('name', String, primary_key=True),
-                            Column('service_url', String),
-                            Column('storage_url', String),
+                            Column('serviceURL', String),
+                            Column('storageURL', String),
                             Column('ec2cert', String)
                             )  
         
@@ -92,12 +93,22 @@ class DAO:
                                     'awsCred' : relationship(AWSCred)
                                     })
         
+        sshCredTable = Table('ssh_cred', metadata,
+                            Column('id', String, primary_key=True),
+                            Column('username', String),
+                            Column('privateKey', String)
+                            )  
+        
+        mapper(SSHCred, sshCredTable)
+        
         roleTable = Table('deploy_role', metadata,
                             Column('name', String, primary_key=True),
                             Column('deploy_id', String, ForeignKey('deploy.id'), primary_key=True),
                             Column('ami_id', String, ForeignKey('ami.id')),
                             Column('count', Integer),
-                            Column('instance_type_id', String, ForeignKey('instance_type.name'))
+                            Column('instance_type_id', String, ForeignKey('instance_type.name')),
+                            Column('context_cred_id', String, ForeignKey('ssh_cred.id')),
+                            Column('launch_cred_id', String, ForeignKey('ssh_cred.id'))
                             )  
         
         mapper(Role, roleTable, properties={
@@ -105,7 +116,9 @@ class DAO:
                                     'startActions': relationship(StartAction),
                                     'uploadActions': relationship(UploadAction),
                                     'dataCollectors': relationship(DataCollector),
-                                    'finishedChecks': relationship(FileExistsFinishedCheck)
+                                    'finishedChecks': relationship(FileExistsFinishedCheck),
+                                    'contextCred': relationship(SSHCred, primaryjoin=roleTable.c.context_cred_id==sshCredTable.c.id),
+                                    'launchCred': relationship(SSHCred, primaryjoin=roleTable.c.launch_cred_id==sshCredTable.c.id)
                                     })
         
         instanceTypeTable = Table('instance_type', metadata,
@@ -147,10 +160,12 @@ class DAO:
                             Column('source', String),
                             Column('destination', String),
                             Column('role_id', ForeignKey('deploy_role.name')),
-                            Column('deploy_id', ForeignKey('deploy.id'))
+                            Column('deploy_id', ForeignKey('deploy.id')),
+                            Column('ssh_cred_id', String, ForeignKey('ssh_cred.id'))
                             )
         
-        mapper(UploadAction, startActionTable)
+        mapper(UploadAction, startActionTable, properties={
+                'sshCred': relationship(SSHCred)})
         
         
         dataCollectorTable = Table('data_collector', metadata,

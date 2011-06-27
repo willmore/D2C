@@ -84,14 +84,14 @@ class Role(object):
         #Using str() because boto does not support unicode type
         ec2Conn = self.deployment.cloud.getConnection(awsCred)
        
-        #launchKey = self.launchCred.id if self.launchCred is not None else None
-        launchKey = None
+        launchKey = self.launchCred.id if self.launchCred is not None else None
+        #launchKey = None
        
         self.logger.write("Reserving %d instance(s) of %s with launchKey %s" % (self.count, self.ami.id, launchKey))
        
         #TODO catch exceptions     
         self.reservation = ec2Conn.run_instances(str(self.ami.id), 
-                                                 key_name=str(launchKey),
+                                                 key_name=str(launchKey) if launchKey is not None else None,
                                                  min_count=self.count, 
                                                  max_count=self.count, 
                                                  instance_type=str(self.instanceType.name)) 

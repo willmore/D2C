@@ -3,24 +3,15 @@ import os
 
 from d2c.Application import Application
 from d2c.data.DAO import DAO
-from d2c.model.Role import Role
-from d2c.model.InstanceType import InstanceType, Architecture
-from d2c.model.Deployment import Deployment
-from d2c.model.Cloud import Cloud
+from d2c.AMITools import AMIToolsFactory, AMITools
+
 from d2c.model.Kernel import Kernel
-from d2c.model.AMI import AMI
-from d2c.data.CredStore import CredStore
-from d2c.AMITools import AMITools, AMIToolsFactory
-from d2c.model.UploadAction import UploadAction
-from TestConfig import TestConfig
+
 from mockito import *
-from copy import copy
 import boto
 from threading import Thread
 import time
-from d2c.model.SSHCred import SSHCred
-from d2c.model.DataCollector import DataCollector
-from d2c.model.SourceImage import SourceImage
+import test_initor
     
 class DummyConn:
     
@@ -105,58 +96,7 @@ def main(argv=None):
    
     dao = DAO(sqlFile, mockBoto)
     
-    conf = TestConfig("/home/willmore/test.conf")   
-    dao.saveConfiguration(conf)
-    
-    dao.addAWSCred(conf.awsCred)
-    
-    dao.setCredStore(CredStore(dao))
-    srcImg = SourceImage("/foobar/vm.vdi")
-    dao.add(srcImg)
-    
-    
-     
-    
-     
-    clouds = [Cloud("SciCloud", 
-                        "http://172.17.36.21:8773/services/Eucalyptus",
-                        "/home/willmore/Downloads/cloud-cert.pem",
-                        "http://172.17.36.21:8773/services/Eucalyptus",
-                        kernels=[Kernel("aki-123", Kernel.ARCH_X86_64, "/foo/bar")],
-                        instanceTypes=get_instance_types(dao)
-                        ),
-                Cloud("eu-west-1", "https://eu-west-1.ec2.amazonaws.com", "https://s3.amazonaws.com","/opt/EC2_TOOLS/etc/ec2/amitools/cert-ec2.pem",
-                      instanceTypes=get_instance_types(dao)),
-                Cloud("us-west-1", "https://us-west-1.ec2.amazonaws.com", "https://s3.amazonaws.com", "/opt/EC2_TOOLS/etc/ec2/amitools/cert-ec2.pem",
-                      get_instance_types(dao))]
-
-    for cloud in clouds:
-        dao.saveCloud(cloud)
-    
-    cloud = dao.getClouds()[0]
-    ami = AMI("ami-47cefa33", srcImg, cloud)
-    dao.addAMI(ami)
-    
-    for a in [Architecture('x86'), Architecture('x86_64')]:
-        dao.add(a)
-        
-        
-    for instance in []:
-        for cloud in clouds:
-            instance.cloud = cloud
-            dao.addInstanceType(instance)
-    
-    deployment = Deployment("dummyDep", 
-                            roles=[Role("loner", ami, 1, cloud.instanceTypes[0],
-                                        uploadActions=[UploadAction("/tmp/foobar", "/tmp/foobar", mock(SSHCred))], 
-                                        dataCollectors=[DataCollector("/tmp", mock(SSHCred))]
-                                        
-                                        )],
-                            awsCred=conf.awsCred,
-                            cloud=cloud)
-    
-    dao.saveDeployment(deployment)
-       
+    test_initor.init_db(dao)
     
     mockAMIFactory = mock(AMIToolsFactory)
     mockAMITools = mock(AMITools)
@@ -169,15 +109,7 @@ def main(argv=None):
     app = Application(dao, mockAMIFactory)
     app.MainLoop()
     
-def get_instance_types(dao):
-        
-    X86 = dao.getArchitecture('X86')
-    X86_64 = dao.getArchitecture('X86_64')
-    
-    return [InstanceType('t1.micro', 2, 2, 613, 0, (X86, X86_64), 0.025),
-            InstanceType('m1.small', 2, 1, 1700, 160, (X86,), 0.095),
-            InstanceType('m1.large', 2, 2, 7500, 850, (X86_64,), 0.038),
-            InstanceType('m1.xlarge', 2, 4, 15000, 850, (X86_64,), 0.76)]
+
 
 if __name__ == "__main__":
     sys.exit(main())

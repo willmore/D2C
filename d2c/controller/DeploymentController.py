@@ -1,8 +1,3 @@
-'''
-Created on Feb 15, 2011
-
-@author: willmore
-'''
 import wx
 from threading import Thread
 from wx.lib.pubsub import Publisher
