@@ -94,6 +94,7 @@ class Deployment(object):
     
     def __init__(self, 
                  id, 
+                 dataDir,
                  awsCred=None,
                  cloud=None,
                  roles=(),
@@ -104,6 +105,7 @@ class Deployment(object):
                  pollRate=30):
                         
         self.id = id
+        self.dataDir = dataDir
         self.cloud = cloud
         self.roles = list()
         self.addRoles(roles)
@@ -338,6 +340,8 @@ class Deployment(object):
     
     def __collectData(self):  
         self.__setState(DeploymentState.COLLECTING_DATA)
+        
+        self._cascadeLogger()
         
         for role in self.roles:
             role.collectData()

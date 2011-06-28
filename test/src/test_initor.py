@@ -59,6 +59,7 @@ def init_db(dao, confFile):
     tmpSrc.write("blah")
     
     deployment = Deployment("dummyDep", 
+                            dataDir="/home/willmore/.d2c_test/deployments/dummyDep",
                             roles=[Role("loner", ami, 1, cloud.instanceTypeByName("m1.small"),
                                         uploadActions=[UploadAction(tmpSrc.name, "/tmp/foobar", sshCred)], 
                                         dataCollectors=[DataCollector("/tmp", sshCred)],

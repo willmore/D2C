@@ -102,7 +102,8 @@ class DAO:
                             Column('id', String, primary_key=True),
                             Column('cloud_id', String, ForeignKey('cloud.name'), nullable=False),
                             Column('aws_cred_id', String, ForeignKey("aws_cred.name")),
-                            Column('state', String)
+                            Column('state', String, nullable=False),
+                            Column('dataDir', String)
                             )  
         
         mapper(Deployment, deploymentTable, properties={
@@ -179,10 +180,13 @@ class DAO:
                             Column('id', Integer, primary_key=True),
                             Column('source', String),
                             Column('role_id', ForeignKey('deploy_role.name')),
-                            Column('deploy_id', ForeignKey('deploy.id'))
+                            Column('deploy_id', ForeignKey('deploy.id')),
+                            Column('ssh_cred_id', String, ForeignKey('ssh_cred.id'))
                             )
         
-        mapper(DataCollector, dataCollectorTable)
+        mapper(DataCollector, dataCollectorTable, properties={
+                'sshCred': relationship(SSHCred)}, 
+                extension=actionExtension)
         
         finishedCheckTable = Table('finished_check', metadata,
                             Column('id', Integer, primary_key=True),
@@ -226,6 +230,7 @@ class DAO:
                             Column('deploy_id', String, ForeignKey('deploy.id'), primary_key=True),
                             Column('ami_id', String, ForeignKey('ami.id')),
                             Column('count', Integer),
+                            Column('pollRate', Integer),
                             Column('instance_type_id', String, ForeignKey('instance_type.name')),
                             Column('context_cred_id', String, ForeignKey('ssh_cred.id')),
                             Column('launch_cred_id', String, ForeignKey('ssh_cred.id'))

@@ -5,6 +5,7 @@ from d2c.model.Deployment import Deployment
 from d2c.model.AWSCred import AWSCred
 import string
 from sqlalchemy.orm import reconstructor
+import os
 
 import time   
 
@@ -208,7 +209,8 @@ class Role(object):
         
         for collector in self.dataCollectors:
             for instance in self.reservation.instances:
-                collector.collect(instance)
+                collector.collect(instance, 
+                                  os.path.join(self.deployment.dataDir, self.name, instance.id, collector.source))
     
     def shutdown(self):
         

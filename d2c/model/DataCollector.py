@@ -30,4 +30,4 @@ class DataCollector(object):
                                                                         instance.public_dns_name, 
                                                                         self.source,
                                                                         dest)
-        ShellExecutor(self.logger).run(cmd)
+        self.executorFactory.executor(self.logger).run(cmd)
