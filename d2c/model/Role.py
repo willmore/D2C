@@ -58,9 +58,13 @@ class Role(object):
     
         self.logger = logger
         
+        self._cascadeLogger()
+        
+    def _cascadeLogger(self):
+        
         for actions in [self.startActions, self.uploadActions, self.stopActions, self.finishedChecks, self.dataCollectors]:
             for a in actions:
-                a.logger = logger
+                a.logger = self.logger
       
     def getReservationId(self):  
         return self.reservationId
@@ -134,6 +138,7 @@ class Role(object):
         
         action = Action(command=cmd, 
                         sshCred=self.contextCred)
+        action.remoteExecutorFactory = self.remoteExecutorFactory
         
         for instance in self.reservation.instances:
             action.execute(instance)

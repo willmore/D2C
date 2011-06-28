@@ -37,10 +37,10 @@ def init_db(dao, confFile):
                       get_instance_types(dao))]
 
     for cloud in clouds:
-        dao.saveCloud(cloud)
+        dao.add(cloud)
     
-    cloud = dao.getClouds()[0]
     #ami = AMI("ami-47cefa33", srcImg, cloud)
+    cloud = clouds[0]
     ami = AMI("emi-58091682", srcImg, cloud)
     dao.addAMI(ami)
     

@@ -1,5 +1,6 @@
 from d2c.logger import StdOutLogger
 from d2c.ShellExecutor import ShellExecutor
+from d2c.model.Action import Action
 
 import os
 
@@ -30,4 +31,4 @@ class UploadAction(object):
              'user':self.sshCred.username,
              'host':instance.public_dns_name}
             
-        ShellExecutor(self.logger, self.logger).run(cmd)
+        self.executorFactory.executor(self.logger, self.logger).run(cmd)

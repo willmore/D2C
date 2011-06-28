@@ -16,9 +16,13 @@ from d2c.model.UploadAction import UploadAction
 from d2c.model.DataCollector import DataCollector
 from d2c.model.SSHCred import SSHCred
 from d2c.model.FileExistsFinishedCheck import FileExistsFinishedCheck
+from d2c.RemoteShellExecutor import RemoteShellExecutorFactory
+from d2c.ShellExecutor import ShellExecutorFactory
 
 from sqlalchemy import Table, Column, Integer, String, MetaData, ForeignKey, create_engine
 from sqlalchemy.orm import sessionmaker, mapper, relationship
+from sqlalchemy.orm.interfaces import MapperExtension
+
 
 import boto
 
@@ -27,9 +31,13 @@ import sqlite3
 
 class DAO:
     
-    def __init__(self, fileName="~/.d2c/db.sqlite", botoModule=boto):
+    def __init__(self, fileName="~/.d2c/db.sqlite", botoModule=boto, 
+                 remoteExecutorFactory=RemoteShellExecutorFactory(),
+                 executorFactory=ShellExecutorFactory()):
     
         self.botoModule = botoModule
+        self.remoteExecutorFactory = remoteExecutorFactory
+        self.executorFactory = executorFactory
         self.fileName = fileName
         baseDir = os.path.dirname(self.fileName)
 
@@ -45,7 +53,7 @@ class DAO:
         self.metadata = MetaData()
         
         self._init_db()
-        
+
     def setCredStore(self, credStore):
         self.__credStore = credStore
         
@@ -73,17 +81,26 @@ class DAO:
                             Column('serviceURL', String),
                             Column('storageURL', String),
                             Column('ec2cert', String)
-                            )  
+                            )       
+        
+        class CloudExtension(MapperExtension):
+            
+            def __init__(self, daoRef):
+                self.daoRef = daoRef
+            
+            def reconstruct_instance(self, mapper, instance):
+                self.daoRef._setCloudBotoModule(instance)
         
         mapper(Cloud, cloudTable, properties={
                                     'deploys': relationship(Deployment, backref='cloud'),
-                                    'amis': relationship(AMI, backref='cloud')        ,
-                                    'instanceTypes': relationship(InstanceType, backref='cloud')     
-                                    })
+                                    'amis': relationship(AMI, backref='cloud'),
+                                    'instanceTypes': relationship(InstanceType, backref='cloud')},
+                                    extension=CloudExtension(self)
+                                  )
       
         deploymentTable = Table('deploy', metadata,
                             Column('id', String, primary_key=True),
-                            Column('cloud_id', String, ForeignKey('cloud.name')),
+                            Column('cloud_id', String, ForeignKey('cloud.name'), nullable=False),
                             Column('aws_cred_id', String, ForeignKey("aws_cred.name")),
                             Column('state', String)
                             )  
@@ -101,29 +118,9 @@ class DAO:
         
         mapper(SSHCred, sshCredTable)
         
-        roleTable = Table('deploy_role', metadata,
-                            Column('name', String, primary_key=True),
-                            Column('deploy_id', String, ForeignKey('deploy.id'), primary_key=True),
-                            Column('ami_id', String, ForeignKey('ami.id')),
-                            Column('count', Integer),
-                            Column('instance_type_id', String, ForeignKey('instance_type.name')),
-                            Column('context_cred_id', String, ForeignKey('ssh_cred.id')),
-                            Column('launch_cred_id', String, ForeignKey('ssh_cred.id'))
-                            )  
-        
-        mapper(Role, roleTable, properties={
-                                    'instanceType': relationship(InstanceType),
-                                    'startActions': relationship(StartAction),
-                                    'uploadActions': relationship(UploadAction),
-                                    'dataCollectors': relationship(DataCollector),
-                                    'finishedChecks': relationship(FileExistsFinishedCheck),
-                                    'contextCred': relationship(SSHCred, primaryjoin=roleTable.c.context_cred_id==sshCredTable.c.id),
-                                    'launchCred': relationship(SSHCred, primaryjoin=roleTable.c.launch_cred_id==sshCredTable.c.id)
-                                    })
-        
         instanceTypeTable = Table('instance_type', metadata,
                             Column('name', String, primary_key=True),
-                            Column('cloud_id', String, ForeignKey('cloud.name'), primary_key=True),
+                            Column('cloud_id', String, ForeignKey('cloud.name'), primary_key=True, nullable=False),
                             Column('cpu', Integer),
                             Column('cpuCount', Integer),
                             Column('memory', Integer),
@@ -146,6 +143,16 @@ class DAO:
         
         mapper(Architecture, archTable)
         
+        class ActionExtension(MapperExtension):
+            
+            def __init__(self, daoRef):
+                self.daoRef = daoRef
+            
+            def reconstruct_instance(self, mapper, instance):
+                self.daoRef._setRemoteShellExecutorFactory(instance)
+        
+        actionExtension = ActionExtension(self)
+        
         startActionTable = Table('start_action', metadata,
                             Column('id', Integer, primary_key=True),
                             Column('action', String),
@@ -153,7 +160,7 @@ class DAO:
                             Column('deploy_id', ForeignKey('deploy.id'))
                             )
         
-        mapper(StartAction, startActionTable)
+        mapper(StartAction, startActionTable, extension=actionExtension)
         
         startActionTable = Table('upload_action', metadata,
                             Column('id', Integer, primary_key=True),
@@ -165,7 +172,7 @@ class DAO:
                             )
         
         mapper(UploadAction, startActionTable, properties={
-                'sshCred': relationship(SSHCred)})
+                'sshCred': relationship(SSHCred)}, extension=actionExtension)
         
         
         dataCollectorTable = Table('data_collector', metadata,
@@ -184,7 +191,7 @@ class DAO:
                             Column('deploy_id', ForeignKey('deploy.id'))
                             )
         
-        mapper(FileExistsFinishedCheck, finishedCheckTable)
+        mapper(FileExistsFinishedCheck, finishedCheckTable, extension=actionExtension)
         
         srcImgTable = Table('src_img', metadata,
                             Column('path', String, primary_key=True)
@@ -197,8 +204,8 @@ class DAO:
         
         amiTable = Table('ami', metadata,
                             Column('id', String, primary_key=True),
-                            Column('src_img_id', String, ForeignKey('src_img.path')),
-                            Column('cloud_id', String, ForeignKey('cloud.name'))
+                            Column('cloud_id', String, ForeignKey('cloud.name'), nullable=False, primary_key=True),
+                            Column('src_img_id', String, ForeignKey('src_img.path'), nullable=True)
                             )
         
         mapper(AMI, amiTable, properties={
@@ -214,6 +221,25 @@ class DAO:
         
         mapper(Kernel, kernelTable, properties={'cloud':relationship(Cloud),
                                                 'architecture':relationship(Architecture)})
+        roleTable = Table('deploy_role', metadata,
+                            Column('name', String, primary_key=True),
+                            Column('deploy_id', String, ForeignKey('deploy.id'), primary_key=True),
+                            Column('ami_id', String, ForeignKey('ami.id')),
+                            Column('count', Integer),
+                            Column('instance_type_id', String, ForeignKey('instance_type.name')),
+                            Column('context_cred_id', String, ForeignKey('ssh_cred.id')),
+                            Column('launch_cred_id', String, ForeignKey('ssh_cred.id'))
+                            )  
+        
+        mapper(Role, roleTable, properties={
+                                    'instanceType': relationship(InstanceType),
+                                    'startActions': relationship(StartAction),
+                                    'uploadActions': relationship(UploadAction),
+                                    'dataCollectors': relationship(DataCollector),
+                                    'finishedChecks': relationship(FileExistsFinishedCheck),
+                                    'contextCred': relationship(SSHCred, primaryjoin=roleTable.c.context_cred_id==sshCredTable.c.id),
+                                    'launchCred': relationship(SSHCred, primaryjoin=roleTable.c.launch_cred_id==sshCredTable.c.id)
+                                    }, extension=actionExtension)
         
         metadata.create_all(self.engine)
         
@@ -237,7 +263,15 @@ class DAO:
     
         self.__getConn().commit()
         c.close()
-        
+    
+    def _setRemoteShellExecutorFactory(self, action):
+        action.remoteExecutorFactory = self.remoteExecutorFactory
+        action.executorFactory = self.executorFactory
+    
+    def _setCloudBotoModule(self, cloud):
+            assert isinstance(cloud, Cloud)
+            cloud.botoModule = self.botoModule
+ 
     def add(self, entity):   
         self.session.add(entity)
         self.session.commit()
@@ -419,11 +453,6 @@ class DAO:
                       (store.name, store.serviceURL))
         self.__getConn().commit()
         c.close()  
-        
-    def saveCloud(self, cloud):
-        
-        self.session.add(cloud)
-        self.session.commit()
             
     def getClouds(self):    
         return self.session.query(Cloud)

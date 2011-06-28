@@ -6,6 +6,9 @@ from d2c.data.DAO import DAO
 from d2c.AMITools import AMIToolsFactory, AMITools
 
 from d2c.model.Kernel import Kernel
+from d2c.RemoteShellExecutor import RemoteShellExecutorFactory, RemoteShellExecutor
+from d2c.ShellExecutor import ShellExecutorFactory, ShellExecutor
+
 
 from mockito import *
 import boto
@@ -72,6 +75,7 @@ class DummyInstance():
         self.state = 'pending'
         self.key_name = 'dummy_key_name'
         self.private_ip_address = "0.0.0.0"
+        self.public_dns_name = "dummy.id.%s" % str(id)
         
     def update(self):
         pass
@@ -94,9 +98,18 @@ def main(argv=None):
     
     mockBoto.connect_ec2 = mock_connect_ec2
    
-    dao = DAO(sqlFile, mockBoto)
+    mockRemoteFactory = mock(RemoteShellExecutorFactory)
+    when(mockRemoteFactory).executor(any(), any(), 
+                any(), any(), any()).thenReturn(mock(RemoteShellExecutor))
+    when(mockRemoteFactory).executor(any(), any(), 
+                any()).thenReturn(mock(RemoteShellExecutor))
+                
+    mockExecFactory = mock(ShellExecutorFactory)
+    when(mockExecFactory).executor(any(), any()).thenReturn(mock(ShellExecutor))
+   
+    dao = DAO(sqlFile, mockBoto, mockRemoteFactory, mockExecFactory)
     
-    test_initor.init_db(dao)
+    test_initor.init_db(dao, "/home/willmore/scicloud.conf")
     
     mockAMIFactory = mock(AMIToolsFactory)
     mockAMITools = mock(AMITools)

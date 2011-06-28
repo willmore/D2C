@@ -9,6 +9,18 @@ from .logger import StdOutLogger
 
 import string
 
+class RemoteShellExecutorFactory(object):
+
+    def executor(self, user, host, 
+                 privateKey=None, 
+                 outputLogger=StdOutLogger(),
+                 logger=StdOutLogger()):
+        
+        return RemoteShellExecutor(user, host, 
+                                   privateKey, 
+                                   outputLogger,
+                                   logger)
+
 class RemoteShellExecutor(ShellExecutor):
     
     def __init__(self, user, host, 

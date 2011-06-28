@@ -118,10 +118,14 @@ class Deployment(object):
     
     def setLogger(self, logger, cascade=True):
         self.logger = logger
-        
         if cascade:
-            for role in self.roles:
-                role.setLogger(logger)
+            self._cascadeLogger()
+        
+        
+    def _cascadeLogger(self):
+        
+        for role in self.roles:
+            role.setLogger(self.logger)
     
     def setCloud(self, cloud):
 
@@ -301,6 +305,8 @@ class Deployment(object):
     def __startRoles(self):
         self.logger.write("Starting roles")
                 
+        self._cascadeLogger()  
+        
         for role in self.roles:
             role.executeStartCommands()
             

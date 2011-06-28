@@ -10,4 +10,5 @@ class AMI(object):
         self.id = id
         self.srcImg = srcImg
         self.cloud = cloud
+        
 

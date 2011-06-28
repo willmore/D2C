@@ -39,11 +39,6 @@ class Cloud(object):
         self.storage = WalrusStorage("placeholder_name", storageURL)
         self.deployments = list()
         
-    
-    @reconstructor
-    def init_on_load(self):    
-        self.botoModule = boto
-        
     def getName(self):
         return self.name
     

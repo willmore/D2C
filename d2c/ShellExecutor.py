@@ -2,7 +2,13 @@ from logger import StdOutLogger
 from subprocess import Popen
 import subprocess
 
-class ShellExecutor:
+class ShellExecutorFactory(object):
+
+    def executor(self, outputLogger=StdOutLogger(),
+                       logger=StdOutLogger()):
+        return ShellExecutor(outputLogger, logger)
+
+class ShellExecutor(object):
 
     def __init__(self, outputLogger=StdOutLogger(),
                        logger=StdOutLogger()):

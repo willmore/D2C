@@ -16,7 +16,7 @@ class Action(object):
      
     def execute(self, instance):   
             
-        RemoteShellExecutor(self.sshCred.username, 
+        self.remoteExecutorFactory.executor(self.sshCred.username, 
                             instance.public_dns_name, 
                             self.sshCred.privateKey).run(self.command)
                             

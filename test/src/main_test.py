@@ -16,9 +16,11 @@ def main(argv=None):
         os.unlink(SQLITE_FILE)
         
     dao = DAO(SQLITE_FILE)
+    
+    
 
     test_initor.init_db(dao, "/home/willmore/scicloud.conf")
-   
+
     app = Application(dao, AMIToolsFactory())
     app.MainLoop()
 
