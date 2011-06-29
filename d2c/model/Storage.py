@@ -33,7 +33,6 @@ class AWSStorage(S3Storage):
             assert isinstance(bucket, basestring)
             assert isinstance(manifest, basestring)
             assert isinstance(awsCred, AWSCred)
-           
             UPLOAD_CMD = "ec2-upload-bundle --url %s -b %s -m %s -a %s -s %s"
         
             uploadCmd = UPLOAD_CMD % (self.serviceURL,

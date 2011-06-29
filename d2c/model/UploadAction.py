@@ -1,7 +1,5 @@
 from d2c.logger import StdOutLogger
 from d2c.ShellExecutor import ShellExecutor
-from d2c.model.Action import Action
-
 import os
 
 class UploadAction(object):

@@ -21,19 +21,29 @@ def init_db(dao, confFile):
     dao.addAWSCred(conf.awsCred)
     
     dao.setCredStore(CredStore(dao))
-    srcImg = SourceImage("/foobar/vm.vdi")
-    dao.add(srcImg)  
+    srcImg = SourceImage("/home/willmore/images/worker.vdi")
+    dao.add(srcImg) 
+    archs = [Architecture('x86'), Architecture('x86_64')]
      
-    clouds = [Cloud("SciCloud", 
-                        "http://172.17.36.21:8773/services/Eucalyptus",
-                        "/home/willmore/Downloads/cloud-cert.pem",
-                        "http://172.17.36.21:8773/services/Eucalyptus",
-                        kernels=[Kernel("aki-123", Kernel.ARCH_X86_64, "/foo/bar")],
+    for a in archs:
+        dao.add(a)
+         
+    clouds = [Cloud(name="SciCloud", 
+                        serviceURL="http://172.17.36.21:8773/services/Eucalyptus",
+                        ec2Cert="/home/willmore/.euca/cloud-cert.pem",
+                        storageURL="http://172.17.36.21:8773/services/Walrus",
+                        kernels=[Kernel("eki-3EB4165A", archs[1], "internal://ami_data/kernels/2.6.35-24-virtual-x86_64.tar")],
                         instanceTypes=get_instance_types(dao)
                         ),
-                Cloud("eu-west-1", "https://eu-west-1.ec2.amazonaws.com", "https://s3.amazonaws.com","/opt/EC2_TOOLS/etc/ec2/amitools/cert-ec2.pem",
+                Cloud("eu-west-1", 
+                      "https://eu-west-1.ec2.amazonaws.com", 
+                      "https://s3.amazonaws.com",
+                      "/opt/EC2_TOOLS/etc/ec2/amitools/cert-ec2.pem",
                       instanceTypes=get_instance_types(dao)),
-                Cloud("us-west-1", "https://us-west-1.ec2.amazonaws.com", "https://s3.amazonaws.com", "/opt/EC2_TOOLS/etc/ec2/amitools/cert-ec2.pem",
+                Cloud("us-west-1", 
+                      "https://us-west-1.ec2.amazonaws.com", 
+                      "https://s3.amazonaws.com", 
+                      "/opt/EC2_TOOLS/etc/ec2/amitools/cert-ec2.pem",
                       get_instance_types(dao))]
 
     for cloud in clouds:
@@ -41,12 +51,9 @@ def init_db(dao, confFile):
     
     #ami = AMI("ami-47cefa33", srcImg, cloud)
     cloud = clouds[0]
-    ami = AMI("emi-58091682", srcImg, cloud)
+    ami = AMI("emi-58091682", cloud, srcImg, kernel=cloud.kernels[0])
     dao.addAMI(ami)
-    
-    for a in [Architecture('x86'), Architecture('x86_64')]:
-        dao.add(a)
-        
+     
     for instance in []:
         for cloud in clouds:
             instance.cloud = cloud
@@ -73,8 +80,8 @@ def init_db(dao, confFile):
     
 def get_instance_types(dao):
         
-    X86 = dao.getArchitecture('X86')
-    X86_64 = dao.getArchitecture('X86_64')
+    X86 = dao.getArchitecture('x86')
+    X86_64 = dao.getArchitecture('x86_64')
     
     return [InstanceType('t1.micro', 2, 2, 613, 0, (X86, X86_64), 0.025),
             InstanceType('m1.small', 2, 1, 1700, 160, (X86,), 0.095),

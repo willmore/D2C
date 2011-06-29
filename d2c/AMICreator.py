@@ -24,7 +24,7 @@ class UnsupportedImageError(Exception):
 
 class AMICreator:
     '''
-    Encapsulates all procedures to covert a VirtualBox VDI to an Amazon S3-backed AMI
+    Encapsulates all procedures to covert desktop VM images to an Amazon S3-backed AMI.
     '''
     
     def __init__(self, srcImg, 
@@ -63,8 +63,10 @@ class AMICreator:
     def createAMI(self):
         """
         Creates AMI from source image, uploads to storage, 
-        registers, and returns the new AMI handle object.
+        registers, and returns the new AMI object.
         """
+        
+        self.__logger.write("Staring AMI creation process")
         
         if not os.path.exists(self.__outputDir):
             os.makedirs(self.__outputDir)
@@ -75,8 +77,8 @@ class AMICreator:
        
         arch = self.__amiTools.getArch(self.__srcImg)
         
-        if arch != self.__kernel.arch:
-            raise Exception("Image architecture %s does not match kernel architecture %s." % (arch, self.__kernel.arch))
+        if arch != str(self.__kernel.architecture.arch):
+            raise Exception("Image architecture %s does not match kernel architecture %s." % (arch, self.__kernel.architecture.arch))
         
         self.__logger.write("EC2izing image")
         self.__logger.write("Job directory is: " + self.__outputDir)
@@ -101,7 +103,7 @@ class AMICreator:
         self.__logger.write("Registering AMI: %s" % s3ManifestPath)
         amiId = self.__amiTools.registerAMI(s3ManifestPath, self.__cloud, self.__awsCred)     
         
-        ami = AMI(amiId, self.__srcImg)
+        ami = AMI(amiId, self.__cloud, self.__srcImg, kernel=self.__kernel)
         self.__dao.add(ami)
         
         return ami    

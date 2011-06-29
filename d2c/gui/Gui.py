@@ -21,7 +21,7 @@ class Gui(wx.Frame):
     LABEL_SOURCE_IMAGES = "Source Images"
     LABEL_AMIS = "AMIs"
     
-    ID_ADD_DEPLOYMENT = 1
+    ID_ADD_DEPLOYMENT = 3
     ID_CONF = 2
     ID_CLOUD = 5
     

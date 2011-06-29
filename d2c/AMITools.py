@@ -1,8 +1,3 @@
-'''
-Created on Mar 3, 2011
-
-@author: willmore
-'''
 import os
 import guestfs
 from d2c.logger import StdOutLogger
@@ -28,8 +23,7 @@ class AMITools:
 
     def __init__(self, logger=StdOutLogger()):
         
-        self.__logger = logger
-        
+        self.__logger = logger     
         
     def registerAMI(self, manifest, cloud, awsCred):
         assert isinstance(cloud, Cloud)
@@ -44,11 +38,22 @@ class AMITools:
         assert isinstance(bucket, basestring)
         assert isinstance(manifest, basestring)
         assert isinstance(awsCred, AWSCred)
+
+        UPLOAD_CMD = "euca-upload-bundle --url %s -b %s -m %s -a %s -s %s"
         
-        return cloud.bundleUploader().upload(manifest, bucket, awsCred)
+        uploadCmd = UPLOAD_CMD % (cloud.storageURL,
+                                      bucket, manifest,
+                                      awsCred.access_key_id,
+                                      awsCred.secret_access_key)
+        
+        ShellExecutor().run(uploadCmd)
+            
+        return bucket + "/" + os.path.basename(manifest)
 
     def bundleImage(self, img, destDir, ec2Cred, userId, cloud, kernel):
-    
+        '''
+        Create an AMI bundle.
+        '''
     
         assert isinstance(img, basestring)
         assert isinstance(destDir, basestring)
@@ -63,21 +68,20 @@ class AMITools:
         BUNDLE_CMD = "euca-bundle-image -i %s -c %s -k %s -u %s -r %s -d %s --kernel %s --ec2cert %s"
         
         bundleCmd = BUNDLE_CMD % (img, ec2Cred.cert, ec2Cred.private_key, 
-                                    userId, kernel.arch, destDir, kernel.aki,
+                                    userId, kernel.architecture.arch, destDir, kernel.aki,
                                     cloud.getEC2Cert())
-        
-        self.__logger.write("Executing: " + bundleCmd)
-        
-        ShellExecutor().run(bundleCmd)
+                
+        ShellExecutor(self.__logger).run(bundleCmd)
         
         return destDir + "/" + os.path.basename(img) + ".manifest.xml"
     
         
     def getArch(self, image):
-        
-        assert isinstance(image, basestring)
-        
-        gf = self.__initGuestFS(image)
+        '''
+        Return the determined architecture of a desktop VM image.
+        '''
+                
+        gf = self.__initGuestFS(image.path)
         
         roots = gf.inspect_os()
         assert (len(roots) == 1)
@@ -117,13 +121,13 @@ class AMITools:
         assert disk is not None
         assert os.path.isdir(outputDir)
         
-        outputImg = os.path.join(outputDir, os.path.basename(disk))
+        outputImg = os.path.join(outputDir, os.path.basename(disk.path))
         
         assert not os.path.exists(outputImg)
                       
         try: 
             
-            gf = self.__initGuestFS(disk)
+            gf = self.__initGuestFS(disk.path)
     
             roots = gf.inspect_os()
             assert (len(roots) == 1)
@@ -141,7 +145,7 @@ class AMITools:
             
             del gf
             
-            gf = self.__initGuestFS(disk, outputImg)
+            gf = self.__initGuestFS(disk.path, outputImg)
             
             newDev = "/dev/vdb" # a guess of name by ordering
        
@@ -154,7 +158,7 @@ class AMITools:
             gf.mount(newDev, "/")
             
             #Step 2: copy kernel            
-            gf.tar_in(kernel.contents, "/") 
+            gf.tar_in(kernel.getContentsAbsPath(), "/") 
                     
             #Step 3: Save old fstab
             self.__logger.write("Saving image's old fstab")
@@ -182,7 +186,7 @@ class AMITools:
     
     def __guestFSLink(self, gf, path):
         '''
-        Returns actual path of 'path' in guestfs handle.
+        Returns actual path of 'path', resolving any symlinks, in guestfs handle.
         '''
         if not gf.is_symlink(path):
             return path

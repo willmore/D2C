@@ -6,9 +6,6 @@ from urlparse import urlparse
 import boto
 from boto.ec2.regioninfo import RegionInfo
 import threading
-from sqlalchemy.orm import reconstructor
-
-
 
 class Cloud(object):
     '''

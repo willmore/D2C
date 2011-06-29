@@ -12,7 +12,7 @@ class CloudPanel(wx.Panel):
         wx.Panel.__init__(self, *args, **kwargs)
  
         self.cloudList = ItemList(self, -1, style=wx.LC_REPORT, size=(-1, 200),
-                                   mappers=[ColumnMapper('Name', lambda c: c.name)])
+                                   mappers=[ColumnMapper('Name', lambda c: c.name, defaultWidth=wx.LIST_AUTOSIZE)])
         
         self.chooseButton = wx.Button(self, wx.ID_ANY, 'Next')
         self.cancelButton = wx.Button(self, wx.ID_ANY, 'Cancel')
@@ -43,8 +43,8 @@ class KernelPanel(wx.Panel):
         wx.Panel.__init__(self, *args, **kwargs)
  
         self.kernelList = ItemList(self, -1, style=wx.LC_REPORT, size=(-1, 100),
-                                     mappers=[ColumnMapper('AKI', lambda k: k.aki),
-                                              ColumnMapper('Architecture', lambda k: k.arch)])
+                                     mappers=[ColumnMapper('AKI', lambda k: k.aki, defaultWidth=90),
+                                              ColumnMapper('Architecture', lambda k: k.architecture, defaultWidth=90)])
         self.chooseButton = wx.Button(self, wx.ID_ANY, 'Next')
         self.backButton = wx.Button(self, wx.ID_ANY, 'Back')
         

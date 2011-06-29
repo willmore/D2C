@@ -7,7 +7,6 @@ from d2c.model.Deployment import Deployment
 from d2c.model.Role import Role
 from d2c.model.InstanceType import InstanceType, Architecture
 from d2c.model.Region import Region
-from d2c.model.Storage import WalrusStorage
 from d2c.model.Cloud import Cloud
 from d2c.model.Kernel import Kernel
 from d2c.model.AMI import AMI
@@ -16,6 +15,7 @@ from d2c.model.UploadAction import UploadAction
 from d2c.model.DataCollector import DataCollector
 from d2c.model.SSHCred import SSHCred
 from d2c.model.FileExistsFinishedCheck import FileExistsFinishedCheck
+from d2c.model.Ramdisk import Ramdisk
 from d2c.RemoteShellExecutor import RemoteShellExecutorFactory
 from d2c.ShellExecutor import ShellExecutorFactory
 
@@ -77,10 +77,10 @@ class DAO:
         mapper(AWSCred, awsCredTable)
       
         cloudTable = Table('cloud', metadata,
-                            Column('name', String, primary_key=True),
-                            Column('serviceURL', String),
-                            Column('storageURL', String),
-                            Column('ec2cert', String)
+                            Column('name', String, primary_key=True, nullable=False),
+                            Column('serviceURL', String, nullable=False),
+                            Column('storageURL', String, nullable=False),
+                            Column('ec2Cert', String, nullable=False)
                             )       
         
         class CloudExtension(MapperExtension):
@@ -93,8 +93,7 @@ class DAO:
         
         mapper(Cloud, cloudTable, properties={
                                     'deploys': relationship(Deployment, backref='cloud'),
-                                    'amis': relationship(AMI, backref='cloud'),
-                                    'instanceTypes': relationship(InstanceType, backref='cloud')},
+                                    'instanceTypes': relationship(InstanceType, backref='cloud')},                                
                                     extension=CloudExtension(self)
                                   )
       
@@ -201,30 +200,46 @@ class DAO:
                             Column('path', String, primary_key=True)
                             )
         
-        mapper(SourceImage, srcImgTable, properties={
-                                'amis': relationship(AMI, backref='srcImg')}
-                                )
+        mapper(SourceImage, srcImgTable)
         
         
         amiTable = Table('ami', metadata,
                             Column('id', String, primary_key=True),
                             Column('cloud_id', String, ForeignKey('cloud.name'), nullable=False, primary_key=True),
-                            Column('src_img_id', String, ForeignKey('src_img.path'), nullable=True)
+                            Column('src_img_id', String, ForeignKey('src_img.path'), nullable=False),
+                            Column('kernel_id', String, ForeignKey('kernel.aki'), nullable=False),
+                            Column('ramdisk_id', String, ForeignKey('ramdisk.id'), nullable=True),
                             )
         
         mapper(AMI, amiTable, properties={
-                        'roles': relationship(Role, backref='ami')
+                        'roles': relationship(Role, backref='ami'),
+                        'cloud': relationship(Cloud),
+                        'srcImg': relationship(SourceImage),
+                        'kernel': relationship(Kernel),
+                        'ramdisk': relationship(Ramdisk)
                     })
+        
+        ramdiskTable = Table('ramdisk', metadata,
+                             Column('id', String, primary_key=True),
+                             Column('cloud_id', String, ForeignKey('cloud.name'), nullable=False),
+                             Column('arch_id', String, ForeignKey('architecture.arch'), nullable=False),
+                            )
+        
+        mapper(Ramdisk, ramdiskTable, properties={'cloud':relationship(Cloud, backref='ramdisks'),
+                                                'architecture':relationship(Architecture),
+                                                })
         
         kernelTable = Table('kernel', metadata,
                             Column('aki', String, primary_key=True),
                             Column('contents', String),
-                            Column('cloud_id', String, ForeignKey('cloud.name')),
-                            Column('arch_id', String, ForeignKey('architecture.arch'))
+                            Column('cloud_id', String, ForeignKey('cloud.name'), nullable=False),
+                            Column('arch_id', String, ForeignKey('architecture.arch'), nullable=False),
+                            Column('ramdisk_id', String, ForeignKey('ramdisk.id'), nullable=True)
                             )
         
-        mapper(Kernel, kernelTable, properties={'cloud':relationship(Cloud),
-                                                'architecture':relationship(Architecture)})
+        mapper(Kernel, kernelTable, properties={'cloud':relationship(Cloud, backref='kernels'),
+                                                'architecture':relationship(Architecture),
+                                               'recommendedRamdisk':relationship(Ramdisk) })
         roleTable = Table('deploy_role', metadata,
                             Column('name', String, primary_key=True),
                             Column('deploy_id', String, ForeignKey('deploy.id'), primary_key=True),
@@ -430,40 +445,12 @@ class DAO:
         c.close()
         
         return regions
-    
-    def addRegion(self, region):
-        c = self.__getConn().cursor()
-
-        c.execute("insert into region (name, endpoint, ec2cert) values (?,?,?)", 
-                      (region.getName(), region.getEndpoint(), region.getEC2Cert()))
-        self.__getConn().commit()
-        c.close()  
-        
-    def getImageStores(self):
-        
-        c = self.__getConn().cursor()
-        
-        c.execute("select * from image_store")
-    
-        stores = [WalrusStorage(row['name'], row['service_url']) for row in c]
-        
-        c.close()
-        
-        return stores
-    
-    def addImageStore(self, store):
-        c = self.__getConn().cursor()
-
-        c.execute("insert into image_store (name, service_url) values (?,?)", 
-                      (store.name, store.serviceURL))
-        self.__getConn().commit()
-        c.close()  
             
     def getClouds(self):    
-        return self.session.query(Cloud)
+        return self.session.query(Cloud).all()
     
     def getCloud(self, name):       
-        return self.session.query(Cloud).filter_by(name=name)     
+        return self.session.query(Cloud).filter_by(name=name).one()     
         
     def saveKernel(self, kernel):
         

@@ -7,7 +7,6 @@ Created on Mar 10, 2011
 import wx
 from .ContainerPanel import ContainerPanel
 from .ItemList import ItemList, ColumnMapper
-from wx._controls import StaticText
        
 class CloudListPanel(wx.Panel):    
     
@@ -15,7 +14,7 @@ class CloudListPanel(wx.Panel):
         wx.Panel.__init__(self, *args, **kwargs)
  
         self.cloudList = ItemList(self, -1, style=wx.LC_REPORT, size=(-1, 330),
-                                   mappers=[ColumnMapper('Cloud Name', lambda c: c.name)])
+                                   mappers=[ColumnMapper('Cloud Name', lambda c: c.name, defaultWidth=wx.LIST_AUTOSIZE_USEHEADER)])
         self.addButton = wx.Button(self, wx.ID_ANY, 'Add New Cloud')
         self.doneButton = wx.Button(self, wx.ID_ANY, 'Close')
         

@@ -13,29 +13,22 @@ class AMIPanel(wx.Panel):
     def __init__(self, *args):
         wx.Panel.__init__(self, *args)
         self.splitter = wx.SplitterWindow(self, -1)
-        
+        self.splitter.SetMinimumPaneSize(150)
         vbox = wx.BoxSizer(wx.VERTICAL)
 
-        self._list = ItemList(self.splitter, -1, style=wx.LC_REPORT, size=(110,110),
+        self._list = ItemList(self.splitter, -1, style=wx.LC_REPORT,
                                  mappers=[ColumnMapper('AMI', lambda r: r.id, defaultWidth=wx.LIST_AUTOSIZE),
                                           ColumnMapper('SourceImage', lambda r: r.srcImg.path, defaultWidth=wx.LIST_AUTOSIZE),
                                           ColumnMapper('Status', lambda r: '', defaultWidth=wx.LIST_AUTOSIZE_USEHEADER),
                                           ColumnMapper('Created', lambda r: '', defaultWidth=wx.LIST_AUTOSIZE_USEHEADER)]
                                  )
+
+        vbox.Add(self.splitter, 1, wx.EXPAND)
         
-        hbox1 = wx.BoxSizer(wx.HORIZONTAL)
-        hbox1.Add(self.splitter, 1, wx.EXPAND)
-        
-       
-        
-        vbox.Add(hbox1, 0, wx.EXPAND)
-        
-        self._logPanel = ContainerPanel(self.splitter, -1, size=(200,100))
+        self._logPanel = ContainerPanel(self.splitter, -1)
    
         self.splitter.SplitHorizontally(self._list, self._logPanel)
-        
         self.SetSizer(vbox)
-        
         self.Layout()   
         
         #self.Bind(wx.EVT_RIGHT_DOWN, self.OnRightDown)
@@ -67,7 +60,6 @@ class AMIPanel(wx.Panel):
     def addAMIEntry(self, ami):
         self._list.addItem(ami)
         
-    
     def setAMIs(self, images): 
         self._list.setItems(images)
     
