@@ -32,10 +32,10 @@ class DeploymentPanel(wx.Panel):
         self.GetSizer().Add(self.roles, 0, wx.BOTTOM | wx.EXPAND, 5)
         
         self.deployButton = wx.Button(self, wx.ID_ANY, 'Deploy', size=(110, -1))
-        self.GetSizer().Add(self.deployButton)
+        self.GetSizer().Add(self.deployButton, 0, wx.ALL, 2)
         
         self.cancelButton = wx.Button(self, wx.ID_ANY, 'Cancel', size=(110, -1))
-        self.GetSizer().Add(self.cancelButton)
+        self.GetSizer().Add(self.cancelButton, 0, wx.ALL, 2)
         
         self.cancelButton.Hide()
            

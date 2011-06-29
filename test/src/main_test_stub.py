@@ -28,7 +28,7 @@ class DummyConn:
         return filter(lambda r: r.id in filters['reservation-id'], 
                       self.reservations.values())
     
-    def run_instances(self, **kwargs):
+    def run_instances(self, *args, **kwargs):
         r = DummyReservation(kwargs['min_count'])
         self.reservations[r.id] = r
         

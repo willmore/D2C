@@ -13,7 +13,7 @@ class RoleList(ItemList):
         kwargs['mappers'] = [ColumnMapper('Name', lambda r: r.name, defaultWidth=wx.LIST_AUTOSIZE),
                              ColumnMapper('AMI', lambda r: r.ami.id, defaultWidth=wx.LIST_AUTOSIZE),
                              ColumnMapper('Count', lambda r: r.count, defaultWidth=wx.LIST_AUTOSIZE_USEHEADER),
-                             ColumnMapper('Instance Type', lambda r: r.instanceType.name, defaultWidth=wx.LIST_AUTOSIZE)]
+                             ColumnMapper('Instance Type', lambda r: r.instanceType.name, defaultWidth=wx.LIST_AUTOSIZE_USEHEADER)]
         
         kwargs['style'] =wx.LC_REPORT
        

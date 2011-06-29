@@ -14,8 +14,8 @@ class AMIPanel(wx.Panel):
         self.list = ItemList(self.splitter, -1, style=wx.LC_REPORT,
                                  mappers=[ColumnMapper('AMI', lambda r: r.id, defaultWidth=wx.LIST_AUTOSIZE),
                                           ColumnMapper('SourceImage', lambda r: r.srcImg.path, defaultWidth=wx.LIST_AUTOSIZE),
-                                          ColumnMapper('Status', lambda r: '', defaultWidth=wx.LIST_AUTOSIZE_USEHEADER),
-                                          ColumnMapper('Created', lambda r: '', defaultWidth=wx.LIST_AUTOSIZE_USEHEADER)]
+                                          ColumnMapper('Status', lambda r: r.status, defaultWidth=wx.LIST_AUTOSIZE_USEHEADER),
+                                          ColumnMapper('Cloud', lambda r: r.cloud.name, defaultWidth=wx.LIST_AUTOSIZE)]
                                  )
 
         vbox.Add(self.splitter, 1, wx.EXPAND)

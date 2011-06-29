@@ -54,15 +54,29 @@ class AMIThread(Thread):
         except:
             traceback.print_exc()
 
+class AMITracker(object):
 
-class AMIController:
+    def __init__(self, ami=None, srcImg=None, cloud=None):
+        if ami is not None:
+            self.ami = ami
+            self.id = ami.id
+            self.status = "Created"
+            self.srcImg = ami.srcImg
+            self.cloud = ami.cloud
+        else:
+            self.id = "---"
+            self.srcImg = srcImg
+            self.status = "In Progress"    
+            self.cloud = cloud
+        
+
+class AMIController(object):
     
     def __init__(self, amiView, dao, amiToolsFactory):
         self.__dao = dao
         self.__amiView = amiView
         self.__amiToolsFactory = amiToolsFactory
-    
-        
+
         self.__refreshAMIList()
         self.__amiView.list.Bind(wx.EVT_LIST_ITEM_SELECTED, self.showAMI)
         Publisher.subscribe(self.__createAMI, "CREATE AMI")
@@ -76,12 +90,12 @@ class AMIController:
             #self.__amiView.showLogPanel()
     
     def __refreshAMIList(self):
-        self.__amiView.setAMIs(self.__dao.getAMIs())
+        
+        self.__amiView.setAMIs([AMITracker(a) for a in self.__dao.getAMIs()])
     
     def _handleAMIJobDone(self, msg):
-        (_, ami, _, _) = msg.data
-        #self.__amiView.addAMIEntry(ami)   
-        print "TODO handle done"
+        (_, amiTracker, _, _) = msg.data
+        self.__refreshAMIList()
     
     def __createAMI(self, msg):
         '''
@@ -108,9 +122,13 @@ class AMIController:
                               self.__dao,
                               logger)
         
+        amiThread.amiTracker = AMITracker(srcImg=rawImg, cloud=cloud)
         amiThread.start()
         
-        self.__amiView.list.Append(("---", rawImg,'In Progress', ''))
+        
+        self.__amiView.list.addItem(amiThread.amiTracker)
+        
+     
      
     class __CreationLogger:
         

@@ -1,5 +1,6 @@
 import wx
 from wx.lib.pubsub import Publisher
+from .util import createEmptyChecker
 
 class AMIWizardController:
     
@@ -12,11 +13,13 @@ class AMIWizardController:
         self._view.container.getPanel("CLOUD").chooseButton.Bind(wx.EVT_BUTTON, self.selectCloud)
         self._view.container.getPanel("CLOUD").cancelButton.Bind(wx.EVT_BUTTON, lambda _: self._view.EndModal(wx.ID_OK))
         
-        
         self._view.container.getPanel("CLOUD").chooseButton.Disable()
         
         self._view.container.getPanel("KERNEL").chooseButton.Bind(wx.EVT_BUTTON, self.selectKernel)
         self._view.container.getPanel("KERNEL").backButton.Bind(wx.EVT_BUTTON, self.showCloud)
+        
+        createEmptyChecker(self._view.container.getPanel("KERNEL").chooseButton,
+                           self._view.container.getPanel("KERNEL").kernelList)
         
         self._view.container.getPanel("BUCKET").createButton.Bind(wx.EVT_BUTTON, self.createAMI)
         self._view.container.getPanel("CLOUD").cloudList.Bind(wx.EVT_LIST_ITEM_SELECTED, self.testContinue)

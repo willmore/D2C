@@ -7,8 +7,6 @@ class CloudPanel(wx.Panel):
     
     def __init__(self, *args, **kwargs):
         
-        
-        
         wx.Panel.__init__(self, *args, **kwargs)
  
         self.cloudList = ItemList(self, -1, style=wx.LC_REPORT, size=(-1, 200),
@@ -44,7 +42,7 @@ class KernelPanel(wx.Panel):
  
         self.kernelList = ItemList(self, -1, style=wx.LC_REPORT, size=(-1, 100),
                                      mappers=[ColumnMapper('AKI', lambda k: k.aki, defaultWidth=90),
-                                              ColumnMapper('Architecture', lambda k: k.architecture, defaultWidth=90)])
+                                              ColumnMapper('Architecture', lambda k: k.architecture.arch, defaultWidth=110)])
         self.chooseButton = wx.Button(self, wx.ID_ANY, 'Next')
         self.backButton = wx.Button(self, wx.ID_ANY, 'Back')
         
@@ -83,8 +81,8 @@ class BucketPanel(wx.Panel):
         self.bucket = wx.TextCtrl(self)
         
         hbox = wx.BoxSizer(wx.HORIZONTAL)
-        hbox.Add(wx.StaticText(self, -1, 'Choose bucket to store image'), -1)
-        hbox.Add(self.bucket, -1)
+        hbox.Add(wx.StaticText(self, -1, 'Choose bucket to store image'), 0)
+        hbox.Add(self.bucket, 1)
         self.sizer.Add(hbox, 0, wx.ALL|wx.EXPAND, 2)
         self.sizer.Add(self.createButton, 0, wx.ALIGN_RIGHT|wx.ALL, 2)
         self.sizer.Add(self.cancelButton, 0, wx.ALIGN_RIGHT|wx.ALL, 2)     
