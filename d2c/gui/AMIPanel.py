@@ -1,8 +1,3 @@
-'''
-Created on Mar 10, 2011
-
-@author: willmore
-'''
 
 import wx
 from .ItemList import ColumnMapper, ItemList
@@ -16,7 +11,7 @@ class AMIPanel(wx.Panel):
         self.splitter.SetMinimumPaneSize(150)
         vbox = wx.BoxSizer(wx.VERTICAL)
 
-        self._list = ItemList(self.splitter, -1, style=wx.LC_REPORT,
+        self.list = ItemList(self.splitter, -1, style=wx.LC_REPORT,
                                  mappers=[ColumnMapper('AMI', lambda r: r.id, defaultWidth=wx.LIST_AUTOSIZE),
                                           ColumnMapper('SourceImage', lambda r: r.srcImg.path, defaultWidth=wx.LIST_AUTOSIZE),
                                           ColumnMapper('Status', lambda r: '', defaultWidth=wx.LIST_AUTOSIZE_USEHEADER),
@@ -27,22 +22,22 @@ class AMIPanel(wx.Panel):
         
         self._logPanel = ContainerPanel(self.splitter, -1)
    
-        self.splitter.SplitHorizontally(self._list, self._logPanel)
+        self.splitter.SplitHorizontally(self.list, self._logPanel)
         self.SetSizer(vbox)
         self.Layout()   
         
         #self.Bind(wx.EVT_RIGHT_DOWN, self.OnRightDown)
         #self.Bind(wx.EVT_LEFT_DOWN, self.OnRightDown)
         
-        #self._list.Bind(wx.EVT_RIGHT_DOWN, self.OnRightDown)
+        #self.list.Bind(wx.EVT_RIGHT_DOWN, self.OnRightDown)
     
     '''
     def OnRightDown(self, event):
-        item, flags = self._list.HitTest(event.GetPosition())
+        item, flags = self.list.HitTest(event.GetPosition())
         if flags == wx.NOT_FOUND:
             event.Skip()
             return
-        self._list.Select(item)
+        self.list.Select(item)
         self.PopupMenu(MyPopupMenu('Test'), event.GetPosition())
     '''
          
@@ -58,10 +53,10 @@ class AMIPanel(wx.Panel):
         self._logPanel.getPanel(logPanelId).AppendText(str(text) + "\n")
         
     def addAMIEntry(self, ami):
-        self._list.addItem(ami)
+        self.list.addItem(ami)
         
     def setAMIs(self, images): 
-        self._list.setItems(images)
+        self.list.setItems(images)
     
 class MyPopupMenu(wx.Menu):
     def __init__(self, WinName):

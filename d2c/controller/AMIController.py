@@ -1,15 +1,12 @@
-'''
-Created on Feb 27, 2011
 
-@author: willmore
-'''
 import wx
 from wx.lib.pubsub import Publisher
 import traceback
 from threading import Thread
 from d2c.AMICreator import AMICreator
 import time
-        
+
+     
 class Codes:
     JOB_CODE_SUCCESS=0
 
@@ -65,15 +62,16 @@ class AMIController:
         self.__amiView = amiView
         self.__amiToolsFactory = amiToolsFactory
     
+        
         self.__refreshAMIList()
-        self.__amiView._list.Bind(wx.EVT_LIST_ITEM_SELECTED, self.showAMI)
+        self.__amiView.list.Bind(wx.EVT_LIST_ITEM_SELECTED, self.showAMI)
         Publisher.subscribe(self.__createAMI, "CREATE AMI")
         Publisher.subscribe(self._handleAMIJobDone, "AMI JOB DONE")
     
     def showAMI(self, _):
         
-        if self.__amiView._list.GetSelectedItemCount() == 1:
-            i = self.__amiView._list.GetFirstSelected()
+        if self.__amiView.list.GetSelectedItemCount() == 1:
+            i = self.__amiView.list.GetFirstSelected()
             print i
             #self.__amiView.showLogPanel()
     
@@ -112,7 +110,7 @@ class AMIController:
         
         amiThread.start()
         
-        self.__amiView._list.Append(("---", rawImg,'In Progress', ''))
+        self.__amiView.list.Append(("---", rawImg,'In Progress', ''))
      
     class __CreationLogger:
         

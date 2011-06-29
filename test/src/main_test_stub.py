@@ -10,7 +10,7 @@ from d2c.RemoteShellExecutor import RemoteShellExecutorFactory, RemoteShellExecu
 from d2c.ShellExecutor import ShellExecutorFactory, ShellExecutor
 
 
-from mockito import *
+from mockito import mock, when, any
 import boto
 from threading import Thread
 import time
@@ -28,7 +28,7 @@ class DummyConn:
         return filter(lambda r: r.id in filters['reservation-id'], 
                       self.reservations.values())
     
-    def run_instances(self, *args, **kwargs):
+    def run_instances(self, **kwargs):
         r = DummyReservation(kwargs['min_count'])
         self.reservations[r.id] = r
         
@@ -83,7 +83,9 @@ class DummyInstance():
     def stop(self):
         pass
 
-def main(argv=None):
+def main(argv=sys.argv):
+    
+    conf = argv[1]
     
     sqlFile = "%s/.d2c_test/main_test_stub.sqlite" % os.path.expanduser('~') 
     if os.path.exists(sqlFile):
@@ -91,7 +93,6 @@ def main(argv=None):
         os.unlink(sqlFile)
         
     mockBoto = mock(boto)
-    #when(mockBoto).connect_ec2(any(),any(),any(),any(),any(),any()).thenReturn(DummyConn())
     
     def mock_connect_ec2(*args, **kwargs):
         return DummyConn()
@@ -109,7 +110,7 @@ def main(argv=None):
    
     dao = DAO(sqlFile, mockBoto, mockRemoteFactory, mockExecFactory)
     
-    test_initor.init_db(dao, "/home/willmore/scicloud.conf")
+    test_initor.init_db(dao, conf)
     
     mockAMIFactory = mock(AMIToolsFactory)
     mockAMITools = mock(AMITools)

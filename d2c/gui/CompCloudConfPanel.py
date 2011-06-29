@@ -35,7 +35,7 @@ class RegionList(wx.ListCtrl):
         
     def getSelectedRegions(self):
         #TODO return more than one ami if selected
-        i = self.GetFirstSelected();
+        i = self.GetFirstSelected()
         
         if i < 0:
             return []
