@@ -155,7 +155,7 @@ class DeploymentWizardController:
         deployment = Deployment(self.newName, roles=roles, awsCred=self.dao.getAWSCred("mainKey"))
         deployment.setCloud(self.cloud)
     
-        self.dao.saveDeployment(deployment)
+        self.dao.save(deployment)
         
         wx.CallAfter(Publisher().sendMessage, "DEPLOYMENT CREATED", 
                              {'deployment':deployment})

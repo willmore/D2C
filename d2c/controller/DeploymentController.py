@@ -22,7 +22,7 @@ class PersistenceListener:
         self.deployment = deployment
 
     def notify(self, event):
-        self.dao.updateDeployment(self.deployment)
+        self.dao.save(self.deployment)
         
 class ViewListener:
     

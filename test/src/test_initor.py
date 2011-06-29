@@ -76,7 +76,7 @@ def init_db(dao, confFile):
                             awsCred=conf.awsCred,
                             cloud=cloud)
     
-    dao.saveDeployment(deployment)
+    dao.save(deployment)
     
 def get_instance_types(dao):
         

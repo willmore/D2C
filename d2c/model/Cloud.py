@@ -29,43 +29,19 @@ class Cloud(object):
         self.serviceURL = serviceURL
         self.storageURL = storageURL
         self.ec2Cert = ec2Cert
-        self.kernels = list()
-        self.addKernels(kernels)
-        self.instanceTypes = list()
-        self.addInstanceTypes(instanceTypes)
+        self.kernels = list(kernels)
+        self.instanceTypes = list(instanceTypes)
         self.storage = WalrusStorage("placeholder_name", storageURL)
         self.deployments = list()
-        
+       
     def getName(self):
         return self.name
-    
-    def addDeployment(self, deployment):
-        if self.deployments not in deployment:
-            self.deployments.addpend(deployment)
-        
-        if deployment.cloud is not self:
-            deployment.cloud = self
-    
-    def addInstanceTypes(self, types):
-        for t in types:
-            self.instanceTypes.append(t)
-            t.cloud = self
-    
-    def addKernels(self, kernels):
-        
-        for k in kernels:
-            k.cloudName = self.name
-        
-        self.kernels.extend(kernels)
     
     def getKernels(self):
         return self.kernels
     
     def getEC2Cert(self):
         return self.ec2Cert
-    
-    def getEndpoint(self):
-        return self.endpoint
         
     def getFStab(self):
         return pkg_resources.resource_filename(__package__, "ami_data/fstab")
@@ -80,11 +56,9 @@ class Cloud(object):
             
         return None
     
-    def _getParsedEndPoint(self):
-        if not hasattr(self, '__parsedEndPoint'):
-            self.__parsedEndPoint = urlparse(self.serviceURL)
-            
-        return self.__parsedEndPoint
+    def __parseEndPoint(self, url):
+        
+        return 
     
     def getConnection(self, awsCred):
         
@@ -92,7 +66,9 @@ class Cloud(object):
         
         if not hasattr(self, "__ec2Conn"):
             #Use string type because boto does not support unicode type
-            parsedEndpoint = self._getParsedEndPoint()
+            
+            parsedEndpoint = urlparse(self.serviceURL)
+            
             regionInfo = RegionInfo(name=str(self.name), endpoint=str(parsedEndpoint.hostname))
 
             self.__ec2Conn = self.botoModule.connect_ec2(aws_access_key_id=str(awsCred.access_key_id),

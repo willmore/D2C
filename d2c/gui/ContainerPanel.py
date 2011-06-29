@@ -1,8 +1,3 @@
-'''
-Created on Feb 28, 2011
-
-@author: willmore
-'''
 
 import wx
 
@@ -26,7 +21,7 @@ class ContainerPanel(wx.Panel):
     def showPanel(self, label):
         
         if not self._panels.has_key(label):
-            raise Exception("ContainerPanel does not have panel ID: %" % label)
+            raise Exception("ContainerPanel does not have panel ID: %s" % label)
         
         for l, p in self._panels.items():
             if l == label:

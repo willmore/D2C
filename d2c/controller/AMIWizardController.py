@@ -21,6 +21,12 @@ class AMIWizardController:
         createEmptyChecker(self._view.container.getPanel("KERNEL").chooseButton,
                            self._view.container.getPanel("KERNEL").kernelList)
         
+        self._view.container.getPanel("RAMDISK").chooseButton.Bind(wx.EVT_BUTTON, self.selectRamdisk)
+        self._view.container.getPanel("RAMDISK").backButton.Bind(wx.EVT_BUTTON, self.showKernel)
+        
+        createEmptyChecker(self._view.container.getPanel("RAMDISK").chooseButton,
+                           self._view.container.getPanel("RAMDISK").rdList)
+        
         self._view.container.getPanel("BUCKET").createButton.Bind(wx.EVT_BUTTON, self.createAMI)
         self._view.container.getPanel("CLOUD").cloudList.Bind(wx.EVT_LIST_ITEM_SELECTED, self.testContinue)
         self._view.showPanel("CLOUD") 
@@ -36,6 +42,9 @@ class AMIWizardController:
     
     def showCloud(self,_):
         self._view.container.showPanel("CLOUD")
+        
+    def showKernel(self,_):
+        self._view.container.showPanel("KERNEL")
             
     def selectCloud(self, _):
         clouds = self._view.container.getPanel("CLOUD").cloudList.getSelectedItems()
@@ -46,16 +55,32 @@ class AMIWizardController:
             
         self.cloud = clouds[0]
         self._view.container.getPanel("KERNEL").kernelList.setItems(self.cloud.kernels)
+        self._view.container.getPanel("RAMDISK").rdList.setItems(self.cloud.ramdisks)
         self._view.showPanel("KERNEL")
     
     def selectKernel(self, _):
         
-        self.kernels = self._view.container.getPanel("KERNEL").kernelList.getSelectedItems()
-        if len(self.kernels) != 1:
+        kernels = self._view.container.getPanel("KERNEL").kernelList.getSelectedItems()
+        if len(kernels) != 1:
             wx.MessageBox("Please select one Kernel", 'Info')
             return
         
-        self.kernel = self._view.container.getPanel("KERNEL").kernelList.getSelectedItems()[0]
+        self.kernel = kernels[0]
+        
+        if self.kernel.isPvGrub:
+            self._view.showPanel("BUCKET")
+        else:
+            self._view.showPanel("RAMDISK")
+            
+    def selectRamdisk(self, _):
+        
+        rds = self._view.container.getPanel("RAMDISK").rdList.getSelectedItems()
+        if len(rds) != 1:
+            wx.MessageBox("Please select one Ramdisk", 'Info')
+            return
+        
+        self.ramdisk = rds[0]
+
         self._view.showPanel("BUCKET")
     
     def createAMI(self, _):

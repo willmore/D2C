@@ -4,15 +4,14 @@ import pkg_resources
 class Kernel(object):
     
     
-    ARCH_X86 = 'i386'
-    ARCH_X86_64 = 'x86_64'
-    
-    def __init__(self, aki, architecture, contents, cloud=None, recommendedRamdisk=None):
+    def __init__(self, aki, architecture, 
+                 contents, cloud=None, recommendedRamdisk=None, isPvGrub=False):
         self.aki = aki
         self.architecture = architecture
-        self.contents = contents
+        self.contents = contents #Kernel Modules and optional GRUB
         self.cloud = cloud
         self.recommendedRamdisk = recommendedRamdisk
+        self.isPvGrub = isPvGrub
         
     def getContentsAbsPath(self):
         '''
@@ -33,5 +32,7 @@ class Kernel(object):
     
     def __ne__(self, other):
         return not self.__eq__(other)
-    
-    
+
+        
+        
+        

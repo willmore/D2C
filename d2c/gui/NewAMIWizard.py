@@ -62,12 +62,38 @@ class KernelPanel(wx.Panel):
              
         self.sizer.Add(self.hsizer, 0, wx.ALIGN_RIGHT|wx.ALL, 2)
         
+        
+class RamdiskPanel(wx.Panel):    
+    
+    def __init__(self, *args, **kwargs):
+        wx.Panel.__init__(self, *args, **kwargs)
+ 
+        self.rdList = ItemList(self, -1, style=wx.LC_REPORT, size=(-1, 100),
+                                     mappers=[ColumnMapper('ARI', lambda k: k.aki, defaultWidth=90)])
+        self.chooseButton = wx.Button(self, wx.ID_ANY, 'Next')
+        self.backButton = wx.Button(self, wx.ID_ANY, 'Back')
+        
+        self.sizer = wx.BoxSizer(wx.VERTICAL) 
+        self.SetSizer(self.sizer)
+        
+        addStoreTxt = wx.StaticText(self, -1, 'Choose Ramdisk')
+        addStoreTxt.SetFont(wx.Font(15, wx.DEFAULT, wx.DEFAULT, wx.BOLD))
+        self.sizer.Add(addStoreTxt, 0)
+        
+        self.sizer.Add(self.rdList, 0, wx.EXPAND|wx.ALL, 5)
+        
+        self.hsizer = wx.BoxSizer(wx.HORIZONTAL)
+        
+        self.hsizer.Add(self.backButton, 0, wx.ALIGN_RIGHT|wx.ALL, 2)
+        self.hsizer.Add(self.chooseButton, 0, wx.ALIGN_RIGHT|wx.ALL, 2)
+             
+        self.sizer.Add(self.hsizer, 0, wx.ALIGN_RIGHT|wx.ALL, 2)
+        
 class BucketPanel(wx.Panel):    
     
     def __init__(self, *args, **kwargs):
         wx.Panel.__init__(self, *args, **kwargs)
  
-        
         self.createButton = wx.Button(self, wx.ID_ANY, 'Create AMI', size=(190, -1))
         self.cancelButton = wx.Button(self, wx.ID_ANY, 'Cancel', size=(190, -1))
         
@@ -104,6 +130,9 @@ class NewAMIWizard(wx.Dialog):
         
         self.kernelPanel = KernelPanel(self.container)
         self.container.addPanel("KERNEL", self.kernelPanel)
+        
+        self.ramdiskPanel = RamdiskPanel(self.container)
+        self.container.addPanel("RAMDISK", self.ramdiskPanel)
         
         self.bucketPanel = BucketPanel(self.container)
         self.container.addPanel("BUCKET", self.bucketPanel)

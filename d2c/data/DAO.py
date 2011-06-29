@@ -19,7 +19,7 @@ from d2c.model.Ramdisk import Ramdisk
 from d2c.RemoteShellExecutor import RemoteShellExecutorFactory
 from d2c.ShellExecutor import ShellExecutorFactory
 
-from sqlalchemy import Table, Column, Integer, String, MetaData, ForeignKey, create_engine
+from sqlalchemy import Table, Column, Integer, String, MetaData, ForeignKey, create_engine, Boolean
 from sqlalchemy.orm import sessionmaker, mapper, relationship
 from sqlalchemy.orm.interfaces import MapperExtension
 
@@ -234,7 +234,9 @@ class DAO:
                             Column('contents', String),
                             Column('cloud_id', String, ForeignKey('cloud.name'), nullable=False),
                             Column('arch_id', String, ForeignKey('architecture.arch'), nullable=False),
-                            Column('ramdisk_id', String, ForeignKey('ramdisk.id'), nullable=True)
+                            Column('ramdisk_id', String, ForeignKey('ramdisk.id'), nullable=True),
+                            Column('isPvGrub', Boolean, nullable=False)
+                            
                             )
         
         mapper(Kernel, kernelTable, properties={'cloud':relationship(Cloud, backref='kernels'),
@@ -294,6 +296,9 @@ class DAO:
  
     def add(self, entity):   
         self.session.add(entity)
+        self.session.commit()
+        
+    def save(self, _):
         self.session.commit()
         
     def getArchitectures(self):
@@ -382,18 +387,6 @@ class DAO:
         c.close()
         
         return AWSCred(row['id'], row['access_key_id'], row['secret_access_key']) if row is not None else None
-    
-    def saveDeployment(self, deployment):
-        #TODO deprecate
-        self.addDeployment(deployment)
-        
-    def addDeployment(self, deployment):
-        self.session.add(deployment)
-        self.session.commit()
-    
-    def updateDeployment(self, deployment):  
-        #TODO Deprecate
-        self.session.commit()
     
     def addRoleInstance(self, roleDeployment, roleName, instanceId):
         c = self.__getConn().cursor()
