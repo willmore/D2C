@@ -6,6 +6,7 @@ from d2c.model.Kernel import Kernel
 from d2c.model.AMI import AMI
 from d2c.data.CredStore import CredStore
 from d2c.model.UploadAction import UploadAction
+from d2c.model.Ramdisk import Ramdisk
 from TestConfig import TestConfig
 from mockito import *
 
@@ -51,7 +52,9 @@ def init_db(dao, confFile):
     
     #ami = AMI("ami-47cefa33", srcImg, cloud)
     cloud = clouds[0]
-    ami = AMI("emi-58091682", cloud, srcImg, kernel=cloud.kernels[0])
+    ramdisk = Ramdisk("eri-foobar", cloud, archs[1])
+    dao.add(ramdisk)
+    ami = AMI("emi-58091682", cloud, srcImg, kernel=cloud.kernels[0], ramdisk=ramdisk)
     dao.addAMI(ami)
      
     for instance in []:

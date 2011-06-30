@@ -5,15 +5,15 @@ from wx.lib.pubsub import Publisher
 
 class DeploymentThread(Thread):
         
-        def __init__(self, deployment):
-            Thread.__init__(self)
-            self.deployment = deployment
+    def __init__(self, deployment):
+        Thread.__init__(self)
+        self.deployment = deployment
             
-        def run(self):
-            self.deployment.run()
+    def run(self):
+        self.deployment.run()
               
-        def pause(self):
-            self.deployment.pause()
+    def pause(self):
+        self.deployment.pause()
             
 class PersistenceListener:
     
@@ -21,7 +21,7 @@ class PersistenceListener:
         self.dao = dao
         self.deployment = deployment
 
-    def notify(self, event):
+    def notify(self, _):
         self.dao.save(self.deployment)
         
 class ViewListener:
@@ -29,7 +29,7 @@ class ViewListener:
     def __init__(self, deploymentView):
         self.deploymentView = deploymentView
         
-    def notify(self, event):
+    def notify(self, _):
         wx.CallAfter(self.deploymentView.update)
         
     
@@ -45,7 +45,7 @@ class DeploymentController:
         
         self.deployment = deploymentView.deployment
 
-    def handleCancel(self, evt):
+    def handleCancel(self, _):
         
         ret = wx.MessageBox('Are you sure you want to cancel?',
                             'Question', wx.YES_NO)
@@ -58,7 +58,7 @@ class DeploymentController:
             self.deploymentView.cancelButton.Hide()
             
 
-    def handleLaunch(self, evt):
+    def handleLaunch(self, _):
         
         ret = wx.MessageBox('Are you sure you want to start? \
                             AWS charges will start at the rate of $%.2f per hour' 
@@ -102,9 +102,3 @@ class DeploymentController:
            
         def receiveMsg(self, msg):
             self.logPanel.appendLogPanelText(msg.data) 
-    
-    
-    
-    
-    
-    

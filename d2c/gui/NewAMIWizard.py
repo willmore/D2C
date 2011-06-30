@@ -69,7 +69,7 @@ class RamdiskPanel(wx.Panel):
         wx.Panel.__init__(self, *args, **kwargs)
  
         self.rdList = ItemList(self, -1, style=wx.LC_REPORT, size=(-1, 100),
-                                     mappers=[ColumnMapper('ARI', lambda k: k.aki, defaultWidth=90)])
+                                     mappers=[ColumnMapper('ARI', lambda k: k.id, defaultWidth=90)])
         self.chooseButton = wx.Button(self, wx.ID_ANY, 'Next')
         self.backButton = wx.Button(self, wx.ID_ANY, 'Back')
         
