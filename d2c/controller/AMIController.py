@@ -16,7 +16,7 @@ class AMIThread(Thread):
     '''
              
     def __init__(self, img, conf, amiToolsFactory, 
-                  cloud, kernel, s3Bucket, dao, logger):
+                  cloud, kernel, s3Bucket, dao, logger, ramdisk):
         
         Thread.__init__(self)
         self.__img = img
@@ -27,6 +27,7 @@ class AMIThread(Thread):
         self.__kernel = kernel
         self.__dao = dao
         self.__logger = logger
+        self.__ramdisk = ramdisk
             
     def _sendFinishMessage(self, jobid, amiid=None, 
                             code=Codes.JOB_CODE_SUCCESS, exception=None):
@@ -45,7 +46,8 @@ class AMIThread(Thread):
                  self.__kernel,
                  self.__dao,
                  self.__amiToolsFactory,
-                 logger=self.__logger)  
+                 logger=self.__logger,
+                 ramdisk=self.__ramdisk)  
             
             ami = amiCreator.createAMI()
             
@@ -105,7 +107,7 @@ class AMIController(object):
         3. Add a new entry into the AMI list with the in-creation-progress AMI information.
         '''
         
-        rawImg,cloud,kernel,s3Bucket = msg.data
+        rawImg,cloud,kernel,s3Bucket,ramdisk = msg.data
 
         #Create a logger that will capture process output and display in a GUI panel        
         logger = self.__createLogger(rawImg.path)
@@ -120,11 +122,11 @@ class AMIController(object):
                               kernel,
                               s3Bucket,
                               self.__dao,
-                              logger)
+                              logger,
+                              ramdisk)
         
         amiThread.amiTracker = AMITracker(srcImg=rawImg, cloud=cloud)
         amiThread.start()
-        
         
         self.__amiView.list.addItem(amiThread.amiTracker)
         

@@ -1,8 +1,3 @@
-'''
-Created on Mar 10, 2011
-
-@author: willmore
-'''
 
 import wx
        
@@ -11,14 +6,14 @@ class ConfPanel(wx.Dialog):
     def __init__(self, *args, **kwargs):
         wx.Dialog.__init__(self, *args, **kwargs)
  
-        self.Title = "Amazon Configuration Panel"
-        self.Size = (400,170)
+        self.Title = "Credential Configuration Panel"
+        self.Size = (600,230)
  
-        self.aws_user_id = wx.TextCtrl(self);
-        self._aws_key_id = wx.TextCtrl(self);
-        self._aws_secret_access_key = wx.TextCtrl(self);
-        self._ec2_cert = wx.TextCtrl(self);
-        self._ec2_private_key = wx.TextCtrl(self);   
+        self.aws_user_id = wx.TextCtrl(self)
+        self._aws_key_id = wx.TextCtrl(self)
+        self._aws_secret_access_key = wx.TextCtrl(self)
+        self._ec2_cert = wx.TextCtrl(self)
+        self._ec2_private_key = wx.TextCtrl(self)  
         self._updateButton = wx.Button(self, wx.ID_ANY, 'Save Credentials')
         self._closeButton = wx.Button(self, wx.ID_ANY, 'Close')
         self._hsizer = wx.BoxSizer(wx.HORIZONTAL)

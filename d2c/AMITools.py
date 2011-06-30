@@ -7,9 +7,13 @@ from d2c.model.Kernel import Kernel
 from d2c.model.EC2Cred import EC2Cred
 from d2c.model.Cloud import Cloud
 
+import re
+
 class UnsupportedPlatformError(Exception):
     def __init__(self, value):
+        Exception.__init__(self)
         self.value = value
+        
     def __str__(self):
         return repr(self.value)
     
@@ -50,7 +54,7 @@ class AMITools:
             
         return bucket + "/" + os.path.basename(manifest)
 
-    def bundleImage(self, img, destDir, ec2Cred, userId, cloud, kernel):
+    def bundleImage(self, img, destDir, ec2Cred, userId, cloud, kernel, ramdisk=None):
         '''
         Create an AMI bundle.
         '''
@@ -70,6 +74,9 @@ class AMITools:
         bundleCmd = BUNDLE_CMD % (img, ec2Cred.cert, ec2Cred.private_key, 
                                     userId, kernel.architecture.arch, destDir, kernel.aki,
                                     cloud.getEC2Cert())
+        
+        if ramdisk is not None:
+            bundleCmd += " --ramdisk %s" % ramdisk.id
                 
         ShellExecutor(self.__logger).run(bundleCmd)
         
@@ -157,9 +164,15 @@ class AMITools:
             
             gf.mount(newDev, "/")
             
-            #Step 2: copy kernel            
-            gf.tar_in(kernel.getContentsAbsPath(), "/") 
-                    
+            #Step 2: copy kernel
+            contentsPath = kernel.getContentsAbsPath()
+            if re.match('.*tgz', contentsPath) or re.match('.*tar\.gz', contentsPath):
+                gf.tgz_in(contentsPath, "/") 
+            elif re.match('.*tar', contentsPath):
+                gf.tgz_in(contentsPath, "/")
+            else:
+                raise Exception("Unknown extension in contents file path: %s" % contentsPath)
+                
             #Step 3: Save old fstab
             self.__logger.write("Saving image's old fstab")
             self.__logger.write("Executing: mv /etc/fstab")
@@ -171,12 +184,10 @@ class AMITools:
             gf.upload(fstab, "/etc/fstab")
         
         except Exception as x:
-            
             self.__logger.write("Exception encountered: %s" % str(x))
             raise
         
-        finally:
-            
+        finally: 
             if gf is not None:
                 del gf
                 

@@ -34,7 +34,8 @@ class AMICreator:
                  dao, 
                  amiToolsFactory,
                  outputDir=None,
-                 logger=StdOutLogger()):
+                 logger=StdOutLogger(),
+                 ramdisk=None):
         
         assert isinstance(srcImg, SourceImage)
         assert isinstance(ec2Cred, EC2Cred)
@@ -53,6 +54,7 @@ class AMICreator:
         self.__logger = logger
         self.__cloud = cloud
         self.__kernel = kernel
+        self.__ramdisk = ramdisk
         
         if outputDir is None:
             outputDir = tempfile.mkdtemp()
@@ -93,7 +95,8 @@ class AMICreator:
                                                self.__ec2Cred,
                                                self.__userId,
                                                self.__cloud,
-                                               self.__kernel) 
+                                               self.__kernel,
+                                               self.__ramdisk) 
     
         self.__logger.write("Uploading bundle")
         s3ManifestPath = self.__amiTools.uploadBundle(self.__cloud,

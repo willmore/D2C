@@ -12,8 +12,9 @@ class CloudPanel(wx.Panel):
         self.cloudList = ItemList(self, -1, style=wx.LC_REPORT, size=(-1, 200),
                                    mappers=[ColumnMapper('Name', lambda c: c.name, defaultWidth=wx.LIST_AUTOSIZE)])
         
-        self.chooseButton = wx.Button(self, wx.ID_ANY, 'Next')
-        self.cancelButton = wx.Button(self, wx.ID_ANY, 'Cancel')
+        self.chooseButton = wx.Button(self, wx.ID_FORWARD)
+        #self.cancelButton = wx.Button(self, wx.ID_ANY, 'Cancel')
+        self.cancelButton = wx.Button(self, wx.ID_CANCEL)
         
         self.sizer = wx.BoxSizer(wx.VERTICAL) 
         self.SetSizer(self.sizer)

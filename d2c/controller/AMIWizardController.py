@@ -6,6 +6,10 @@ class AMIWizardController:
     
     def __init__(self, view, dao):
         
+        self.cloud = None
+        self.kernel = None
+        self.ramdisk = None
+        
         self._view = view
         self._dao = dao
          
@@ -87,7 +91,7 @@ class AMIWizardController:
         
         bucket = self._view.container.getPanel("BUCKET").bucket.GetValue()
         
-        wx.CallAfter(Publisher().sendMessage, "CREATE AMI", (self.img, self.cloud, self.kernel, bucket))
+        wx.CallAfter(Publisher().sendMessage, "CREATE AMI", (self.img, self.cloud, self.kernel, bucket, self.ramdisk))
         
         self._view.EndModal(wx.ID_OK)
     
