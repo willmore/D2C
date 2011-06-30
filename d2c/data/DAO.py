@@ -418,6 +418,9 @@ class DAO:
     
     def getDeployments(self):
         return self.session.query(Deployment)
+    
+    def getDeploymentTemplates(self):
+        return self.session.query(DeploymentTemplate)
              
     def getEC2Cred(self, id):
         

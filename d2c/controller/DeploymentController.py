@@ -101,4 +101,13 @@ class DeploymentController:
             wx.CallAfter(Publisher.sendMessage, self.channel, msg)
            
         def receiveMsg(self, msg):
-            self.logPanel.appendLogPanelText(msg.data) 
+            self.logPanel.appendLogPanelText(msg.data)
+            
+class DeploymentTemplateController:
+    
+    def __init__(self, deploymentView, dao):
+        
+        self.dao = dao
+        self.deploymentView = deploymentView
+        
+        self.deployment = deploymentView.deployment 

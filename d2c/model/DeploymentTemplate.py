@@ -3,7 +3,7 @@ class DeploymentTemplate(object):
     
     def __init__(self, id, dataDir, roleTemplates, deployments=()):
         self.id = id
-        self.dataDir = dataDir,
+        self.dataDir = dataDir
         self.roleTemplates = roleTemplates
         self.deployments = list(deployments)
         

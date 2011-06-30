@@ -16,9 +16,11 @@ from d2c.controller.AMIController import AMIController
 from d2c.gui.DeploymentWizard import DeploymentWizard
 from d2c.controller.DeploymentWizardController import DeploymentWizardController
 from d2c.gui.DeploymentPanel import DeploymentPanel
-from d2c.controller.DeploymentController import DeploymentController
+from d2c.controller.DeploymentController import DeploymentController, DeploymentTemplateController
 from d2c.controller.NewCloudController import NewCloudController
 from d2c.gui.CloudPanel import CloudWizard
+from d2c.gui.DeploymentTab import DeploymentTemplatePanel
+
 
 
 class Application:
@@ -59,14 +61,14 @@ class Application:
         
     def loadDeploymentPanels(self):
         self.deplomentControllers = {}
-        for d in self._dao.getDeployments():
+        for d in self._dao.getDeploymentTemplates():
             self.loadDeploymentPanel(d)
             
     def loadDeploymentPanel(self, deployment):
         
-        deployPanel = DeploymentPanel(deployment, self._frame.deploymentPanel.displayPanel)
+        deployPanel = DeploymentTemplatePanel(deployment, self._frame.deploymentPanel.displayPanel)
         self._frame.deploymentPanel.addDeploymentPanel(deployPanel)
-        self.deplomentControllers[deployment.id] = DeploymentController(deployPanel, self._dao)
+        self.deplomentControllers[deployment.id] = DeploymentTemplateController(deployPanel, self._dao)
     
     def addDeployment(self, event):
         mywiz = DeploymentWizard(None, -1, 'Deployment Creation Wizard')

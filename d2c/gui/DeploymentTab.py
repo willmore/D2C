@@ -1,7 +1,7 @@
 import wx
 
 from .ContainerPanel import ContainerPanel
-from .ItemList import ColumnMapper, ItemList
+from .RoleList import RoleTemplateList
 
 class DeploymentTab(wx.Panel):
     
@@ -26,4 +26,26 @@ class DeploymentTab(wx.Panel):
     def addDeploymentPanel(self, deploymentPanel):
         self.tree.AppendItem(self.treeRoot, deploymentPanel.deployment.id)
         self.displayPanel.addPanel(deploymentPanel.deployment.id, deploymentPanel)
+        
+class DeploymentTemplatePanel(wx.Panel):    
+    
+    def __init__(self, deployment, *args, **kwargs):
+        wx.Panel.__init__(self, *args, **kwargs)
+        
+        self.SetSizer(wx.BoxSizer(wx.VERTICAL))
+        
+        self.deployment = deployment
+        
+        label = wx.StaticText(self, -1, deployment.id)
+        label.SetFont(wx.Font(20, wx.DEFAULT, wx.DEFAULT, wx.BOLD))
+        self.GetSizer().Add(label, 0, wx.BOTTOM, 10)
+          
+        label = wx.StaticText(self, -1, 'Roles')
+        label.SetFont(wx.Font(wx.DEFAULT, wx.DEFAULT, wx.DEFAULT, wx.BOLD))
+        self.GetSizer().Add(label, 0, wx.BOTTOM, 5)
+        self.roles = RoleTemplateList(self, -1, items=deployment.roleTemplates)
+        self.GetSizer().Add(self.roles, 0, wx.BOTTOM | wx.EXPAND, 5)
+        
+        self.deployButton = wx.Button(self, wx.ID_ANY, 'Create Deployment', size=(110, -1))
+        self.GetSizer().Add(self.deployButton, 0, wx.ALL, 2)
         
