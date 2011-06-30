@@ -18,6 +18,7 @@ from d2c.model.FileExistsFinishedCheck import FileExistsFinishedCheck
 from d2c.model.Ramdisk import Ramdisk
 from d2c.RemoteShellExecutor import RemoteShellExecutorFactory
 from d2c.ShellExecutor import ShellExecutorFactory
+from d2c.model.DeploymentTemplate import DeploymentTemplate, RoleTemplate
 
 from sqlalchemy import Table, Column, Integer, String, MetaData, ForeignKey, create_engine, Boolean
 from sqlalchemy.orm import sessionmaker, mapper, relationship
@@ -101,6 +102,7 @@ class DAO:
                             Column('id', String, primary_key=True),
                             Column('cloud_id', String, ForeignKey('cloud.name'), nullable=False),
                             Column('aws_cred_id', String, ForeignKey("aws_cred.name")),
+                            Column('deployment_template_id', String, ForeignKey("deployment_template.id")),
                             Column('state', String, nullable=False),
                             Column('dataDir', String)
                             )  
@@ -108,6 +110,16 @@ class DAO:
         mapper(Deployment, deploymentTable, properties={
                                     'roles': relationship(Role, backref='deployment'),
                                     'awsCred' : relationship(AWSCred)
+                                    })
+        
+        deploymentTemplateTable = Table('deployment_template', metadata,
+                            Column('id', String, primary_key=True),
+                            Column('dataDir', String)
+                            )  
+        
+        mapper(DeploymentTemplate, deploymentTemplateTable, properties={
+                                    'roleTemplates': relationship(RoleTemplate, backref='deploymentTemplate'),
+                                    'deployments': relationship(Deployment, backref='deploymentTemplate'),    
                                     })
         
         sshCredTable = Table('ssh_cred', metadata,
@@ -156,7 +168,7 @@ class DAO:
         startActionTable = Table('start_action', metadata,
                             Column('id', Integer, primary_key=True),
                             Column('action', String),
-                            Column('role_id', ForeignKey('deploy_role.name')),
+                            Column('role_id', ForeignKey('role_template.id')),
                             Column('deploy_id', ForeignKey('deploy.id'))
                             )
         
@@ -166,8 +178,8 @@ class DAO:
                             Column('id', Integer, primary_key=True),
                             Column('source', String),
                             Column('destination', String),
-                            Column('role_id', ForeignKey('deploy_role.name')),
-                            Column('deploy_id', ForeignKey('deploy.id')),
+                            Column('role_id', ForeignKey('role_template.id')),
+                            Column('deployment_template_id', ForeignKey('deployment_template.id')),
                             Column('ssh_cred_id', String, ForeignKey('ssh_cred.id'))
                             )
         
@@ -178,8 +190,8 @@ class DAO:
         dataCollectorTable = Table('data_collector', metadata,
                             Column('id', Integer, primary_key=True),
                             Column('source', String),
-                            Column('role_id', ForeignKey('deploy_role.name')),
-                            Column('deploy_id', ForeignKey('deploy.id')),
+                            Column('role_id', ForeignKey('role_template.id')),
+                            Column('deployment_template_id', ForeignKey('deployment_template.id')),
                             Column('ssh_cred_id', String, ForeignKey('ssh_cred.id'))
                             )
         
@@ -190,8 +202,8 @@ class DAO:
         finishedCheckTable = Table('finished_check', metadata,
                             Column('id', Integer, primary_key=True),
                             Column('fileName', String),
-                            Column('role_id', ForeignKey('deploy_role.name')),
-                            Column('deploy_id', ForeignKey('deploy.id'))
+                            Column('role_template_id', ForeignKey('role_template.id')),
+                            Column('deployment_template_id', ForeignKey('deployment_template.id'))
                             )
         
         mapper(FileExistsFinishedCheck, finishedCheckTable, extension=actionExtension)
@@ -242,25 +254,33 @@ class DAO:
         mapper(Kernel, kernelTable, properties={'cloud':relationship(Cloud, backref='kernels'),
                                                 'architecture':relationship(Architecture),
                                                'recommendedRamdisk':relationship(Ramdisk) })
-        roleTable = Table('deploy_role', metadata,
-                            Column('name', String, primary_key=True),
-                            Column('deploy_id', String, ForeignKey('deploy.id'), primary_key=True),
-                            Column('ami_id', String, ForeignKey('ami.id')),
-                            Column('count', Integer),
-                            Column('pollRate', Integer),
-                            Column('instance_type_id', String, ForeignKey('instance_type.name')),
+        roleTemplateTable = Table('role_template', metadata,
+                            Column('id', String, primary_key=True),
+                            Column('deployment_template_id', String, ForeignKey('deployment_template.id'), primary_key=True),
                             Column('context_cred_id', String, ForeignKey('ssh_cred.id')),
                             Column('launch_cred_id', String, ForeignKey('ssh_cred.id'))
                             )  
         
-        mapper(Role, roleTable, properties={
-                                    'instanceType': relationship(InstanceType),
+        mapper(RoleTemplate, roleTemplateTable, properties={
                                     'startActions': relationship(StartAction),
                                     'uploadActions': relationship(UploadAction),
                                     'dataCollectors': relationship(DataCollector),
                                     'finishedChecks': relationship(FileExistsFinishedCheck),
-                                    'contextCred': relationship(SSHCred, primaryjoin=roleTable.c.context_cred_id==sshCredTable.c.id),
-                                    'launchCred': relationship(SSHCred, primaryjoin=roleTable.c.launch_cred_id==sshCredTable.c.id)
+                                    'contextCred': relationship(SSHCred, primaryjoin=roleTemplateTable.c.context_cred_id==sshCredTable.c.id),
+                                    'launchCred': relationship(SSHCred, primaryjoin=roleTemplateTable.c.launch_cred_id==sshCredTable.c.id)
+                                    }, extension=actionExtension)
+        
+        roleTable = Table('role', metadata,
+                            Column('id', String, primary_key=True),
+                            Column('deploy_id', String, ForeignKey('deploy.id'), primary_key=True),
+                            Column('ami_id', String, ForeignKey('ami.id')),
+                            Column('count', Integer),
+                            Column('pollRate', Integer),
+                            Column('instance_type_id', String, ForeignKey('instance_type.name'))
+                            )  
+        
+        mapper(Role, roleTable, properties={
+                                    'instanceType': relationship(InstanceType)
                                     }, extension=actionExtension)
         
         metadata.create_all(self.engine)
@@ -281,7 +301,7 @@ class DAO:
                     (instance text primary key, -- AWS instance ID
                     role_name text,
                     role_deploy text,
-                    foreign key(role_name, role_deploy) references deploy_role(name, deploy))''')
+                    foreign key(role_name, role_deploy) references role(name, deploy))''')
     
         self.__getConn().commit()
         c.close()

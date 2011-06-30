@@ -4,7 +4,6 @@ from d2c.model.Action import Action
 from d2c.model.Deployment import Deployment
 from d2c.model.AWSCred import AWSCred
 import string
-from sqlalchemy.orm import reconstructor
 import os
 
 import time   
@@ -12,17 +11,12 @@ import time
 class Role(object):
     
     def __init__(self,  
-                 name, ami, count,
+                 id, ami, count,
                  instanceType, 
+                 roleTemplate,
                  deployment=None,
                  reservationId=None,
-                 startActions=(), 
-                 uploadActions=(),
-                 stopActions=(),
-                 finishedChecks=(),
-                 dataCollectors=(), 
-                 contextCred=None,
-                 launchCred=None,
+                 remoteExecutorFactory=None,
                  pollRate=15,
                  logger=StdOutLogger()):
         
@@ -30,30 +24,18 @@ class Role(object):
         assert isinstance(instanceType, InstanceType), "Type is %s" % type(instanceType)
         assert deployment is None or isinstance(deployment, Deployment)
         
-        self.name = name
+        self.id = id
         self.ami = ami  
+        self.roleTemplate = roleTemplate
         self.count = count
         self.instanceType = instanceType
         self.pollRate = pollRate
         self.reservationId = reservationId
         self.reservation = None #lazy loaded
         self.deployment = deployment
-        
-        self.startActions = list(startActions)
-        self.uploadActions = list(uploadActions)
-        self.stopActions = list(stopActions)
-        self.finishedChecks = list(finishedChecks)
-        self.dataCollectors = list(dataCollectors)
-        
-        self.launchCred = launchCred
-        self.contextCred = contextCred
-          
+        self.remoteExecutorFactory = remoteExecutorFactory
         self.logger = logger
     
-    @reconstructor
-    def init_on_load(self):
-        self.stopActions = []
-        self.startActions = []
     
     def setLogger(self, logger): 
     
@@ -63,7 +45,9 @@ class Role(object):
         
     def _cascadeLogger(self):
         
-        for actions in [self.startActions, self.uploadActions, self.stopActions, self.finishedChecks, self.dataCollectors]:
+        for actions in [self.roleTemplate.startActions, self.roleTemplate.uploadActions, 
+                        self.roleTemplate.stopActions, self.roleTemplate.finishedChecks, 
+                        self.roleTemplate.dataCollectors]:
             for a in actions:
                 a.logger = self.logger
       
@@ -72,9 +56,6 @@ class Role(object):
     
     def setReservationId(self, id):
         self.reservationId = id
-    
-    def getName(self):
-        return self.name
     
     def getCount(self):
         return self.count
@@ -89,7 +70,7 @@ class Role(object):
         #Using str() because boto does not support unicode type
         ec2Conn = self.deployment.cloud.getConnection(awsCred)
        
-        launchKey = self.launchCred.id if self.launchCred is not None else None
+        launchKey = self.roleTemplate.launchCred.id if self.roleTemplate.launchCred is not None else None
         #launchKey = None
        
         self.logger.write("Reserving %d instance(s) of %s with launchKey %s" % (self.count, self.ami.id, launchKey))
@@ -130,7 +111,7 @@ class Role(object):
         context scheme.
         '''
         
-        if (self.contextCred is None):
+        if (self.roleTemplate.contextCred is None):
             self.logger.write("Role has no context cred. Cannot contextualize.")
             return
         
@@ -138,7 +119,7 @@ class Role(object):
         cmd = "echo -e \"%s\" > /tmp/d2c.context" % ctxt
         
         action = Action(command=cmd, 
-                        sshCred=self.contextCred)
+                        sshCred=self.roleTemplate.contextCred)
         action.remoteExecutorFactory = self.remoteExecutorFactory
         
         for instance in self.reservation.instances:
@@ -161,15 +142,15 @@ class Role(object):
         '''
         Execute the start action(s) on each instance within the role.
         '''
-        self.__executeActions(self.uploadActions)
-        self.__executeActions(self.startActions)
+        self.__executeActions(self.roleTemplate.uploadActions)
+        self.__executeActions(self.roleTemplate.startActions)
                 
     def executeStopCommands(self):
         '''
         Execute the end action(s) on each instance within the role.
         '''
           
-        self.__executeActions(self.stopActions) 
+        self.__executeActions(self.roleTemplate.stopActions) 
                 
     def checkFinished(self):
         '''
@@ -181,7 +162,7 @@ class Role(object):
             self.reservation = self.__getReservation()
             
         for instance in self.reservation.instances:
-            for check in self.finishedChecks:
+            for check in self.roleTemplate.finishedChecks:
                 if not check.check(instance):
                     self.logger.write("Returning False for finished test")
                     return False
@@ -197,7 +178,7 @@ class Role(object):
         
         assert hasattr(self, 'reservationId') and self.reservationId is not None
         
-        reservations = self.ec2ConnFactory.getConnection().get_all_instances(filters={'reservation-id':[self.reservationId]})
+        reservations = self.deployment.cloud.getConnection().get_all_instances(filters={'reservation-id':[self.reservationId]})
         
         assert len(reservations) == 1, "Unable to retrieve reservation %s" % self.reservationId
         return reservations[0] 
@@ -207,10 +188,10 @@ class Role(object):
         if self.reservation is None:
             self.reservation = self.__getReservation()
         
-        for collector in self.dataCollectors:
+        for collector in self.roleTemplate.dataCollectors:
             for instance in self.reservation.instances:
                 collector.collect(instance, 
-                                  os.path.join(self.deployment.dataDir, self.name, instance.id, collector.source))
+                                  os.path.join(self.deployment.dataDir, self.id, instance.id, collector.source))
     
     def shutdown(self):
         
@@ -242,4 +223,4 @@ class Role(object):
         self.logger.write("Reservation %s terminated" % self.reservation.id)
         
     def __str__(self):
-        return "{name:%s, ami: %s}" % (self.name, self.ami)
+        return "{id:%s, ami: %s}" % (self.id, self.ami)

@@ -55,8 +55,7 @@ class Application:
     
     def _handleNewDeployment(self, msg):    
         deployment = msg.data['deployment']
-        self.loadDeploymentPanel(deployment)
-        self._frame.setSelection("[Deployment] " + deployment.id)    
+        self.loadDeploymentPanel(deployment)  
         
     def loadDeploymentPanels(self):
         self.deplomentControllers = {}

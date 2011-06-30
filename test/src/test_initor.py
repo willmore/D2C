@@ -8,6 +8,7 @@ from d2c.data.CredStore import CredStore
 from d2c.model.UploadAction import UploadAction
 from d2c.model.Ramdisk import Ramdisk
 from TestConfig import TestConfig
+from d2c.model.DeploymentTemplate import DeploymentTemplate, RoleTemplate
 from mockito import *
 
 from d2c.model.SSHCred import SSHCred
@@ -71,13 +72,13 @@ def init_db(dao, confFile):
     tmpSrc = tempfile.NamedTemporaryFile(delete=False)
     tmpSrc.write("blah")
     
-    deployment = Deployment("dummyDep", 
+    deployment = DeploymentTemplate("dummyDep", 
                             dataDir="/home/willmore/.d2c_test/deployments/dummyDep",
-                            roles=[Role("loner", ami, 1, cloud.instanceTypeByName("m1.small"),
-                                        uploadActions=[UploadAction(tmpSrc.name, "/tmp/foobar", sshCred)], 
-                                        dataCollectors=[DataCollector("/tmp", sshCred)],
-                                        contextCred=sshCred,
-                                        launchCred=sshCred
+                            roleTemplates=[RoleTemplate(id="loner",
+                                                        uploadActions=[UploadAction(tmpSrc.name, "/tmp/foobar", sshCred)], 
+                                                        dataCollectors=[DataCollector("/tmp", sshCred)],
+                                                        contextCred=sshCred,
+                                                        launchCred=sshCred
                                         )],
                             awsCred=conf.awsCred,
                             cloud=cloud)
