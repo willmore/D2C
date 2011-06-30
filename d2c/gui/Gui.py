@@ -8,8 +8,16 @@ import wx
 from wx.lib.pubsub import Publisher as pub
 from .ContainerPanel import ContainerPanel
 from .AMIPanel import AMIPanel
-from .RawImagePanel import RawImagePanel
 import pkg_resources
+from .RawImagePanel import RawImagePanel
+from .DeploymentTab import DeploymentTab
+
+class MainTabContainer(wx.Panel):
+    
+    def __init__(self, *args, **kwargs):
+        wx.Panel.__init__(self, *args, **kwargs)
+        
+        
 
 
 class Gui(wx.Frame):    
@@ -31,36 +39,23 @@ class Gui(wx.Frame):
         self.Center()
 
         self.__initMenuBar()
-        
-        vbox = wx.BoxSizer(wx.VERTICAL)
-        hbox = wx.BoxSizer(wx.HORIZONTAL)
-  
-        labels = []
-        self._containerPanel = ContainerPanel(self)
-        
-        for (label, panel) in [(self.LABEL_SOURCE_IMAGES, RawImagePanel(self._containerPanel)),
-                               (self.LABEL_AMIS, AMIPanel(self._containerPanel))]:
-            self._containerPanel.addPanel(label, panel)
-            labels.append(label)
-        
-        self._items = wx.ListBox(self, self._ID_LISTBOX, wx.DefaultPosition, (170, 130), labels, wx.LB_SINGLE)
-        self._items.SetSelection(0)
-        
-        #TODO move to controller
-        self.Bind(wx.EVT_LISTBOX, self.OnListSelect, id=self._ID_LISTBOX)
 
         toolbar = self.CreateToolBar()
         
         toolbar.AddLabelTool(self.ID_CONF, '', wx.Bitmap(pkg_resources.resource_filename(__package__, "icons/keys-icon.png")))
         toolbar.AddLabelTool(self.ID_CLOUD, '', wx.Bitmap(pkg_resources.resource_filename(__package__, "icons/cloud-hd-icon.png")))
         toolbar.AddLabelTool(self.ID_ADD_DEPLOYMENT, '', wx.Bitmap(pkg_resources.resource_filename(__package__, "icons/network-icon.png")))
-
-        hbox.Add(self._items, 0, wx.ALL|wx.EXPAND, 5)
-        hbox.Add(self._containerPanel, 1, wx.ALL|wx.EXPAND, 5)
+     
+        self.tabContainer = wx.Notebook(self, -1, style=wx.NB_TOP)
         
-        vbox.Add(hbox, 1, wx.EXPAND)
+        self.imagePanel = RawImagePanel(self.tabContainer, -1)
+        self.tabContainer.AddPage(self.imagePanel, "Source Images")
         
-        self.SetSizer(vbox)
+        self.amiPanel = AMIPanel(self.tabContainer, -1)
+        self.tabContainer.AddPage(self.amiPanel, "AMIs")
+        
+        self.deploymentPanel = DeploymentTab(self.tabContainer, -1)
+        self.tabContainer.AddPage(self.deploymentPanel, "Deployments")
         
         #TODO move to controller
         pub.subscribe(self.__createAMI, "CREATE AMI")

@@ -30,22 +30,29 @@ class Application:
         self._app = wx.App()
 
         self._frame = Gui()
-        
-        self._imageController = ImageController(self._frame.getImagePanel(), self._dao)
-        self._amiController = AMIController(self._frame.getAMIPanel(), 
+    
+        self._imageController = ImageController(self._frame.imagePanel, self._dao)
+        self._amiController = AMIController(self._frame.amiPanel, 
                                             self._dao,
                                             self._amiToolsFactory)
+        
         self.loadDeploymentPanels()
         
         self._frame.bindAddDeploymentTool(self.addDeployment)
         self._frame.bindConfTool(self.showConf)
         self._frame.bindCloudTool(self.showCloudWizard)
         
+        self._frame.deploymentPanel.tree.Bind(wx.EVT_TREE_SEL_CHANGED, self.deploymentSelect)
+        
         Publisher.subscribe(self._handleNewDeployment, "DEPLOYMENT CREATED")
         
         self._frame
         self._frame.Show()     
         
+        
+    def deploymentSelect(self, event):
+        self._frame.deploymentPanel.displayPanel.showPanel(self._frame.deploymentPanel.tree.GetItemText(event.GetItem()))
+    
     def _handleNewDeployment(self, msg):    
         deployment = msg.data['deployment']
         self.loadDeploymentPanel(deployment)
@@ -57,8 +64,9 @@ class Application:
             self.loadDeploymentPanel(d)
             
     def loadDeploymentPanel(self, deployment):
-        deployPanel = DeploymentPanel(deployment, self._frame._containerPanel)
-        self._frame.addPanel("[Deployment] " + deployment.id, deployPanel)
+        
+        deployPanel = DeploymentPanel(deployment, self._frame.deploymentPanel.displayPanel)
+        self._frame.deploymentPanel.addDeploymentPanel(deployPanel)
         self.deplomentControllers[deployment.id] = DeploymentController(deployPanel, self._dao)
     
     def addDeployment(self, event):
