@@ -1,9 +1,10 @@
+from .SourceImage import SourceImage
 
-class AMI(object):
+class AMI(SourceImage):
     
-    def __init__(self, id, cloud, srcImg=None, kernel=None, ramdisk=None):
-        self.id = id
+    def __init__(self, id, image, amiId, cloud, kernel=None, ramdisk=None):
+        SourceImage.__init__(self, id, image)
+        self.amiId = amiId
         self.cloud = cloud
-        self.srcImg = srcImg
         self.ramdisk = ramdisk
         self.kernel = kernel

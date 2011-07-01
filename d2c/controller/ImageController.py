@@ -14,7 +14,7 @@ class ImageController:
         self._dao = dao
           
         self._imageView.addButton.Bind(wx.EVT_BUTTON, self._onAddImage) 
-        self._imageView.SetImages(dao.getSourceImages())
+        self._imageView.SetImages(dao.getDesktopImages())
         self._imageView.createAMIButton.Bind(wx.EVT_BUTTON, self._createAMIImage)
         
         createEmptyChecker(self._imageView.addButton, self._imageView.newFileText)

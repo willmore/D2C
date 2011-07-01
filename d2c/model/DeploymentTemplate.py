@@ -9,11 +9,12 @@ class DeploymentTemplate(object):
         
 class RoleTemplate(object):
     
-    def __init__(self, id, roles=(), 
+    def __init__(self, id, image, roles=(), 
                  startActions=(), uploadActions=(),
                  stopActions=(), finishedChecks=(), 
                  dataCollectors=(), launchCred=None, contextCred=None):
         self.id = id
+        self.image = image
         self.roles = list(roles)
         self.startActions= list(startActions)
         self.uploadActions= list(uploadActions)

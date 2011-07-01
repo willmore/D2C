@@ -61,9 +61,9 @@ class AMITracker(object):
     def __init__(self, ami=None, srcImg=None, cloud=None):
         if ami is not None:
             self.ami = ami
-            self.id = ami.id
+            self.id = ami.amiId
             self.status = "Created"
-            self.srcImg = ami.srcImg
+            self.srcImg = ami.image.originalImage
             self.cloud = ami.cloud
         else:
             self.id = "---"

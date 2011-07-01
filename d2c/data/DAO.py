@@ -1,5 +1,5 @@
 import os
-from d2c.model.SourceImage import SourceImage
+from d2c.model.SourceImage import SourceImage, Image, DesktopImage
 from d2c.model.EC2Cred import EC2Cred
 from d2c.model.AWSCred import AWSCred
 from d2c.model.Configuration import Configuration
@@ -87,6 +87,7 @@ class DAO:
         class CloudExtension(MapperExtension):
             
             def __init__(self, daoRef):
+                MapperExtension.__init__(self)
                 self.daoRef = daoRef
             
             def reconstruct_instance(self, mapper, instance):
@@ -208,28 +209,33 @@ class DAO:
         
         mapper(FileExistsFinishedCheck, finishedCheckTable, extension=actionExtension)
         
+          
         srcImgTable = Table('src_img', metadata,
-                            Column('path', String, primary_key=True)
+                            Column('id', Integer, primary_key=True),
+                            Column('image_id', ForeignKey('image.id')),
+                            Column('type', String(30), nullable=False)
+                            )
+            
+        imgTable = Table('image', metadata,
+                            Column('id', Integer, primary_key=True),
+                            Column('name', String, unique=True),
+                            Column('original_id', Integer, ForeignKey('src_img.id', use_alter=True, name='fk_orig_constraint'))
                             )
         
-        mapper(SourceImage, srcImgTable)
-        
-        
+        desktopImageTable = Table('desktop_img', metadata,
+                            Column('path', String),
+                            Column('id', Integer, ForeignKey('src_img.id'), primary_key=True)
+                            )
+            
         amiTable = Table('ami', metadata,
-                            Column('id', String, primary_key=True),
+                            Column('id', Integer, ForeignKey('src_img.id'), primary_key=True),
+                            Column('amiId', String),
                             Column('cloud_id', String, ForeignKey('cloud.name'), nullable=False, primary_key=True),
-                            Column('src_img_id', String, ForeignKey('src_img.path'), nullable=False),
                             Column('kernel_id', String, ForeignKey('kernel.aki'), nullable=False),
                             Column('ramdisk_id', String, ForeignKey('ramdisk.id'), nullable=True),
                             )
         
-        mapper(AMI, amiTable, properties={
-                        'roles': relationship(Role, backref='ami'),
-                        'cloud': relationship(Cloud),
-                        'srcImg': relationship(SourceImage),
-                        'kernel': relationship(Kernel),
-                        'ramdisk': relationship(Ramdisk)
-                    })
+        
         
         ramdiskTable = Table('ramdisk', metadata,
                              Column('id', String, primary_key=True),
@@ -248,20 +254,22 @@ class DAO:
                             Column('arch_id', String, ForeignKey('architecture.arch'), nullable=False),
                             Column('ramdisk_id', String, ForeignKey('ramdisk.id'), nullable=True),
                             Column('isPvGrub', Boolean, nullable=False)
-                            
                             )
         
         mapper(Kernel, kernelTable, properties={'cloud':relationship(Cloud, backref='kernels'),
                                                 'architecture':relationship(Architecture),
                                                'recommendedRamdisk':relationship(Ramdisk) })
+        
         roleTemplateTable = Table('role_template', metadata,
                             Column('id', String, primary_key=True),
                             Column('deployment_template_id', String, ForeignKey('deployment_template.id'), primary_key=True),
                             Column('context_cred_id', String, ForeignKey('ssh_cred.id')),
-                            Column('launch_cred_id', String, ForeignKey('ssh_cred.id'))
+                            Column('launch_cred_id', String, ForeignKey('ssh_cred.id')),
+                            Column('image_id', Integer, ForeignKey('image.id'), nullable=False)
                             )  
         
         mapper(RoleTemplate, roleTemplateTable, properties={
+                                    'image' : relationship(Image),
                                     'startActions': relationship(StartAction),
                                     'uploadActions': relationship(UploadAction),
                                     'dataCollectors': relationship(DataCollector),
@@ -273,15 +281,33 @@ class DAO:
         roleTable = Table('role', metadata,
                             Column('id', String, primary_key=True),
                             Column('deploy_id', String, ForeignKey('deploy.id'), primary_key=True),
-                            Column('ami_id', String, ForeignKey('ami.id')),
+                            Column('src_img_id', Integer, ForeignKey('src_img.id')),
                             Column('count', Integer),
                             Column('pollRate', Integer),
                             Column('instance_type_id', String, ForeignKey('instance_type.name'))
                             )  
         
         mapper(Role, roleTable, properties={
-                                    'instanceType': relationship(InstanceType)
-                                    }, extension=actionExtension)
+                                    'instanceType': relationship(InstanceType),
+                                    'sourceImage' : relationship(SourceImage)
+                                     }, extension=actionExtension)
+        
+        mapper(SourceImage, srcImgTable, polymorphic_on=srcImgTable.c.type, polymorphic_identity='src_img')
+        
+        mapper(Image, imgTable, 
+               properties={'images': relationship(SourceImage, backref='image', primaryjoin=srcImgTable.c.image_id==imgTable.c.id),
+                           'originalImage': relationship(SourceImage, post_update=True, primaryjoin=imgTable.c.original_id==srcImgTable.c.id)
+                           })
+        
+        mapper(DesktopImage, desktopImageTable, inherits=SourceImage, polymorphic_identity='desktop_img')
+        
+        mapper(AMI, amiTable, 
+                    inherits=SourceImage, polymorphic_identity='ami_img',
+                    properties={
+                        'cloud': relationship(Cloud),
+                        'kernel': relationship(Kernel),
+                        'ramdisk': relationship(Ramdisk)
+                    })
         
         metadata.create_all(self.engine)
         
@@ -311,8 +337,8 @@ class DAO:
         action.executorFactory = self.executorFactory
     
     def _setCloudBotoModule(self, cloud):
-            assert isinstance(cloud, Cloud)
-            cloud.botoModule = self.botoModule
+        assert isinstance(cloud, Cloud)
+        cloud.botoModule = self.botoModule
  
     def add(self, entity):   
         self.session.add(entity)
@@ -329,6 +355,9 @@ class DAO:
     
     def getSourceImages(self):
         return self.session.query(SourceImage)
+    
+    def getDesktopImages(self):
+        return self.session.query(DesktopImage)
         
     def saveConfiguration(self, conf):
         c = self.__getConn().cursor()
@@ -467,17 +496,6 @@ class DAO:
     
     def getCloud(self, name):       
         return self.session.query(Cloud).filter_by(name=name).one()     
-        
-    def saveKernel(self, kernel):
-        
-        assert isinstance(kernel, Kernel)
-                
-        c = self.__getConn().cursor()
-
-        c.execute("insert into amikernel (aki, cloud, arch, contents) values (?,?,?,?)", 
-                      (kernel.aki, kernel.cloudName, kernel.arch, kernel.contents))
-        self.__getConn().commit()
-        c.close() 
 
     def addInstanceType(self, instanceType):
         self.session.add(instanceType)

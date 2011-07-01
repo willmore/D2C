@@ -13,7 +13,7 @@ from mockito import *
 
 from d2c.model.SSHCred import SSHCred
 from d2c.model.DataCollector import DataCollector
-from d2c.model.SourceImage import SourceImage
+from d2c.model.SourceImage import Image, DesktopImage
 import tempfile
 
 def init_db(dao, confFile):
@@ -23,8 +23,10 @@ def init_db(dao, confFile):
     dao.addAWSCred(conf.awsCred)
     
     dao.setCredStore(CredStore(dao))
-    srcImg = SourceImage("/home/willmore/images/worker.vdi")
-    dao.add(srcImg) 
+    myWorkerImg = Image(None, "My Worker", DesktopImage(None, None, "/home/willmore/images/worker.vdi"))
+    
+     
+    dao.add(myWorkerImg) 
     archs = [Architecture('x86'), Architecture('x86_64')]
      
     for a in archs:
@@ -58,7 +60,7 @@ def init_db(dao, confFile):
     dao.add(ramdisk)
     ramdisk = Ramdisk("eri-83141744", cloud, archs[1])
     dao.add(ramdisk)
-    ami = AMI("emi-58091682", cloud, srcImg, kernel=cloud.kernels[0], ramdisk=ramdisk)
+    ami = AMI(None, myWorkerImg, "emi-58091682", cloud, kernel=cloud.kernels[0], ramdisk=ramdisk)
     dao.addAMI(ami)
      
     for instance in []:
@@ -74,7 +76,9 @@ def init_db(dao, confFile):
     
     dTemplate = DeploymentTemplate("dummyDep", 
                                    dataDir="/home/willmore/.d2c_test/deployments/dummyDep",
-                                   roleTemplates=[RoleTemplate(id="loner",
+                                   roleTemplates=[RoleTemplate(
+                                                        id="loner",
+                                                        image = myWorkerImg,
                                                         uploadActions=[UploadAction(tmpSrc.name, "/tmp/foobar", sshCred)], 
                                                         dataCollectors=[DataCollector("/tmp", sshCred)],
                                                         contextCred=sshCred,
