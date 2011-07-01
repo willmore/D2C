@@ -55,7 +55,7 @@ class Gui(wx.Frame):
         self.amiPanel = AMIPanel(self.tabContainer, -1)
         self.tabContainer.AddPage(self.amiPanel, "AMIs")
         
-        self.deploymentPanel = DeploymentTab(self.tabContainer, -1)
+        self.deploymentPanel = DeploymentTab(dao, self.tabContainer, -1)
         self.tabContainer.AddPage(self.deploymentPanel, "Deployments")
         
         #TODO move to controller

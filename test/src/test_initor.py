@@ -1,7 +1,5 @@
-from d2c.model.Role import Role
 from d2c.model.InstanceType import InstanceType, Architecture
-from d2c.model.Deployment import Deployment
-from d2c.model.Cloud import Cloud
+from d2c.model.Cloud import EC2Cloud, DesktopCloud
 from d2c.model.Kernel import Kernel
 from d2c.model.AMI import AMI
 from d2c.data.CredStore import CredStore
@@ -33,7 +31,7 @@ def init_db(dao, confFile):
     for a in archs:
         dao.add(a)
          
-    clouds = [Cloud(name="SciCloud", 
+    clouds = [EC2Cloud(name="SciCloud", 
                         serviceURL="http://172.17.36.21:8773/services/Eucalyptus",
                         ec2Cert="/home/willmore/.euca/cloud-cert.pem",
                         storageURL="http://172.17.36.21:8773/services/Walrus",
@@ -41,16 +39,17 @@ def init_db(dao, confFile):
                                  Kernel("eki-3EB4165A", archs[1], "internal://ami_data/kernels/2.6.35-24-virtual-x86_64.tgz")],
                         instanceTypes=get_instance_types(dao)
                         ),
-                Cloud("eu-west-1", 
+              EC2Cloud("eu-west-1", 
                       "https://eu-west-1.ec2.amazonaws.com", 
                       "https://s3.amazonaws.com",
                       "/opt/EC2_TOOLS/etc/ec2/amitools/cert-ec2.pem",
                       instanceTypes=get_instance_types(dao)),
-                Cloud("us-west-1", 
+              EC2Cloud("us-west-1", 
                       "https://us-west-1.ec2.amazonaws.com", 
                       "https://s3.amazonaws.com", 
                       "/opt/EC2_TOOLS/etc/ec2/amitools/cert-ec2.pem",
-                      get_instance_types(dao))]
+                      get_instance_types(dao)),
+              DesktopCloud("VirtualBox")]
 
     for cloud in clouds:
         dao.add(cloud)
@@ -92,13 +91,19 @@ def init_db(dao, confFile):
 
     
     dao.add(dTemplate)
-    cloud = clouds[0]
-
+    ec2Cloud = clouds[0]
+    vbCloud = clouds[3]
+    
     roleReq = {}
     for roleTemp in dTemplate.roleTemplates:
-        roleReq[roleTemp] = (ami, cloud.instanceTypes[0], 2)
-        
-    deployment = dTemplate.createDeployment(cloud, roleReq)
+        roleReq[roleTemp] = (ami, ec2Cloud.instanceTypes[0], 2)
+    deployment = dTemplate.createDeployment(ec2Cloud, roleReq)
+  
+    roleReq = {}
+    for roleTemp in dTemplate.roleTemplates:
+        roleReq[roleTemp] = (deskImg, None, 2)
+    deployment = dTemplate.createDeployment(vbCloud, roleReq)
+    
     dao.add(deployment)
     
 def get_instance_types(dao):

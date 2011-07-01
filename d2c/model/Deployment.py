@@ -92,6 +92,8 @@ class Deployment(object):
         which may be in various states (requested, running, terminated, etc.)
     '''  
     
+    POLL_RATE = 1
+    
     def __init__(self, 
                  id, 
                  dataDir,
@@ -113,7 +115,7 @@ class Deployment(object):
         self.deploymentTemplate = deploymentTemplate
         
         self.state = state
-        self.monitor = Monitor(self, listeners, pollRate)
+        
         self.logger = logger
         self.pollRate = pollRate
         
@@ -172,6 +174,13 @@ class Deployment(object):
         self.runLifecycle = False
         self.stopInstances = True
         self.logger.write("Canceling deployment")
+    
+    def _getMonitor(self):
+        
+        if not hasattr(self, 'monitor'):
+            self.monitor = Monitor(self, pollRate=Deployment.POLL_RATE)
+
+        return self.monitor
         
     def run(self):
         '''
@@ -181,7 +190,6 @@ class Deployment(object):
         runLifecycle flag which indicates is the process must stop.
         Each stage must throw an exception if a failure occurs.
         '''
-        
         self.runLifecycle = True
         
         #Ordered mapping of existing stage to transition.
@@ -236,7 +244,7 @@ class Deployment(object):
         allRunning = False
         
         while self.runLifecycle and not allRunning:
-            time.sleep(self.pollRate)
+            time.sleep(Deployment.POLL_RATE)
             
             if not self.runLifecycle:
                 return
@@ -290,7 +298,7 @@ class Deployment(object):
         # Filter only works in boto 2.0. Add back when we move from 1.9 to 2.0
         #res = self.cloud.getConnection(self.awsCred).get_all_instances(filters={'reservation-id':reservationIds})
         
-        res = self.cloud.getConnection(self.awsCred).get_all_instances()
+        res = self.cloud.getConnection(self.awsCred).getAllInstances()
         
         self.logger.write("Got reservations: %s" % str(res))
         
@@ -319,11 +327,11 @@ class Deployment(object):
         
     def __stopRoles(self):
         self.logger.write("Stopping roles")
-                
-        for role in self.roles:
-            role.executeStopCommands()
-            
-        self.__setState(DeploymentState.INSTANCES_STOPPED)
+        #        
+        #for role in self.roles:
+        #    role.executeStopCommands()
+        #    
+        #self.__setState(DeploymentState.INSTANCES_STOPPED)
             
         self.logger.write("Roles stopped")
         
@@ -358,10 +366,10 @@ class Deployment(object):
         self.__setState(DeploymentState.COMPLETED)
     
     def addAnyStateChangeListener(self, listener):
-        self.monitor.addStateAnyChangeListener(listener)
+        self._getMonitor().addStateAnyChangeListener(listener)
         
     def addStateChangeListener(self, state, listener):
-        self.monitor.addStateChangeListener(state, listener)
+        self._getMonitor().addStateChangeListener(state, listener)
      
     def setPollRate(self, pollRate): 
         self.pollRate = pollRate

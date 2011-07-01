@@ -7,7 +7,7 @@ from d2c.model.Deployment import Deployment
 from d2c.model.Role import Role
 from d2c.model.InstanceType import InstanceType, Architecture
 from d2c.model.Region import Region
-from d2c.model.Cloud import Cloud
+from d2c.model.Cloud import EC2Cloud, DesktopCloud, Cloud
 from d2c.model.Kernel import Kernel
 from d2c.model.AMI import AMI
 from d2c.model.Action import StartAction
@@ -78,11 +78,16 @@ class DAO:
         mapper(AWSCred, awsCredTable)
       
         cloudTable = Table('cloud', metadata,
-                            Column('name', String, primary_key=True, nullable=False),
+                            Column('name', String, primary_key=True),
+                            Column('type', String, nullable=False)
+                            )
+        
+        ec2CloudTable  = Table('ec2cloud', metadata,
+                            Column('name', ForeignKey("cloud.name"), primary_key=True),
                             Column('serviceURL', String, nullable=False),
                             Column('storageURL', String, nullable=False),
-                            Column('ec2Cert', String, nullable=False)
-                            )       
+                            Column('ec2Cert', String, nullable=False),
+                        )
         
         class CloudExtension(MapperExtension):
             
@@ -96,8 +101,12 @@ class DAO:
         mapper(Cloud, cloudTable, properties={
                                     'deploys': relationship(Deployment, backref='cloud'),
                                     'instanceTypes': relationship(InstanceType, backref='cloud')},                                
-                                    extension=CloudExtension(self)
-                                  )
+                                    extension=CloudExtension(self),
+                                    polymorphic_on=cloudTable.c.type, polymorphic_identity='cloud')
+        
+        mapper(EC2Cloud, ec2CloudTable, inherits=Cloud, polymorphic_identity='ec2')
+        
+        mapper(DesktopCloud, cloudTable, inherits=Cloud, polymorphic_identity='desktop')
       
         deploymentTable = Table('deploy', metadata,
                             Column('id', Integer, primary_key=True),
@@ -209,7 +218,6 @@ class DAO:
                             )
         
         mapper(FileExistsFinishedCheck, finishedCheckTable, extension=actionExtension)
-        
           
         srcImgTable = Table('src_img', metadata,
                             Column('id', Integer, primary_key=True),
@@ -282,9 +290,9 @@ class DAO:
         
         roleTable = Table('role', metadata,
                             Column('id', Integer, primary_key=True),
-                            Column('deploy_id', ForeignKey('deploy.id')),
-                            Column('src_img_id', Integer, ForeignKey('src_img.id')),
-                            Column('template_id', ForeignKey('role_template.id')),
+                            Column('deploy_id', ForeignKey('deploy.id'), nullable=False),
+                            Column('src_img_id', Integer, ForeignKey('src_img.id'), nullable=False),
+                            Column('template_id', ForeignKey('role_template.id'), nullable=False),
                             Column('count', Integer),
                             Column('pollRate', Integer),
                             Column('instance_type_id', String, ForeignKey('instance_type.name'))

@@ -7,7 +7,73 @@ import boto
 from boto.ec2.regioninfo import RegionInfo
 import threading
 
+
 class Cloud(object):
+    
+    def __init__(self, name):
+        self.name = name
+        
+class CloudConnection(object):
+    
+    def __init__(self):
+        pass
+
+class DummyReservation(object):
+    
+    def __init__(self):
+        self.id = 0
+        self.instances = []
+
+class VBoxConn(CloudConnection):
+    
+    def __init__(self):
+        CloudConnection.__init__(self)
+        
+    def runInstances(self, image, instanceType, count):
+        #TODO action acquire instances
+        return DummyReservation() #because Deployment needs a reservation handle
+    
+    def getAllInstances(self, reservationId=None):
+        #TODO return instance objects
+        '''
+        If reservationId is none, return a list of all reservations
+        if resrvationId is defined, return a list of the one reservation that matches
+        Must create a new VirtualBox instance type that has a fields:
+            - state
+            - public_dns_name = ip of vbox instance
+        '''
+        pass
+
+class DesktopCloud(Cloud):
+    
+    def __init__(self, name):
+        Cloud.__init__(self, name)
+        
+    def getConnection(self, *args):
+        return VBoxConn()
+  
+    
+class EC2CloudConn(CloudConnection):
+    
+    def __init__(self, botoConn):
+        CloudConnection.__init__(self)
+        self.botoConn = botoConn
+        
+    def runInstances(self, image, instanceType, count):    
+        
+        return self.botoConn.run_instances(image.amiId, 
+                                    None,#key_name=str(launchKey) if launchKey is not None else None,
+                                    min_count=count, 
+                                    max_count=count, 
+                                    instance_type=str(instanceType.name))
+        
+    def getAllInstances(self, reservationId=None):
+        if reservationId is None:
+            self.botoConn.get_all_instances()                    
+        else:
+            self.botoConn.get_all_instances(filters={'reservation-id':reservationId})
+
+class EC2Cloud(Cloud):
     '''
     Region represents the EC2 concept of a region, which is an isolated instance of 
     a cloud system.
@@ -23,9 +89,10 @@ class Cloud(object):
         assert isinstance(storageURL, basestring)
         assert isinstance(ec2Cert, basestring)
         
+        Cloud.__init__(self, name)
+        
         self.mylock = threading.RLock()
         self.botoModule = botoModule
-        self.name = name
         self.serviceURL = serviceURL
         self.storageURL = storageURL
         self.ec2Cert = ec2Cert
@@ -56,10 +123,6 @@ class Cloud(object):
             
         return None
     
-    def __parseEndPoint(self, url):
-        
-        return 
-    
     def getConnection(self, awsCred):
         
         assert isinstance(awsCred, AWSCred), "AWSCred is type=%s" % type(awsCred)
@@ -71,12 +134,12 @@ class Cloud(object):
             
             regionInfo = RegionInfo(name=str(self.name), endpoint=str(parsedEndpoint.hostname))
 
-            self.__ec2Conn = self.botoModule.connect_ec2(aws_access_key_id=str(awsCred.access_key_id),
+            self.__ec2Conn = EC2CloudConn(self.botoModule.connect_ec2(aws_access_key_id=str(awsCred.access_key_id),
                                               aws_secret_access_key=str(awsCred.secret_access_key),
                                               is_secure=parsedEndpoint.scheme == "https",
                                               region=regionInfo,
                                               port=parsedEndpoint.port,
-                                              path=str(parsedEndpoint.path))
+                                              path=str(parsedEndpoint.path)))
         
         return self.__ec2Conn
     

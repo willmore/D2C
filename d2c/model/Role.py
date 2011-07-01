@@ -23,7 +23,7 @@ class Role(object):
                  logger=StdOutLogger()):
         
         assert count > 0, "Count must be int > 0"
-        assert isinstance(instanceType, InstanceType), "Type is %s" % type(instanceType)
+        assert instanceType is None or isinstance(instanceType, InstanceType), "Type is %s" % type(instanceType)
         assert deployment is None or isinstance(deployment, Deployment)
         
         self.id = id
@@ -48,7 +48,7 @@ class Role(object):
     def _cascadeLogger(self):
         
         for actions in [self.roleTemplate.startActions, self.roleTemplate.uploadActions, 
-                        self.roleTemplate.stopActions, self.roleTemplate.finishedChecks, 
+                        self.roleTemplate.finishedChecks, 
                         self.roleTemplate.dataCollectors]:
             for a in actions:
                 a.logger = self.logger
@@ -63,11 +63,11 @@ class Role(object):
         return self.count
      
     def costPerHour(self):
-        return self.count * self.instanceType.costPerHour
+        return self.count * self.instanceType.costPerHour if self.instanceType is not None else 0
        
     def launch(self, awsCred):
         
-        assert isinstance(awsCred, AWSCred)
+        assert awsCred is None or isinstance(awsCred, AWSCred)
         
         #Using str() because boto does not support unicode type
         cloudConn = self.deployment.cloud.getConnection(awsCred)
@@ -75,14 +75,13 @@ class Role(object):
         launchKey = self.roleTemplate.launchCred.id if self.roleTemplate.launchCred is not None else None
         #launchKey = None
        
-        self.logger.write("Reserving %d instance(s) of %s with launchKey %s" % (self.count, self.image.amiId, launchKey))
+        self.logger.write("Reserving %d instance(s) of %s with launchKey %s" % (self.count, str(self.image), launchKey))
        
         #TODO catch exceptions     
-        self.reservation = cloudConn.run_instances(str(self.image.amiId), 
-                                                 key_name=str(launchKey) if launchKey is not None else None,
-                                                 min_count=self.count, 
-                                                 max_count=self.count, 
-                                                 instance_type=str(self.instanceType.name)) 
+        self.reservation = cloudConn.runInstances(self.image, 
+                                                 #key_name=str(launchKey) if launchKey is not None else None,
+                                                 self.count, 
+                                                 self.instanceType) 
         
         #TODO introduce abstraction appropriate exception
         assert self.reservation is not None and self.reservation.id is not None

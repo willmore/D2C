@@ -37,7 +37,7 @@ class RoleTemplate(object):
     
     def __init__(self, id, name, image, roles=(), 
                  startActions=(), uploadActions=(),
-                 stopActions=(), finishedChecks=(), 
+                 finishedChecks=(), 
                  dataCollectors=(), launchCred=None, contextCred=None):
         self.id = id
         self.name = name
@@ -45,7 +45,6 @@ class RoleTemplate(object):
         self.roles = list(roles)
         self.startActions= list(startActions)
         self.uploadActions= list(uploadActions)
-        self.stopActions= list(stopActions)
         self.finishedChecks= list(finishedChecks)
         self.dataCollectors= list(dataCollectors)
         self.launchCred = launchCred

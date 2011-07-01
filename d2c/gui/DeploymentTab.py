@@ -3,12 +3,16 @@ import wx
 from .ContainerPanel import ContainerPanel
 from .RoleList import RoleTemplateList
 from .DeploymentPanel import DeploymentPanel
+from d2c.controller.DeploymentController import DeploymentController
 
 class DeploymentTab(wx.Panel):
     
-    def __init__(self, *args, **kwargs):
+    def __init__(self, dao, *args, **kwargs):
 
         wx.Panel.__init__(self, *args, **kwargs)
+        
+        self.dao = dao
+        
         self.splitter = wx.SplitterWindow(self, -1)
         self.splitter.SetMinimumPaneSize(150)
         vbox = wx.BoxSizer(wx.VERTICAL)
@@ -32,7 +36,9 @@ class DeploymentTab(wx.Panel):
         for d in deploymentPanel.deployment.deployments:
             label = deploymentPanel.deployment.name  + ":" + str(d.id)
             self.tree.AppendItem(node, label)
-            self.displayPanel.addPanel(label, DeploymentPanel(d, self.displayPanel, -1))
+            p = DeploymentPanel(d, self.displayPanel, -1)
+            self.displayPanel.addPanel(label, p)
+            DeploymentController(p, self.dao)
         
         
 class DeploymentTemplatePanel(wx.Panel):    
