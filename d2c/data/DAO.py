@@ -295,7 +295,7 @@ class DAO:
         mapper(SourceImage, srcImgTable, polymorphic_on=srcImgTable.c.type, polymorphic_identity='src_img')
         
         mapper(Image, imgTable, 
-               properties={'images': relationship(SourceImage, backref='image', primaryjoin=srcImgTable.c.image_id==imgTable.c.id),
+               properties={'reals': relationship(SourceImage, backref='image', primaryjoin=srcImgTable.c.image_id==imgTable.c.id),
                            'originalImage': relationship(SourceImage, post_update=True, primaryjoin=imgTable.c.original_id==srcImgTable.c.id)
                            })
         
@@ -352,6 +352,9 @@ class DAO:
     
     def getArchitecture(self, id):
         return self.session.query(Architecture).filter_by(arch=id).first()
+    
+    def getImages(self):
+        return self.session.query(Image)
     
     def getSourceImages(self):
         return self.session.query(SourceImage)

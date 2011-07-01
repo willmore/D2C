@@ -11,15 +11,13 @@ from .AMIPanel import AMIPanel
 import pkg_resources
 from .RawImagePanel import RawImagePanel
 from .DeploymentTab import DeploymentTab
+from .ImageTab import ImageTab
 
 class MainTabContainer(wx.Panel):
     
     def __init__(self, *args, **kwargs):
         wx.Panel.__init__(self, *args, **kwargs)
         
-        
-
-
 class Gui(wx.Frame):    
     
     _ID_LISTBOX = 1
@@ -33,7 +31,7 @@ class Gui(wx.Frame):
     ID_CONF = 2
     ID_CLOUD = 5
     
-    def __init__(self, parent=None, id=-1, title='D2C'):
+    def __init__(self, dao, parent=None, id=-1, title='D2C'):
         wx.Frame.__init__(self, parent, id, title, size=(750, 450))
 
         self.Center()
@@ -47,6 +45,9 @@ class Gui(wx.Frame):
         toolbar.AddLabelTool(self.ID_ADD_DEPLOYMENT, '', wx.Bitmap(pkg_resources.resource_filename(__package__, "icons/network-icon.png")))
      
         self.tabContainer = wx.Notebook(self, -1, style=wx.NB_TOP)
+        
+        self.imageTab = ImageTab(dao, self.tabContainer, -1)
+        self.tabContainer.AddPage(self.imageTab, "Images")
         
         self.imagePanel = RawImagePanel(self.tabContainer, -1)
         self.tabContainer.AddPage(self.imagePanel, "Source Images")
@@ -87,7 +88,7 @@ class Gui(wx.Frame):
         
     #TODO move to controller
     def __createAMI(self, _):
-        self.setSelection(self.LABEL_AMIS)
+        self.tabContainer.ChangeSelection(2)
         
     def setSelection(self, label):
         self._items.SetStringSelection(label)

@@ -19,7 +19,7 @@ class DesktopImage(SourceImage):
         
 class Image(object):
     
-    def __init__(self, id, name, originalImage, images=()):
+    def __init__(self, id, name, originalImage, reals=()):
         
         assert id is None or isinstance(id, int)
         assert name is None or isinstance(name, basestring)
@@ -27,4 +27,4 @@ class Image(object):
         self.id = id
         self.name = name
         self.originalImage = originalImage
-        self.images = list(images)
+        self.reals = list(reals)

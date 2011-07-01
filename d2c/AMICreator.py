@@ -106,7 +106,7 @@ class AMICreator:
         self.__logger.write("Registering AMI: %s" % s3ManifestPath)
         amiId = self.__amiTools.registerAMI(s3ManifestPath, self.__cloud, self.__awsCred)     
         
-        ami = AMI(amiId, self.__cloud, self.__srcImg, kernel=self.__kernel)
+        ami = AMI(None, self.__srcImg.image, amiId, self.__cloud, kernel=self.__kernel)
         self.__dao.add(ami)
         
         return ami    

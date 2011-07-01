@@ -115,7 +115,7 @@ def main(argv=sys.argv):
     mockAMIFactory = mock(AMIToolsFactory)
     mockAMITools = mock(AMITools)
     when(mockAMIFactory).getAMITools(any()).thenReturn(mockAMITools)
-    when(mockAMITools).getArch(any()).thenReturn("X86_64")
+    when(mockAMITools).getArch(any()).thenReturn("x86_64")
     when(mockAMITools).registerAMI(any(), any(), any()).thenReturn("foobarami")
     
     print dao.getAMIs()

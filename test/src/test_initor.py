@@ -23,7 +23,8 @@ def init_db(dao, confFile):
     dao.addAWSCred(conf.awsCred)
     
     dao.setCredStore(CredStore(dao))
-    myWorkerImg = Image(None, "My Worker", DesktopImage(None, None, "/home/willmore/images/worker.vdi"))
+    deskImg = DesktopImage(None, None, "/home/willmore/images/worker.vdi")
+    myWorkerImg = Image(None, "My Worker", deskImg, [deskImg])
     
      
     dao.add(myWorkerImg) 

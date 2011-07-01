@@ -31,7 +31,7 @@ class Application:
         self._dao = dao
         self._app = wx.App()
 
-        self._frame = Gui()
+        self._frame = Gui(dao)
     
         self._imageController = ImageController(self._frame.imagePanel, self._dao)
         self._amiController = AMIController(self._frame.amiPanel, 
