@@ -32,3 +32,8 @@ class ContainerPanel(wx.Panel):
     
     def getPanel(self, label):
         return self._panels[label]
+    
+    def clearPanels(self):
+        
+        for panel in self._panels.values():
+            panel.GetParent().RemoveChild(panel)

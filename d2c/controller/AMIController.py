@@ -29,11 +29,11 @@ class AMIThread(Thread):
         self.__logger = logger
         self.__ramdisk = ramdisk
             
-    def _sendFinishMessage(self, jobid, amiid=None, 
+    def _sendFinishMessage(self, jobid, ami=None, 
                             code=Codes.JOB_CODE_SUCCESS, exception=None):
     
         wx.CallAfter(Publisher().sendMessage, "AMI JOB DONE", 
-                             (jobid, amiid, code, exception))
+                             (jobid, ami, code, exception))
             
     def run(self):
         try:

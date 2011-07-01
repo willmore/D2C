@@ -7,6 +7,7 @@ from d2c.model.SourceImage import Image, DesktopImage
 from d2c.model.AMI import AMI
 from .NewAMIWizard import NewAMIWizard
 from d2c.controller.AMIWizardController import AMIWizardController
+from wx.lib.pubsub import Publisher
 
 class ImageTab(wx.Panel):
     
@@ -44,18 +45,34 @@ class ImageTab(wx.Panel):
         self.loadImages()
         
         self.tree.Bind(wx.EVT_TREE_SEL_CHANGED, self.imageSelect)
-        self.tree.Bind(wx.EVT_TREE_ITEM_RIGHT_CLICK, self.onTreeRightClick)
         self.bottomPanel.addButton.Bind(wx.EVT_BUTTON, self.addImage)
-
-    def onTreeRightClick(self, event):
         
-        pass
+        Publisher.subscribe(self.handleNewAMI, "AMI JOB DONE")
+
+    def handleNewAMI(self, msg):
+        (_, ami, _, _) = msg.data
+        self.addRealPanel(AMIImagePanel(ami, self.displayPanel, -1))
+    
+    def addRealPanel(self, panel):
+        imageName = panel.image.image.name
+        item, cookie = self.tree.GetFirstChild(self.treeRoot)
+        while item:
+            if imageName == self.tree.GetItemText(item):
+                self.tree.AppendItem(item, panel.image.amiId)
+                self.displayPanel.addPanel(panel.image.amiId, panel)
+                return
+            item, cookie = self.tree.GetNextChild(self.treeRoot, cookie)
+            
+        raise Exception("Unable to find node for: %s" % imageName)
     
     def imageSelect(self, event):
-        self.displayPanel.showPanel(self.tree.GetItemText(event.GetItem()))
+        label = self.tree.GetItemText(event.GetItem())
+        if label != "root":
+            self.displayPanel.showPanel(label)
         
     def loadImages(self):
-        
+        self.tree.DeleteChildren(self.treeRoot)
+        self.displayPanel.clearPanels()
         for image in self.dao.getImages():
             self.addImagePanel(ImagePanel(image, self.displayPanel, -1))
         
@@ -76,7 +93,8 @@ class ImageTab(wx.Panel):
         dialog = AddImageDialog(None, -1, 'Add Image', size=(400,200))
         
         if dialog.ShowModal() == wx.ID_OK:
-            img = Image(None, dialog.name.GetValue(), DesktopImage(None, None, dialog.path.GetValue()))
+            deskImg = DesktopImage(None, None, dialog.path.GetValue())
+            img = Image(None, dialog.name.GetValue(), deskImg, [deskImg])
             self.dao.add(img)
             self.addImagePanel(ImagePanel(img, self.displayPanel, -1)) 
         
