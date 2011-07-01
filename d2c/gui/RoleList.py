@@ -21,7 +21,7 @@ class RoleTemplateList(ItemList):
     
     def __init__(self, *args, **kwargs):
         
-        kwargs['mappers'] = [ColumnMapper('Name', lambda r: r.id, defaultWidth=wx.LIST_AUTOSIZE)]
+        kwargs['mappers'] = [ColumnMapper('Name', lambda r: r.name, defaultWidth=wx.LIST_AUTOSIZE)]
         kwargs['style'] =wx.LC_REPORT
        
         ItemList.__init__(self, *args, **kwargs)

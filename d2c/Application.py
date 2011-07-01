@@ -13,9 +13,8 @@ from d2c.controller.ConfController import ConfController
 from d2c.gui.ConfPanel import ConfPanel
 from d2c.controller.ImageController import ImageController
 from d2c.controller.AMIController import AMIController
-from d2c.gui.DeploymentWizard import DeploymentWizard
-from d2c.controller.DeploymentWizardController import DeploymentWizardController
-from d2c.gui.DeploymentPanel import DeploymentPanel
+from d2c.gui.DeploymentTemplateWizard import DeploymentTemplateWizard
+from d2c.controller.DeploymentTemplateWizardController import DeploymentTemplateWizardController
 from d2c.controller.DeploymentController import DeploymentController, DeploymentTemplateController
 from d2c.controller.NewCloudController import NewCloudController
 from d2c.gui.CloudPanel import CloudWizard
@@ -71,8 +70,8 @@ class Application:
         self.deplomentControllers[deployment.id] = DeploymentTemplateController(deployPanel, self._dao)
     
     def addDeployment(self, event):
-        mywiz = DeploymentWizard(None, -1, 'Deployment Creation Wizard')
-        DeploymentWizardController(mywiz, self._dao)
+        mywiz = DeploymentTemplateWizard(None, -1, 'Deployment Creation Wizard')
+        DeploymentTemplateWizardController(mywiz, self._dao)
         mywiz.ShowModal()
         mywiz.Destroy()
         

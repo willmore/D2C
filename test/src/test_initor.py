@@ -75,10 +75,14 @@ def init_db(dao, confFile):
     tmpSrc = tempfile.NamedTemporaryFile(delete=False)
     tmpSrc.write("blah")
     
-    dTemplate = DeploymentTemplate("dummyDep", 
+    
+    
+    dTemplate = DeploymentTemplate(None, 
+                                   "dummyDep", 
                                    dataDir="/home/willmore/.d2c_test/deployments/dummyDep",
                                    roleTemplates=[RoleTemplate(
-                                                        id="loner",
+                                                        None,
+                                                        name="Loner",
                                                         image = myWorkerImg,
                                                         uploadActions=[UploadAction(tmpSrc.name, "/tmp/foobar", sshCred)], 
                                                         dataCollectors=[DataCollector("/tmp", sshCred)],
@@ -88,6 +92,14 @@ def init_db(dao, confFile):
 
     
     dao.add(dTemplate)
+    cloud = clouds[0]
+
+    roleReq = {}
+    for roleTemp in dTemplate.roleTemplates:
+        roleReq[roleTemp] = (ami, cloud.instanceTypes[0], 2)
+        
+    deployment = dTemplate.createDeployment(cloud, roleReq)
+    dao.add(deployment)
     
 def get_instance_types(dao):
         

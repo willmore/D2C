@@ -2,6 +2,7 @@ import wx
 from .ContainerPanel import ContainerPanel
 from .AMIList import AMIList
 from .RoleList import RoleList
+from .ItemList import ItemList, ColumnMapper
 
         
 class RolePanel(wx.Panel):
@@ -14,7 +15,10 @@ class RolePanel(wx.Panel):
         
         self.sizer.Add(self.rolesText,0,wx.ALIGN_LEFT|wx.ALL,5)
         
-        self.roleList = RoleList(self, -1, style=wx.LC_REPORT)
+        mappers = [ColumnMapper('Name', lambda r: r.name, defaultWidth=wx.LIST_AUTOSIZE),
+                   ColumnMapper('Image', lambda r: r.image.name, defaultWidth=wx.LIST_AUTOSIZE)]
+        
+        self.roleList = ItemList(self, -1, style=wx.LC_REPORT, mappers=mappers)
 
         self.sizer.Add(self.roleList, 0, wx.EXPAND|wx.ALL, 5)
         
@@ -23,7 +27,6 @@ class RolePanel(wx.Panel):
         self.addRoleButton = wx.Button(self, wx.ID_ANY, 'Add New Role')
         self.hsizer.Add(self.addRoleButton, 0, wx.ALIGN_LEFT|wx.ALL, 2)
         
-          
         self.backButton = wx.Button(self, wx.ID_ANY, 'Back')
         self.hsizer.Add(self.backButton,0, wx.ALIGN_RIGHT|wx.ALL, 2)
         
@@ -45,27 +48,20 @@ class AddRolePanel(wx.Panel):
         addRoleTxt.SetFont(wx.Font(15, wx.DEFAULT, wx.DEFAULT, wx.BOLD))
         self.sizer.Add(addRoleTxt, 0)
         
-        self.amiList = AMIList(self, -1, style=wx.LC_REPORT)
-        self.sizer.Add(self.amiList, 0, wx.EXPAND | wx.ALL, 5)
+        
+        mappers = [ColumnMapper('Name', lambda i: i.name, defaultWidth=wx.LIST_AUTOSIZE)]
+        
+        self.imageList = ItemList(self, -1, style=wx.LC_REPORT, mappers=mappers)
+        
+        self.sizer.Add(self.imageList, 0, wx.EXPAND | wx.ALL, 5)
         
         self.roleName = wx.TextCtrl(self)
-        
-        self.hostCount = wx.SpinCtrl(self, size=(60, -1))
-        self.hostCount.SetRange(1, 1000)
-        
-        self.instanceType = wx.ComboBox(self, style=wx.CB_READONLY)
-        
+ 
         self.fgs = wx.FlexGridSizer(3,2,0,0)
         self.fgs.AddGrowableCol(1, 1)
         self.fgs.AddMany([
                         (wx.StaticText(self, -1, 'Role Name'),0, wx.ALIGN_RIGHT|wx.ALL, 2),
-                        (self.roleName, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL|wx.EXPAND|wx.ALL, 2),
-                        
-                        (wx.StaticText(self, -1, 'Host Count'),0, wx.ALIGN_RIGHT|wx.ALL, 2),
-                        (self.hostCount, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 2),
-                         
-                        (wx.StaticText(self, -1, 'Instance Type'),0, wx.ALIGN_RIGHT|wx.ALL, 2),
-                        (self.instanceType, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL|wx.EXPAND|wx.ALL, 2)]
+                        (self.roleName, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL|wx.EXPAND|wx.ALL, 2)]
                        )
         
         self.sizer.Add(self.fgs, 0, wx.ALL | wx.EXPAND, 5)
@@ -196,7 +192,7 @@ class CloudPanel(wx.Panel):
         self.SetSizer(self.sizer)
 
 
-class DeploymentWizard(wx.Dialog):
+class DeploymentTemplateWizard(wx.Dialog):
     
     def __init__(self, *args, **kwargs):
         wx.Dialog.__init__(self, size=(400, 300), *args, **kwargs)

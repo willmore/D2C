@@ -98,11 +98,11 @@ class Deployment(object):
                  awsCred=None,
                  cloud=None,
                  roles=(),
-                 reservations=(), 
                  state=DeploymentState.NOT_RUN, 
                  listeners={},
                  logger=StdOutLogger(), 
-                 pollRate=30):
+                 pollRate=30,
+                 deploymentTemplate=None):
                         
         self.id = id
         self.dataDir = dataDir
@@ -110,6 +110,7 @@ class Deployment(object):
         self.roles = list()
         self.addRoles(roles)
         self.awsCred = awsCred
+        self.deploymentTemplate = deploymentTemplate
         
         self.state = state
         self.monitor = Monitor(self, listeners, pollRate)

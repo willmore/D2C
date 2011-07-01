@@ -100,7 +100,7 @@ class DAO:
                                   )
       
         deploymentTable = Table('deploy', metadata,
-                            Column('id', String, primary_key=True),
+                            Column('id', Integer, primary_key=True),
                             Column('cloud_id', String, ForeignKey('cloud.name'), nullable=False),
                             Column('aws_cred_id', String, ForeignKey("aws_cred.name")),
                             Column('deployment_template_id', String, ForeignKey("deployment_template.id")),
@@ -114,7 +114,8 @@ class DAO:
                                     })
         
         deploymentTemplateTable = Table('deployment_template', metadata,
-                            Column('id', String, primary_key=True),
+                            Column('id', Integer, primary_key=True),
+                            Column('name', String, unique=True),
                             Column('dataDir', String)
                             )  
         
@@ -261,8 +262,9 @@ class DAO:
                                                'recommendedRamdisk':relationship(Ramdisk) })
         
         roleTemplateTable = Table('role_template', metadata,
-                            Column('id', String, primary_key=True),
-                            Column('deployment_template_id', String, ForeignKey('deployment_template.id'), primary_key=True),
+                            Column('id', Integer, primary_key=True),
+                            Column('name', String),
+                            Column('deployment_template_id', String, ForeignKey('deployment_template.id')),
                             Column('context_cred_id', String, ForeignKey('ssh_cred.id')),
                             Column('launch_cred_id', String, ForeignKey('ssh_cred.id')),
                             Column('image_id', Integer, ForeignKey('image.id'), nullable=False)
@@ -279,8 +281,8 @@ class DAO:
                                     }, extension=actionExtension)
         
         roleTable = Table('role', metadata,
-                            Column('id', String, primary_key=True),
-                            Column('deploy_id', String, ForeignKey('deploy.id'), primary_key=True),
+                            Column('id', Integer, primary_key=True),
+                            Column('deploy_id', ForeignKey('deploy.id')),
                             Column('src_img_id', Integer, ForeignKey('src_img.id')),
                             Column('count', Integer),
                             Column('pollRate', Integer),
@@ -431,14 +433,14 @@ class DAO:
         self.session.add(awsCred)
         self.session.commit()
         
-    def getAWSCred(self, id):
+    def getAWSCred(self, name):
         
         c = self.__getConn().cursor()
-        c.execute("select * from aws_cred where id = ? limit 1", (id,))
+        c.execute("select * from aws_cred where name = ? limit 1", (name,))
         row = c.fetchone()
         c.close()
         
-        return AWSCred(row['id'], row['access_key_id'], row['secret_access_key']) if row is not None else None
+        return AWSCred(row['name'], row['access_key_id'], row['secret_access_key']) if row is not None else None
     
     def addRoleInstance(self, roleDeployment, roleName, instanceId):
         c = self.__getConn().cursor()

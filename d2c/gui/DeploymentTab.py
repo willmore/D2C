@@ -24,8 +24,8 @@ class DeploymentTab(wx.Panel):
         self.Layout()   
         
     def addDeploymentPanel(self, deploymentPanel):
-        self.tree.AppendItem(self.treeRoot, deploymentPanel.deployment.id)
-        self.displayPanel.addPanel(deploymentPanel.deployment.id, deploymentPanel)
+        self.tree.AppendItem(self.treeRoot, deploymentPanel.deployment.name)
+        self.displayPanel.addPanel(deploymentPanel.deployment.name, deploymentPanel)
         
 class DeploymentTemplatePanel(wx.Panel):    
     
@@ -36,7 +36,7 @@ class DeploymentTemplatePanel(wx.Panel):
         
         self.deployment = deployment
         
-        label = wx.StaticText(self, -1, deployment.id)
+        label = wx.StaticText(self, -1, deployment.name)
         label.SetFont(wx.Font(20, wx.DEFAULT, wx.DEFAULT, wx.BOLD))
         self.GetSizer().Add(label, 0, wx.BOTTOM, 10)
           
@@ -46,6 +46,6 @@ class DeploymentTemplatePanel(wx.Panel):
         self.roles = RoleTemplateList(self, -1, items=deployment.roleTemplates)
         self.GetSizer().Add(self.roles, 0, wx.BOTTOM | wx.EXPAND, 5)
         
-        self.deployButton = wx.Button(self, wx.ID_ANY, 'Create Deployment', size=(110, -1))
+        self.deployButton = wx.Button(self, wx.ID_ANY, 'Create Deployment')
         self.GetSizer().Add(self.deployButton, 0, wx.ALL, 2)
         

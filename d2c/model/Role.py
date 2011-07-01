@@ -11,7 +11,9 @@ import time
 class Role(object):
     
     def __init__(self,  
-                 id, ami, count,
+                 id, 
+                 image, 
+                 count,
                  instanceType, 
                  roleTemplate,
                  deployment=None,
@@ -25,7 +27,7 @@ class Role(object):
         assert deployment is None or isinstance(deployment, Deployment)
         
         self.id = id
-        self.ami = ami  
+        self.image = image  
         self.roleTemplate = roleTemplate
         self.count = count
         self.instanceType = instanceType
@@ -68,15 +70,15 @@ class Role(object):
         assert isinstance(awsCred, AWSCred)
         
         #Using str() because boto does not support unicode type
-        ec2Conn = self.deployment.cloud.getConnection(awsCred)
+        cloudConn = self.deployment.cloud.getConnection(awsCred)
        
         launchKey = self.roleTemplate.launchCred.id if self.roleTemplate.launchCred is not None else None
         #launchKey = None
        
-        self.logger.write("Reserving %d instance(s) of %s with launchKey %s" % (self.count, self.ami.id, launchKey))
+        self.logger.write("Reserving %d instance(s) of %s with launchKey %s" % (self.count, self.image.amiId, launchKey))
        
         #TODO catch exceptions     
-        self.reservation = ec2Conn.run_instances(str(self.ami.id), 
+        self.reservation = cloudConn.run_instances(str(self.image.amiId), 
                                                  key_name=str(launchKey) if launchKey is not None else None,
                                                  min_count=self.count, 
                                                  max_count=self.count, 
@@ -223,4 +225,4 @@ class Role(object):
         self.logger.write("Reservation %s terminated" % self.reservation.id)
         
     def __str__(self):
-        return "{id:%s, ami: %s}" % (self.id, self.ami)
+        return "{id:%s, image: %s}" % (self.id, self.image)
