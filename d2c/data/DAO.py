@@ -284,6 +284,7 @@ class DAO:
                             Column('id', Integer, primary_key=True),
                             Column('deploy_id', ForeignKey('deploy.id')),
                             Column('src_img_id', Integer, ForeignKey('src_img.id')),
+                            Column('template_id', ForeignKey('role_template.id')),
                             Column('count', Integer),
                             Column('pollRate', Integer),
                             Column('instance_type_id', String, ForeignKey('instance_type.name'))
@@ -291,7 +292,8 @@ class DAO:
         
         mapper(Role, roleTable, properties={
                                     'instanceType': relationship(InstanceType),
-                                    'sourceImage' : relationship(SourceImage)
+                                    'image' : relationship(SourceImage),
+                                    'roleTemplate' : relationship(RoleTemplate)
                                      }, extension=actionExtension)
         
         mapper(SourceImage, srcImgTable, polymorphic_on=srcImgTable.c.type, polymorphic_identity='src_img')

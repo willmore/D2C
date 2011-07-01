@@ -2,6 +2,7 @@ import wx
 
 from .ContainerPanel import ContainerPanel
 from .RoleList import RoleTemplateList
+from .DeploymentPanel import DeploymentPanel
 
 class DeploymentTab(wx.Panel):
     
@@ -24,8 +25,15 @@ class DeploymentTab(wx.Panel):
         self.Layout()   
         
     def addDeploymentPanel(self, deploymentPanel):
-        self.tree.AppendItem(self.treeRoot, deploymentPanel.deployment.name)
+        
+        node = self.tree.AppendItem(self.treeRoot, deploymentPanel.deployment.name)
         self.displayPanel.addPanel(deploymentPanel.deployment.name, deploymentPanel)
+        
+        for d in deploymentPanel.deployment.deployments:
+            label = deploymentPanel.deployment.name  + ":" + str(d.id)
+            self.tree.AppendItem(node, label)
+            self.displayPanel.addPanel(label, DeploymentPanel(d, self.displayPanel, -1))
+        
         
 class DeploymentTemplatePanel(wx.Panel):    
     

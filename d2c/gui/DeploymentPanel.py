@@ -13,7 +13,7 @@ class DeploymentPanel(wx.Panel):
         
         self.deployment = deployment
         
-        label = wx.StaticText(self, -1, deployment.id)
+        label = wx.StaticText(self, -1, deployment.deploymentTemplate.name + ":" + str(deployment.id))
         label.SetFont(wx.Font(20, wx.DEFAULT, wx.DEFAULT, wx.BOLD))
         self.GetSizer().Add(label, 0, wx.BOTTOM, 10)
         

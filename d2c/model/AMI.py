@@ -8,3 +8,6 @@ class AMI(SourceImage):
         self.cloud = cloud
         self.ramdisk = ramdisk
         self.kernel = kernel
+        
+    def getDisplayName(self):
+        return "%s:%s" % (self.image.name, self.amiId)

@@ -15,7 +15,8 @@ class DesktopImage(SourceImage):
         SourceImage.__init__(self, id, image)
         self.path = path
 
-        
+    def getDisplayName(self):
+        return "%s:%s" % (self.image.name, self.path)
         
 class Image(object):
     
