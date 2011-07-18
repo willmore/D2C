@@ -1,9 +1,0 @@
-faeb69f5c08760d5f9ff86162a5591b7  usr/lib/debug/usr/bin/virsh
-ff4a25f6b997ebfac6486485012183b9  usr/lib/debug/usr/lib/libvirt-qemu.so.0.8.8
-f3fa82a09749738680e446175b48fc8a  usr/lib/debug/usr/lib/libvirt.so.0.8.8
-590bd9c14487b025e153b274c912e1da  usr/lib/debug/usr/lib/libvirt/libvirt_lxc
-9842171c0a0acee41ae21be58e6f328c  usr/lib/debug/usr/lib/libvirt/libvirt_parthelper
-3207bbeb01f6354f295809e4dd0ac7e3  usr/lib/debug/usr/lib/libvirt/virt-aa-helper
-fd094b05fbc6e86f6a86ce1edad7bbcd  usr/lib/debug/usr/lib/python2.7/dist-packages/libvirtmod.so
-89f3d9aec95ea942726d78e8a5ada9d7  usr/lib/debug/usr/sbin/libvirtd
-addfa791af4d6e25784ec35146f853eb  usr/share/doc/libvirt0-dbg/copyright

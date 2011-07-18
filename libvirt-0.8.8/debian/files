@@ -1,6 +1,0 @@
-libvirt-doc_0.8.8-1ubuntu6.2~local1_all.deb doc optional
-libvirt-bin_0.8.8-1ubuntu6.2~local1_amd64.deb admin optional
-libvirt0_0.8.8-1ubuntu6.2~local1_amd64.deb libs optional
-libvirt0-dbg_0.8.8-1ubuntu6.2~local1_amd64.deb debug extra
-libvirt-dev_0.8.8-1ubuntu6.2~local1_amd64.deb libdevel optional
-python-libvirt_0.8.8-1ubuntu6.2~local1_amd64.deb python optional

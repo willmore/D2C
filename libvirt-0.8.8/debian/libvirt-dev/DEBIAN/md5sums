@@ -1,7 +1,0 @@
-80dcab1fdf6c5116d33f4e3bdbfb8f04  usr/include/libvirt/libvirt-qemu.h
-1ded258056e352cc5b5719a072cd8788  usr/include/libvirt/libvirt.h
-afa6fceb6ce625bf47a84a20b8bacbcf  usr/include/libvirt/virterror.h
-9a73aacacfcf2de0c1a3a5133dfce1e3  usr/lib/libvirt-qemu.a
-da86f602f98ef69c64a105d073930a43  usr/lib/libvirt.a
-1139cc3d02fe6f8fa21798e34ca12a72  usr/lib/pkgconfig/libvirt.pc
-addfa791af4d6e25784ec35146f853eb  usr/share/doc/libvirt-dev/copyright

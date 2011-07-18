@@ -1,4 +1,0 @@
-misc:Depends=upstart-job
-python:Versions=current
-python:Depends=python-central (>= 0.6.11)
-shlibs:Depends=libapparmor1 (>= 2.6~devel), libavahi-client3 (>= 0.6.16), libavahi-common3 (>= 0.6.16), libblkid1 (>= 2.16), libc6 (>= 2.11), libcap-ng0, libdevmapper1.02.1 (>= 2:1.02.20), libgcrypt11 (>= 1.4.6), libgnutls26 (>= 2.7.14-0), libnl1 (>= 1.1), libparted0debian1 (>= 2.2-1), libpciaccess0, libreadline6 (>= 6.0), libsasl2-2, libudev0 (>= 147), libuuid1 (>= 2.16), libvirt0 (>= 0.8.8), libxen3, libxml2 (>= 2.7.4)

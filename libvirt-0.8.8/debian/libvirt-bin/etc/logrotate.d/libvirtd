@@ -1,9 +1,0 @@
-/var/log/libvirt/qemu/*.log {
-        daily
-        missingok
-        rotate 7
-        compress
-        delaycompress
-        notifempty
-        copytruncate
-}
