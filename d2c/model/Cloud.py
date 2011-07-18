@@ -10,6 +10,9 @@ import string
 import random
 from threading import Thread
 import os
+import libvirt
+from .SourceImage import DesktopImage
+from d2c.ShellExecutor import ShellExecutor
 
 class Cloud(object):
     
@@ -23,11 +26,24 @@ class CloudConnection(object):
 
 class LibVirtInstance(object):
     
-    def __init__(self):
+    def __init__(self, image, instanceType, dataDir):
+        
+        assert isinstance(image, DesktopImage), "image must be of type DesktopImage, is %s" % type(image)
+        
+        self.id = 'i-' + ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(6))
         self.state = 'requesting' #TODO match with initial state of EC2
+        self.private_ip_address = None
+        self.image = image
+        self.instanceType = instanceType
+        self.dataDir = dataDir
         
     def start(self):
+        #TODO clone
+        ShellExecutor().run("dd if=%s of=%s/%s" % (self.image.path, self.dataDir, self.id))
         self.state = 'running'
+        
+    def update(self):
+        pass
 
 class LibVirtReservationThread(Thread):
     
@@ -41,21 +57,18 @@ class LibVirtReservationThread(Thread):
 class LibVirtReservation(object):
     
     def __init__(self, image, instanceType, count):
-        self.id = ''.join(random.choice(string.ascii_uppercase + string.digits) for x in range(6))
-        self.instances = [LibVirtInstance() for _ in range(count)]
-        self.image = image
-        self.dataDir = "/tmp/d2c/libvirt_reservation%s" % self.id
+        
+        assert isinstance(image, DesktopImage), "image must be of type DesktopImage, is %s" % type(image)
+        
+        self.id = 'r' + ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(6))
+        self.dataDir = "/tmp/d2c/libvirt_reservation%s/" % self.id    
+        self.instances = [LibVirtInstance(image, instanceType, self.dataDir) for _ in range(count)]        
+        
+        os.makedirs(self.dataDir)
         
     def reserve(self):
-        #TODO Clone
-        #TODO Start libvirt
-        
         for inst in self.instances:
-            inst.img = self.__clone(self.image, self.dataDir)
-            inst.start()
-            
-    def __clone(self, image, dataDir):
-        return ""
+            inst.start()     
         
 
 class LibVirtConn(CloudConnection):
