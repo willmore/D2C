@@ -1,0 +1,26 @@
+<?xml version="1.0"?>
+<html>
+  <body>
+    <h1 >Environment variables and configuration files</h1>
+    <p>
+The libvirt library and the libvirtd daemon behaviour can be modified
+though some environement variable and some configuration files.
+</p>
+    <ul>
+      <li>
+        <a href="#Environemnt">Environment variables</a>
+      </li>
+      <li>
+        <a href="#Configuration">Configuration files</a>
+      </li>
+    </ul>
+    <h3>
+      <a name="Environemnt">Environment variables</a>
+    </h3>
+    <p></p>
+    <h3>
+      <a name="Configuration">Configuration files</a>
+    </h3>
+    <p> </p>
+  </body>
+</html>

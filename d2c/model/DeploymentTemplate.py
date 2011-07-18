@@ -13,7 +13,7 @@ class DeploymentTemplate(object):
         self.roleTemplates = roleTemplates
         self.deployments = list(deployments)
         
-    def createDeployment(self, cloud, roleCounts):
+    def createDeployment(self, cloud, roleCounts, awsCred=None):
         
         assert isinstance(cloud, Cloud)
         assert len(roleCounts) == len(self.roleTemplates)
@@ -22,7 +22,7 @@ class DeploymentTemplate(object):
         
         dataDir = os.path.join(self.dataDir, str(random.randint(1,1000)))
         
-        deployment = Deployment(None, dataDir, cloud=cloud, deploymentTemplate=self)
+        deployment = Deployment(None, dataDir, cloud=cloud, deploymentTemplate=self, awsCred=awsCred)
         
         for roleTemp, (image, instanceType, count) in roleCounts.iteritems():
             assert roleTemp in self.roleTemplates

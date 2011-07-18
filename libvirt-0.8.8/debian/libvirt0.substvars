@@ -1,0 +1,3 @@
+python:Versions=current
+shlibs:Depends=libapparmor1 (>= 2.6~devel), libc6 (>= 2.8), libcap-ng0, libgcrypt11 (>= 1.4.6), libgnutls26 (>= 2.7.14-0), libnl1 (>= 1.1), libsasl2-2, libvirt0 (>= 0.8.8), libxen3, libxml2 (>= 2.7.4)
+misc:Depends=

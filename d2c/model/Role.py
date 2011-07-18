@@ -69,7 +69,6 @@ class Role(object):
         
         assert awsCred is None or isinstance(awsCred, AWSCred)
         
-        #Using str() because boto does not support unicode type
         cloudConn = self.deployment.cloud.getConnection(awsCred)
        
         launchKey = self.roleTemplate.launchCred.id if self.roleTemplate.launchCred is not None else None
@@ -80,8 +79,8 @@ class Role(object):
         #TODO catch exceptions     
         self.reservation = cloudConn.runInstances(self.image, 
                                                  #key_name=str(launchKey) if launchKey is not None else None,
-                                                 self.count, 
-                                                 self.instanceType) 
+                                                 count=self.count, 
+                                                 instanceType=self.instanceType) 
         
         #TODO introduce abstraction appropriate exception
         assert self.reservation is not None and self.reservation.id is not None

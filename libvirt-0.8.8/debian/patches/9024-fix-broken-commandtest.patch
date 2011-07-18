@@ -1,0 +1,19 @@
+Description: fix broken commandtest
+Author: Daniel P. Berrange <berrange@redhat.com>
+Origin: upstream, http://osdir.com/ml/libvir-list/2011-02/msg01083.html
+Forwarded: not-needed
+
+Index: libvirt-0.8.8-1ubuntu1/tests/commandtest.c
+===================================================================
+--- libvirt-0.8.8-1ubuntu1.orig/tests/commandtest.c	2011-02-24 10:22:57.471332581 -0600
++++ libvirt-0.8.8-1ubuntu1/tests/commandtest.c	2011-02-24 10:23:14.631332579 -0600
+@@ -730,6 +730,9 @@
+     if (chdir("/tmp") < 0)
+         return(EXIT_FAILURE);
+ 
++    setpgid(0, 0);
++    setsid();
++
+     /* Kill off any inherited fds that might interfere with our
+      * testing.  */
+     fd = 3;

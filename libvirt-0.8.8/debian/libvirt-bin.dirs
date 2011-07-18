@@ -1,0 +1,10 @@
+/etc/apparmor.d/abstractions
+/etc/apparmor.d/disable
+/etc/apparmor.d/force-complain
+/etc/apparmor.d/libvirt
+/etc/cron.daily
+/usr/share/apport/package-hooks
+/var/lib/libvirt/images
+/var/lib/libvirt/boot
+/var/cache/libvirt
+/var/log/libvirt/qemu

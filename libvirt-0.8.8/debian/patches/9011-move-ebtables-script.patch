@@ -1,0 +1,25 @@
+Author: Jamie Strandboge <jamie@canonical.com>
+Description: move ebiptables script from /tmp to /var/lib/libvirt
+Forwarded: yes
+
+Index: libvirt-daily-quilt/src/nwfilter/nwfilter_ebiptables_driver.c
+===================================================================
+--- libvirt-daily-quilt.orig/src/nwfilter/nwfilter_ebiptables_driver.c	2010-12-17 11:13:23.747224000 -0600
++++ libvirt-daily-quilt/src/nwfilter/nwfilter_ebiptables_driver.c	2010-12-20 18:33:46.548757998 -0600
+@@ -38,6 +38,7 @@
+ #include "nwfilter_gentech_driver.h"
+ #include "nwfilter_ebiptables_driver.h"
+ #include "files.h"
++#include "configmake.h"
+ 
+ 
+ #define VIR_FROM_THIS VIR_FROM_NWFILTER
+@@ -2441,7 +2442,7 @@
+  */
+ static char *
+ ebiptablesWriteToTempFile(const char *string) {
+-    char filename[] = "/tmp/virtdXXXXXX";
++    char filename[] = LOCALSTATEDIR "/lib/libvirt/virtdXXXXXX";
+     int len;
+     char *filnam;
+     virBuffer buf = VIR_BUFFER_INITIALIZER;

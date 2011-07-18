@@ -1,0 +1,10 @@
+^gnulib/
+^po/
+^ChangeLog$
+^ChangeLog-old$
+^Makefile*
+^docs/
+^tests/
+^tools/virsh\.c$
+^tools/console\.c$
+^build-aux/

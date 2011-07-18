@@ -1,0 +1,11 @@
+diff -Naurp libvirt-0.8.8.orig//src/lxc/lxc_container.c libvirt-0.8.8//src/lxc/lxc_container.c
+--- libvirt-0.8.8.orig//src/lxc/lxc_container.c	2011-02-09 22:08:11.000000000 -0500
++++ libvirt-0.8.8//src/lxc/lxc_container.c	2011-04-11 13:41:03.695295559 -0400
+@@ -109,6 +109,7 @@ static int lxcContainerExecInit(virDomai
+     const char *const envp[] = {
+         "PATH=/bin:/sbin",
+         "TERM=linux",
++		"container=libvirt",
+         NULL,
+     };
+ 

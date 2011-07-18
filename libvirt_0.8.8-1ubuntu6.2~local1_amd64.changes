@@ -1,0 +1,51 @@
+Format: 1.8
+Date: Fri, 10 Jun 2011 16:53:09 -0500
+Source: libvirt
+Binary: libvirt-bin libvirt0 libvirt0-dbg libvirt-doc libvirt-dev python-libvirt
+Architecture: all amd64
+Version: 0.8.8-1ubuntu6.2~local1
+Distribution: natty-security
+Urgency: low
+Maintainer: Ubuntu Developers <ubuntu-devel-discuss@lists.ubuntu.com>
+Changed-By: Jamie Strandboge <jamie@ubuntu.com>
+Description: 
+ libvirt-bin - the programs for the libvirt library
+ libvirt-dev - development files for the libvirt library
+ libvirt-doc - documentation for the libvirt library
+ libvirt0   - library for interfacing with different virtualization systems
+ libvirt0-dbg - library for interfacing with different virtualization systems
+ python-libvirt - libvirt Python bindings
+Changes: 
+ libvirt (0.8.8-1ubuntu6.2~local1) natty-security; urgency=low
+ .
+   * SECURITY UPDATE: 0.8.8 regression which reopens disk probing
+     (CVE-2010-2238)
+     - 9029-CVE-2011-2178.patch: use correct pointer address in
+       virSecurityManagerGetPrivateData()
+     - CVE-2011-2178
+   * SECURITY UPDATE:
+     - 9030-CVE-2011-1486.patch: update daemon/dispatch.c and daemon/remote.c
+       to call virDomainFree() after remoteDispatchConnError()
+     - CVE-2011-1486
+Checksums-Sha1: 
+ 85cc2906b1e01723543b6bfeb8b87dfc45df8b1d 968818 libvirt-doc_0.8.8-1ubuntu6.2~local1_all.deb
+ ca35efe51360b3f24301a4dec0c25de3c400b056 846676 libvirt-bin_0.8.8-1ubuntu6.2~local1_amd64.deb
+ a21f64c6437660cce91eec30c61b18e12ac8d153 844168 libvirt0_0.8.8-1ubuntu6.2~local1_amd64.deb
+ 354c297c74dd8de53308a38533892a1ec507c425 3802608 libvirt0-dbg_0.8.8-1ubuntu6.2~local1_amd64.deb
+ 0c86c857d4f927bacbde22fd6dfb3ca785c143ed 1002072 libvirt-dev_0.8.8-1ubuntu6.2~local1_amd64.deb
+ 441eb47d283b9769dc2021a749986c02eb8b1b78 68970 python-libvirt_0.8.8-1ubuntu6.2~local1_amd64.deb
+Checksums-Sha256: 
+ 7dca49f1c50ceb8c8c0ad6bf9434a122779b9bf5d0695d4c77b26ca02f128e98 968818 libvirt-doc_0.8.8-1ubuntu6.2~local1_all.deb
+ 8c27fd9dc00d6a8e5c74212a994a8420d948d06c91d67d2c6021bb9fa93ea1c8 846676 libvirt-bin_0.8.8-1ubuntu6.2~local1_amd64.deb
+ 19f4328986b45daa4f36e584c561b3ae2520264daa10180a1b47f0778a7e5f09 844168 libvirt0_0.8.8-1ubuntu6.2~local1_amd64.deb
+ 473ee2119c3b9e6694f71224907a17efa38b6c09bf970839b45f362450a440ef 3802608 libvirt0-dbg_0.8.8-1ubuntu6.2~local1_amd64.deb
+ 00cfb61f6f6abdb9428797d6712015075644cfbd61b760fba4221847d5a5cafa 1002072 libvirt-dev_0.8.8-1ubuntu6.2~local1_amd64.deb
+ 9326b40502ee0d69589485f316feca7079db639a8b2447087176650ef367650e 68970 python-libvirt_0.8.8-1ubuntu6.2~local1_amd64.deb
+Files: 
+ 2543573bfc8c7f6276d5c920a3809c08 968818 doc optional libvirt-doc_0.8.8-1ubuntu6.2~local1_all.deb
+ 822a917003ed61bb22604af09c997964 846676 admin optional libvirt-bin_0.8.8-1ubuntu6.2~local1_amd64.deb
+ 439eb65043cf64a0c4663dacd4a696fe 844168 libs optional libvirt0_0.8.8-1ubuntu6.2~local1_amd64.deb
+ ced8687bbb5b7d70d033ddf5308ffcd4 3802608 debug extra libvirt0-dbg_0.8.8-1ubuntu6.2~local1_amd64.deb
+ f605e413aaf1f8e0b09436705f46d669 1002072 libdevel optional libvirt-dev_0.8.8-1ubuntu6.2~local1_amd64.deb
+ 4b0f2c6167ceec5c6fc24e331e2e852b 68970 python optional python-libvirt_0.8.8-1ubuntu6.2~local1_amd64.deb
+Original-Maintainer: Debian Libvirt Maintainers <pkg-libvirt-maintainers@lists.alioth.debian.org>

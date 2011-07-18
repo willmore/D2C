@@ -1,0 +1,4 @@
+^examples/
+^gnulib/lib/dummy\.c$
+^gnulib/tests/dummy\.c$
+^ChangeLog$

@@ -1,0 +1,9 @@
+[python-package]
+format = 1
+python-version = 2.7
+[pycentral]
+version = 0.6.11
+include-links = 0
+[files]
+/usr/share/pyshared/libvirt.py=f
+/usr/lib/python2.7/dist-packages/libvirtmod.so=f

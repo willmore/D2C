@@ -1,0 +1,5 @@
+^ChangeLog$
+^ChangeLog-old$
+^include/libvirt/virterror\.h$
+^daemon/dispatch\.c$
+^src/util/virterror\.c$

@@ -1,0 +1,83 @@
+From: =?UTF-8?q?Guido=20G=C3=BCnther?= <agx@sigxcpu.org>
+Date: Wed, 6 Oct 2010 18:12:46 +0200
+Subject: Autodetect if the remote nc command supports the -q option
+
+Author: Marc Deslauriers <marc.deslauriers@ubuntu.com>
+Origin: other, based on http://hg.fedorahosted.org/hg/virt-manager/rev/1f781890ea4a
+Origin: other, based on http://hg.fedorahosted.org/hg/virt-manager/rev/f09702cfdb03
+Origin: other, based on http://hg.fedorahosted.org/hg/virt-manager/rev/907ee61e5558
+Origin: other, based on http://hg.fedorahosted.org/hg/virt-manager/rev/16fcbf77e47e
+Bug-Ubuntu: https://bugs.launchpad.net/ubuntu/+source/libvirt/+bug/517478
+Ubuntu-Bug: https://bugs.launchpad.net/ubuntu/+source/virt-manager/+bug/605172
+Bug: https://bugzilla.redhat.com/show_bug.cgi?id=562176
+Bug: https://bugzilla.redhat.com/show_bug.cgi?id=614420
+---
+ src/remote/remote_driver.c |   47 +++++++++++++++++++++++++++++++++++++------
+ 1 files changed, 40 insertions(+), 7 deletions(-)
+
+diff --git a/src/remote/remote_driver.c b/src/remote/remote_driver.c
+index 4ca0d3b..27757ce 100644
+--- a/src/remote/remote_driver.c
++++ b/src/remote/remote_driver.c
+@@ -738,7 +738,8 @@ doRemoteOpen (virConnectPtr conn,
+     }
+ 
+     case trans_ssh: {
+-        int j, nr_args = 6;
++        int j, nr_args = 5;
++        virBuffer cmd_netcat = VIR_BUFFER_INITIALIZER;
+ 
+         if (username) nr_args += 2; /* For -l username */
+         if (no_tty) nr_args += 5;   /* For -T -o BatchMode=yes -e none */
+@@ -771,12 +772,44 @@ doRemoteOpen (virConnectPtr conn,
+             cmd_argv[j++] = strdup ("none");
+         }
+         cmd_argv[j++] = strdup (priv->hostname);
+-        cmd_argv[j++] = strdup (netcat ? netcat : "nc");
+-        cmd_argv[j++] = strdup ("-U");
+-        cmd_argv[j++] = strdup (sockname ? sockname :
+-                                (flags & VIR_CONNECT_RO
+-                                 ? LIBVIRTD_PRIV_UNIX_SOCKET_RO
+-                                 : LIBVIRTD_PRIV_UNIX_SOCKET));
++        cmd_argv[j++] = strdup ("sh -c");
++
++	/*
++	 * This ugly thing is a shell script to detect availability of
++	 * the -q option for 'nc': debian and suse based distros need this
++	 * flag to ensure the remote nc will exit on EOF, so it will go away
++	 * when we close the VNC tunnel. If it doesn't go away, subsequent
++	 * VNC connection attempts will hang.
++	 *
++	 * Fedora's 'nc' doesn't have this option, and apparently defaults
++	 * to the desired behavior.
++	 */
++
++        virBufferVSprintf(&cmd_netcat, "'%s -q 2>&1 | grep -q \"requires an argument\";"
++                                       "if [ $? -eq 0 ] ; then"
++                                       "   CMD=\"%s -q 0 -U %s\";"
++                                       "else"
++                                       "   CMD=\"%s -U %s\";"
++                                       "fi;"
++                                       "eval \"$CMD\";'",
++                                       netcat ? netcat : "nc",
++                                       netcat ? netcat : "nc",
++                                       sockname ? sockname :
++                                        (flags & VIR_CONNECT_RO
++                                         ? LIBVIRTD_PRIV_UNIX_SOCKET_RO
++                                         : LIBVIRTD_PRIV_UNIX_SOCKET),
++                                       netcat ? netcat : "nc",
++                                       sockname ? sockname :
++                                        (flags & VIR_CONNECT_RO
++                                         ? LIBVIRTD_PRIV_UNIX_SOCKET_RO
++                                         : LIBVIRTD_PRIV_UNIX_SOCKET));
++
++        if (virBufferError(&cmd_netcat)) {
++            virBufferFreeAndReset(&cmd_netcat);
++            goto out_of_memory;
++        }
++
++        cmd_argv[j++] = virBufferContentAndReset(&cmd_netcat);
+         cmd_argv[j++] = 0;
+         assert (j == nr_args);
+         for (j = 0; j < (nr_args-1); j++)
+-- 

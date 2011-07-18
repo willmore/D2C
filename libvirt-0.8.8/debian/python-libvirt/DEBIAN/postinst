@@ -1,0 +1,11 @@
+#!/bin/sh
+set -e
+# Automatically added by dh_pycentral
+rm -f /var/lib/pycentral/python-libvirt.pkgremove
+if which pycentral >/dev/null 2>&1; then
+	pycentral pkginstall python-libvirt
+	if grep -qs '^python-libvirt$' /var/lib/pycentral/delayed-pkgs; then
+		sed -i '/^python-libvirt$/d' /var/lib/pycentral/delayed-pkgs
+	fi
+fi
+# End automatically added section

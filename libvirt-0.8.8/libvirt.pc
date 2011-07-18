@@ -1,0 +1,11 @@
+prefix=/usr
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
+
+Name: libvirt
+Version: 0.8.8
+Description: libvirt library
+Requires:
+Libs: -L${libdir} -lvirt -ldl 
+Cflags: -I${includedir}

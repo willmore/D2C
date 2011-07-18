@@ -1,0 +1,13 @@
+usr/bin/*
+usr/sbin/*
+etc/apparmor.d/abstractions/libvirt-qemu
+etc/apparmor.d/libvirt/TEMPLATE
+etc/apparmor.d/usr.lib.libvirt.virt-aa-helper
+etc/apparmor.d/usr.sbin.libvirtd
+etc/libvirt/*
+etc/sasl2/*
+usr/share/polkit-1/*
+usr/lib/libvirt/*
+usr/share/augeas/*
+usr/share/libvirt/*
+usr/share/apport/package-hooks/source_libvirt-bin.py

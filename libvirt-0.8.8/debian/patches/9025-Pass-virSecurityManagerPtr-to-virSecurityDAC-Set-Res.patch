@@ -1,0 +1,40 @@
+From 8d78eba6356385e806a298c63c1b531efd36fd0a Mon Sep 17 00:00:00 2001
+From: Soren Hansen <soren@linux2go.dk>
+Date: Thu, 3 Mar 2011 15:12:50 +0100
+Subject: [PATCH] Pass virSecurityManagerPtr to virSecurityDAC{Set,Restore}ChardevCallback
+
+virSecurityDAC{Set,Restore}ChardevCallback expect virSecurityManagerPtr,
+but are passed virDomainObjPtr instead. This makes
+virSecurityDACSetChardevLabel set a wrong uid/gid on chardevs. This
+patch fixes this behaviour.
+
+Signed-off-by: Soren Hansen <soren@linux2go.dk>
+---
+ src/security/security_dac.c |    4 ++--
+ 1 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/src/security/security_dac.c b/src/security/security_dac.c
+index 1c1a037..b8de232 100644
+--- a/src/security/security_dac.c
++++ b/src/security/security_dac.c
+@@ -509,7 +509,7 @@ virSecurityDACRestoreSecurityAllLabel(virSecurityManagerPtr mgr,
+     if (virDomainChrDefForeach(vm->def,
+                                false,
+                                virSecurityDACRestoreChardevCallback,
+-                               vm) < 0)
++                               mgr) < 0)
+         rc = -1;
+ 
+     if (vm->def->os.kernel &&
+@@ -565,7 +565,7 @@ virSecurityDACSetSecurityAllLabel(virSecurityManagerPtr mgr,
+     if (virDomainChrDefForeach(vm->def,
+                                true,
+                                virSecurityDACSetChardevCallback,
+-                               vm) < 0)
++                               mgr) < 0)
+         return -1;
+ 
+     if (vm->def->os.kernel &&
+-- 
+1.7.4.1
+

@@ -1,0 +1,3 @@
+version=3
+
+http://libvirt.org/sources/libvirt-([\d\.]+)\.tar\.gz

@@ -1,0 +1,60 @@
+Description: Make virsh connect to qemu:///system by default if the user
+  has write access to /var/run/libvirt/libvirt-sock and qemu:///session if
+  not.
+Author: Soren Hansen <soren@ubuntu.com>
+Forwarded: no
+
+Index: libvirt-0.8.7/tools/virsh.c
+===================================================================
+--- libvirt-0.8.7.orig/tools/virsh.c	2010-12-30 20:54:14.000000000 -0600
++++ libvirt-0.8.7/tools/virsh.c	2011-02-08 12:33:58.173376743 -0600
+@@ -67,6 +67,8 @@
+ #define VSH_PROMPT_RW    "virsh # "
+ #define VSH_PROMPT_RO    "virsh > "
+ 
++#include "remote_driver.h"
++
+ #define GETTIMEOFDAY(T) gettimeofday(T, NULL)
+ #define DIFF_MSEC(T, U) \
+         ((((int) ((T)->tv_sec - (U)->tv_sec)) * 1000000.0 + \
+@@ -11971,6 +11973,10 @@
+ 
+     if ((defaultConn = getenv("VIRSH_DEFAULT_CONNECT_URI"))) {
+         ctl->name = vshStrdup(ctl, defaultConn);
++    } else if (!access(LIBVIRTD_PRIV_UNIX_SOCKET, W_OK)) {
++        ctl->name = vshStrdup(ctl, "qemu:///system");
++    } else {
++        ctl->name = vshStrdup(ctl, "qemu:///session");
+     }
+ 
+     if (!vshParseArgv(ctl, argc, argv)) {
+Index: libvirt-0.8.7/tools/Makefile.am
+===================================================================
+--- libvirt-0.8.7.orig/tools/Makefile.am	2010-12-22 02:54:05.000000000 -0600
++++ libvirt-0.8.7/tools/Makefile.am	2011-02-08 12:34:27.533287358 -0600
+@@ -53,8 +53,10 @@
+ 		-I$(top_srcdir)/gnulib/lib -I../gnulib/lib	\
+ 		-I../include -I$(top_srcdir)/include		\
+ 		-I$(top_srcdir)/src				\
++		-I$(top_srcdir)/src/remote			\
+ 		-I$(top_srcdir)/src/util			\
+ 		-I$(top_srcdir)					\
++		-DLOCAL_STATE_DIR=\""$(localstatedir)"\"	\
+ 		$(WARN_CFLAGS)					\
+ 		$(COVERAGE_CFLAGS)				\
+ 		$(LIBXML_CFLAGS)				\
+Index: libvirt-0.8.7/tools/Makefile.in
+===================================================================
+--- libvirt-0.8.7.orig/tools/Makefile.in	2011-01-03 20:22:54.000000000 -0600
++++ libvirt-0.8.7/tools/Makefile.in	2011-02-08 12:35:01.557182228 -0600
+@@ -1127,8 +1127,10 @@
+ 		-I$(top_srcdir)/gnulib/lib -I../gnulib/lib	\
+ 		-I../include -I$(top_srcdir)/include		\
+ 		-I$(top_srcdir)/src				\
++		-I$(top_srcdir)/src/remote			\
+ 		-I$(top_srcdir)/src/util			\
+ 		-I$(top_srcdir)					\
++		-DLOCAL_STATE_DIR=\""$(localstatedir)"\"	\
+ 		$(WARN_CFLAGS)					\
+ 		$(COVERAGE_CFLAGS)				\
+ 		$(LIBXML_CFLAGS)				\

@@ -1,0 +1,239 @@
+#!/bin/bash
+#
+# libvirt-migrate-qemu-disks
+#
+# Author: Jamie Strandboge <jamie@canonical.com>
+# Copyright 2010 Canonical Ltd.
+#
+#    This program is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License version 3,
+#    as published by the Free Software Foundation.
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+
+# This script probes qemu VMs and migrates the xml to the proper disk format
+# if it is discovered that the disk file format is not raw.
+
+# Since virsh can hang forever under certain circumstances, we need to account
+# for this when migrating. This is accomplished by creating a stampdir and
+# passing this to a backgrounded migrate_vm(). migrate_vm() will use this
+# directory for its temporary files, and will remove the stampdir after the
+# migration. The parent will poll for the stampdir's existance, and if it still
+# exists after too long, it will remove it and kill all children.
+
+set -e
+
+debug() {
+    test "$debug" = "yes" && echo "DEBUG: $*" >&2 || true
+}
+
+help() {
+    cat << EOM
+USAGE:
+libvirt-migrate-qemu-disks -a
+libvirt-migrate-qemu-disks -t TYPE vm1 vm2...
+
+ -c		connect URI (defaults to qemu:///system)
+ -a		probe all domains and migrate if necessary
+ -t TYPE	migrate specified domains to disk format TYPE
+
+You must specify domains when using '-t'. You may not specify both '-a' and
+'-t'.
+EOM
+}
+
+wait_for_libvirtd() {
+    # Used to make sure libvirtd is responding
+    virsh -c $connect capabilities >/dev/null 2>&1
+    rm -f "$1"
+}
+
+migrate_vm() {
+    dir="$1"
+    vm="$2"
+    format="$3"
+
+    migrate=""
+    found=
+    in_disk=
+    fn="$dir/$vm.xml"
+
+    virsh -c $connect dumpxml "$vm" 2>/dev/null | while read line && test -d "$dir" ; do
+        # This assumes the following format:
+        # ...
+        # <disk type='file' device='disk'>
+        # <driver name='qemu' type='raw'/>
+        # <source file='<disk>'/>
+        # ...
+        if [ -z "$in_disk" ] && echo "$line" | grep -q "<disk type='file'" ; then
+            in_disk="yes"
+        elif [ "$in_disk" = "yes" ] && [ "$found" != "yes" ]; then
+            if echo "$line" | grep -q "<driver name='qemu' type='raw'/>" ; then
+                found="yes"
+                continue
+            fi
+            in_disk=
+        elif [ "$found" = "yes" ]; then
+            disk=`echo $line | cut -d "'" -f 2`
+            if [ -n "$format" ]; then
+                echo "<driver name='qemu' type='$format'/>" >> "$fn"
+                migrate="yes"
+            elif [ -r "$disk" ]; then
+                probe_format=`LANG=C qemu-img info "$disk" | grep '^file format: ' | cut -d ' ' -f 3`
+                if [ -n "$probe_format" ] && [ "$probe_format" != "raw" ]; then
+                    echo "<driver name='qemu' type='$probe_format'/>" >> "$fn"
+                    migrate="yes"
+                fi
+            else
+                debug "'$disk' is not readble. Defaulting to 'raw'."
+                echo "<driver name='qemu' type='raw'/>" >> "$fn"
+            fi
+            found=
+            in_disk=
+        fi
+        echo "$line" >> "$fn"
+        if [ "$line" = "</domain>" ]; then
+            if [ "$migrate" = "yes" ]; then
+                echo "Migrating '$vm'"
+                virsh -c $connect define "$fn" >/dev/null
+                debug "Using new xml:"
+                debug `cat $fn`
+            else
+                debug "nothing to migrate"
+            fi
+            rm -rf "$dir"
+            break
+        fi
+    done
+}
+
+connect="qemu:///system"
+do_all=
+debug=
+while getopts adc:t: f ; do
+    case "$f" in
+        a) do_all="yes";;
+        c) connect=$OPTARG;;
+        d) debug="yes";;
+        t) type=$OPTARG;;
+        \?) help; exit 1;;
+    esac
+done
+shift `expr $OPTIND - 1`
+
+if [ -n "$type" ] && ! echo "$type" | egrep -q "^(raw|qcow2|qcow|cow|vdi|vmdk|vpc|cloop)$" ; then
+    echo "'$type' is not supported. See 'man qemu-img' for details." >&2
+    exit 1
+fi
+
+if [ "$connect" != "qemu:///system" ] && [ "$connect" != "qemu:///session" ]; then
+    echo "Only qemu:///system and qemu:///session is supported" >&2
+    exit 1
+fi
+
+xml_dir="/etc/libvirt/qemu"
+if [ "$connect" = "qemu:///session" ]; then
+    xml_dir="$HOME/.libvirt/qemu"
+fi
+
+vms=
+if [ "$do_all" = "yes" ]; then
+    # grab these from /etc/libvirt/qemu/*xml rather than virsh, since it
+    # is a) the qemu driver that changed and b) virsh could hang
+    cd "$xml_dir"
+    vms=`ls -1 *.xml 2>/dev/null | sed 's/\.xml$//'`
+    if [ -z "$vms" ]; then
+        debug "no VMs to migrate"
+        exit 0
+    fi
+    cd - >/dev/null
+else
+    vms="$*"
+fi
+
+if [ -z "$vms" ]; then
+    help
+    exit 1
+elif [ -z "$do_all" ] && [ -z "$type" ]; then
+    help
+    exit 1
+elif [ -n "$do_all" ] && [ -n "$type" ]; then
+    help
+    exit 1
+fi
+
+mypid="$$"
+script=`basename $0`
+
+# Alas, we need to make sure libvirtd is not only running, but responding to
+# requests, otherwise migrate_vm() will fail for the first few VMs.
+if [ "$connect" = "qemu:///system" ]; then
+    pidfile="/var/run/libvirtd.pid"
+
+    # Wait up to 10 seconds for libvirtd to come up before bailing.
+    echo "Waiting up to 10 seconds for libvirtd to start... "
+    count=0
+    while [ ! -e "$pidfile" ]; do
+        if [ $count -gt 100 ]; then
+            break
+        fi
+        sleep 0.1
+        count=$((count+1))
+    done
+    if [ ! -e "$pidfile" ]; then
+        echo "Aborting. '$pidfile' does not exist. Is libvirtd running?"
+        exit 1
+    fi
+
+    stamp=`mktemp`
+    wait_for_libvirtd "$stamp" &
+
+    # Wait up to 30 seconds for libvirtd to respond before bailing.
+    echo "Waiting up to 30 seconds for libvirtd to respond to requests... "
+    count=0
+    while [ -e "$stamp" ]; do
+        if [ $count -gt 300 ]; then
+            break
+        fi
+        sleep 0.1
+        count=$((count+1))
+    done
+    if [ -e "$stamp" ]; then
+        echo "libvirtd is not responding. Aborting"
+        kill `ps a | grep "/bin/sh .*libvirt-migrate-qemu-disks" | grep -v "$mypid" | awk '{print $1}'` 2>/dev/null || true
+        rm -f "$stamp"
+        exit 1
+    fi
+fi
+echo "Checking domains defined in $xml_dir... "
+
+for i in $vms ; do
+    debug "checking $i"
+    stampdir=`mktemp -d`
+
+    migrate_vm "$stampdir" "$i" "$type" &
+
+    count=0
+    while [ -d "$stampdir" ]; do
+        debug $count
+        if [ $count -gt 100 ]; then
+            break
+        fi
+        sleep 0.1
+        count=$((count+1))
+    done
+    if [ -d "$stampdir" ]; then
+        echo "migrate_vm \"$i\" is not responding. Aborting"
+        kill `ps a | grep "/bin/sh .*libvirt-migrate-qemu-disks" | grep -v "$mypid" | awk '{print $1}'` 2>/dev/null || true
+        rm -rf "$stampdir"
+    fi
+done
+
+echo "Migration complete"

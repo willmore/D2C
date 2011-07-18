@@ -1,0 +1,29 @@
+Description: delayed_iff_up_bridge.patch: Don't try to IFF_UP the bridge
+  interface until an interface gets added to it.
+
+Index: libvirt-0.8.7/src/util/bridge.c
+===================================================================
+--- libvirt-0.8.7.orig/src/util/bridge.c	2011-01-02 00:07:24.000000000 -0600
++++ libvirt-0.8.7/src/util/bridge.c	2011-02-08 12:32:26.741656799 -0600
+@@ -246,7 +246,10 @@
+                const char *bridge,
+                const char *iface)
+ {
+-    return brAddDelInterface(ctl, SIOCBRADDIF, bridge, iface);
++    int ret;
++    if (ret = brAddDelInterface(ctl, SIOCBRADDIF, bridge, iface))
++        return ret;
++    return brSetInterfaceUp(ctl, bridge, 1);
+ }
+ # else
+ int
+@@ -617,7 +620,8 @@
+         ifr.ifr_flags = flags;
+ 
+         if (ioctl(ctl->fd, SIOCSIFFLAGS, &ifr) < 0)
+-            return errno;
++            /*  Just smile and wave, boys... */
++            return 0;
+     }
+ 
+     return 0;

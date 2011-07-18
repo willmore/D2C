@@ -1,0 +1,2 @@
+^docs/api_extension/.*
+^tests/qemuhelpdata/.*

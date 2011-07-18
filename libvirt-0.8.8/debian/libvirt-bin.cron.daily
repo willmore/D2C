@@ -1,0 +1,38 @@
+#!/bin/sh
+#
+# clean out AppArmor profiles for virtual machines that no longer exist
+#
+set -e
+
+PROFILES_DIR="/etc/apparmor.d/libvirt"
+AA_PROFILES="/sys/kernel/security/apparmor/profiles"
+
+uuids=""
+remove_if_unused() {
+    uuid=`basename "$1" | sed 's/libvirt-//' | egrep '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}'` || return
+
+    # don't remove a profile for an existing VM
+    echo "$uuids" | grep -q "$uuid" && return
+
+    # don't remove a loaded profile
+    if [ -e "$AA_PROFILES" ] && grep -q "$uuid" "$AA_PROFILES" ; then
+        return
+    fi
+
+    find $PROFILES_DIR -name "libvirt-${uuid}*" -prune -type f -exec rm -f -- '{}' \;
+}
+
+# read in all existing uuids
+for i in /etc/libvirt/qemu/*.xml ; do
+    if [ -r "$i" ]; then
+        uuid=`grep '<uuid>' "$i" | sed 's#.*<uuid>\(.*\)</uuid>.*#\1#'`
+        uuids="$uuids $uuid"
+    fi
+done
+
+for i in "$PROFILES_DIR"/libvirt-* ; do
+    if [ -r "$i" ]; then
+        basename "$i" | egrep -q '\.' && continue
+        remove_if_unused "$i" || true
+    fi
+done

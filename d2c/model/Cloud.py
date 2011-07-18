@@ -62,16 +62,16 @@ class EC2CloudConn(CloudConnection):
     def runInstances(self, image, instanceType, count):    
         
         return self.botoConn.run_instances(image.amiId, 
-                                    None,#key_name=str(launchKey) if launchKey is not None else None,
+                                    key_name=None,#key_name=str(launchKey) if launchKey is not None else None,
                                     min_count=count, 
                                     max_count=count, 
                                     instance_type=str(instanceType.name))
         
     def getAllInstances(self, reservationId=None):
         if reservationId is None:
-            self.botoConn.get_all_instances()                    
+            return self.botoConn.get_all_instances()                    
         else:
-            self.botoConn.get_all_instances(filters={'reservation-id':reservationId})
+            return self.botoConn.get_all_instances(filters={'reservation-id':reservationId})
 
 class EC2Cloud(Cloud):
     '''
@@ -134,7 +134,8 @@ class EC2Cloud(Cloud):
             
             regionInfo = RegionInfo(name=str(self.name), endpoint=str(parsedEndpoint.hostname))
 
-            self.__ec2Conn = EC2CloudConn(self.botoModule.connect_ec2(aws_access_key_id=str(awsCred.access_key_id),
+            self.__ec2Conn = EC2CloudConn(self.botoModule.connect_ec2(
+                                              aws_access_key_id=str(awsCred.access_key_id),
                                               aws_secret_access_key=str(awsCred.secret_access_key),
                                               is_secure=parsedEndpoint.scheme == "https",
                                               region=regionInfo,

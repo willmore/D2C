@@ -1,0 +1,2 @@
+tools/virsh.1
+debian/libvirt-migrate-qemu-disks.1

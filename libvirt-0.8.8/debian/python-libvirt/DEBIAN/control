@@ -1,0 +1,20 @@
+Package: python-libvirt
+Source: libvirt
+Version: 0.8.8-1ubuntu6.2~local1
+Architecture: amd64
+Maintainer: Ubuntu Developers <ubuntu-devel-discuss@lists.ubuntu.com>
+Installed-Size: 452
+Depends: libapparmor1 (>= 2.6~devel), libc6 (>= 2.4), libcap-ng0, libgcrypt11 (>= 1.4.6), libgnutls26 (>= 2.7.14-0), libnl1 (>= 1.1), libsasl2-2, libvirt0 (>= 0.8.8-1ubuntu6.2~local1), libxen3, libxml2 (>= 2.6.27), python (<< 2.8), python (>= 2.7), python-central (>= 0.6.11)
+Provides: python2.7-libvirt
+Section: python
+Priority: optional
+Homepage: http://libvirt.org
+Description: libvirt Python bindings
+ Libvirt is a C toolkit to interact with the virtualization capabilities
+ of recent versions of Linux (and other OSes). The library aims at providing
+ a long term stable C API for different virtualization mechanisms. It currently
+ supports QEMU, KVM, XEN, OpenVZ, LXC, and VirtualBox.
+ .
+ This package contains Python bindings for the libvirt library
+Original-Maintainer: Debian Libvirt Maintainers <pkg-libvirt-maintainers@lists.alioth.debian.org>
+Python-Version: 2.7

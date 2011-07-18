@@ -1,0 +1,20 @@
+Package: libvirt-dev
+Source: libvirt
+Version: 0.8.8-1ubuntu6.2~local1
+Architecture: amd64
+Maintainer: Ubuntu Developers <ubuntu-devel-discuss@lists.ubuntu.com>
+Installed-Size: 3920
+Depends: libvirt0 (= 0.8.8-1ubuntu6.2~local1), libxen3-dev
+Recommends: pkg-config
+Section: libdevel
+Priority: optional
+Homepage: http://libvirt.org
+Description: development files for the libvirt library
+ Libvirt is a C toolkit to interact with the virtualization capabilities
+ of recent versions of Linux (and other OSes). The library aims at providing
+ a long term stable C API for different virtualization mechanisms. It currently
+ supports QEMU, KVM, XEN, OpenVZ, LXC, and VirtualBox.
+ .
+ This package contains the header files and static libraries which are
+ needed for developing the applications with libvirt.
+Original-Maintainer: Debian Libvirt Maintainers <pkg-libvirt-maintainers@lists.alioth.debian.org>
