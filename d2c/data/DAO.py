@@ -78,12 +78,13 @@ class DAO:
         mapper(AWSCred, awsCredTable)
       
         cloudTable = Table('cloud', metadata,
-                            Column('name', String, primary_key=True),
+                            Column('id', Integer, primary_key=True),
+                            Column('name', String),
                             Column('type', String, nullable=False)
                             )
         
         ec2CloudTable  = Table('ec2cloud', metadata,
-                            Column('name', ForeignKey("cloud.name"), primary_key=True),
+                            Column('name', ForeignKey("cloud.id"), primary_key=True),
                             Column('serviceURL', String, nullable=False),
                             Column('storageURL', String, nullable=False),
                             Column('ec2Cert', String, nullable=False),
@@ -110,7 +111,7 @@ class DAO:
       
         deploymentTable = Table('deploy', metadata,
                             Column('id', Integer, primary_key=True),
-                            Column('cloud_id', String, ForeignKey('cloud.name'), nullable=False),
+                            Column('cloud_id', ForeignKey('cloud.id'), nullable=False),
                             Column('aws_cred_id', String, ForeignKey("aws_cred.name")),
                             Column('deployment_template_id', String, ForeignKey("deployment_template.id")),
                             Column('state', String, nullable=False),
@@ -143,7 +144,7 @@ class DAO:
         
         instanceTypeTable = Table('instance_type', metadata,
                             Column('name', String, primary_key=True),
-                            Column('cloud_id', String, ForeignKey('cloud.name'), primary_key=True, nullable=False),
+                            Column('cloud_id', ForeignKey('cloud.id'), primary_key=True, nullable=False),
                             Column('cpu', Integer),
                             Column('cpuCount', Integer),
                             Column('memory', Integer),
@@ -223,7 +224,8 @@ class DAO:
         srcImgTable = Table('src_img', metadata,
                             Column('id', Integer, primary_key=True),
                             Column('image_id', ForeignKey('image.id')),
-                            Column('type', String(30), nullable=False)
+                            Column('type', String(30), nullable=False),
+                            Column('cloud_id', ForeignKey('cloud.id'), nullable=False)
                             )
             
         imgTable = Table('image', metadata,
@@ -240,17 +242,14 @@ class DAO:
         amiTable = Table('ami', metadata,
                             Column('id', Integer, ForeignKey('src_img.id'), primary_key=True),
                             Column('amiId', String),
-                            Column('cloud_id', String, ForeignKey('cloud.name'), nullable=False, primary_key=True),
                             Column('kernel_id', String, ForeignKey('kernel.aki'), nullable=False),
                             Column('ramdisk_id', String, ForeignKey('ramdisk.id'), nullable=True),
-                            )
-        
-        
-        
+                        )
+         
         ramdiskTable = Table('ramdisk', metadata,
                              Column('id', String, primary_key=True),
-                             Column('cloud_id', String, ForeignKey('cloud.name'), nullable=False),
-                             Column('arch_id', String, ForeignKey('architecture.arch'), nullable=False),
+                             Column('cloud_id', ForeignKey('cloud.id'), nullable=False),
+                             Column('arch_id', ForeignKey('architecture.arch'), nullable=False),
                             )
         
         mapper(Ramdisk, ramdiskTable, properties={'cloud':relationship(Cloud, backref='ramdisks'),
@@ -260,7 +259,7 @@ class DAO:
         kernelTable = Table('kernel', metadata,
                             Column('aki', String, primary_key=True),
                             Column('contents', String),
-                            Column('cloud_id', String, ForeignKey('cloud.name'), nullable=False),
+                            Column('cloud_id', ForeignKey('cloud.id'), nullable=False),
                             Column('arch_id', String, ForeignKey('architecture.arch'), nullable=False),
                             Column('ramdisk_id', String, ForeignKey('ramdisk.id'), nullable=True),
                             Column('isPvGrub', Boolean, nullable=False)
@@ -305,7 +304,10 @@ class DAO:
                                     'roleTemplate' : relationship(RoleTemplate)
                                      }, extension=actionExtension)
         
-        mapper(SourceImage, srcImgTable, polymorphic_on=srcImgTable.c.type, polymorphic_identity='src_img')
+        mapper(SourceImage, srcImgTable, polymorphic_on=srcImgTable.c.type, polymorphic_identity='src_img', 
+                    properties={
+                        'cloud': relationship(Cloud)
+                    })
         
         mapper(Image, imgTable, 
                properties={'reals': relationship(SourceImage, backref='image', primaryjoin=srcImgTable.c.image_id==imgTable.c.id),
@@ -315,9 +317,9 @@ class DAO:
         mapper(DesktopImage, desktopImageTable, inherits=SourceImage, polymorphic_identity='desktop_img')
         
         mapper(AMI, amiTable, 
-                    inherits=SourceImage, polymorphic_identity='ami_img',
+                    inherits=SourceImage, 
+                    polymorphic_identity='ami_img',
                     properties={
-                        'cloud': relationship(Cloud),
                         'kernel': relationship(Kernel),
                         'ramdisk': relationship(Ramdisk)
                     })

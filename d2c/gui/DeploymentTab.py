@@ -4,6 +4,9 @@ from .ContainerPanel import ContainerPanel
 from .RoleList import RoleTemplateList
 from .DeploymentPanel import DeploymentPanel
 from d2c.controller.DeploymentController import DeploymentController
+from d2c.controller.DeploymentCreatorController import DeploymentCreatorController
+
+from .DeploymentCreator import DeploymentCreator
 
 class DeploymentTab(wx.Panel):
     
@@ -28,23 +31,47 @@ class DeploymentTab(wx.Panel):
         self.SetSizer(vbox)
         self.Layout()   
         
-    def addDeploymentPanel(self, deploymentPanel):
+    def addDeploymentTemplatePanel(self, deploymentPanel):
         
         node = self.tree.AppendItem(self.treeRoot, deploymentPanel.deployment.name)
         self.displayPanel.addPanel(deploymentPanel.deployment.name, deploymentPanel)
         
         for d in deploymentPanel.deployment.deployments:
-            label = deploymentPanel.deployment.name  + ":" + str(d.id)
-            self.tree.AppendItem(node, label)
-            p = DeploymentPanel(d, self.displayPanel, -1)
-            self.displayPanel.addPanel(label, p)
-            DeploymentController(p, self.dao)
+            self.addDeployment(d, node)
+            
+    def addDeployment(self, deployment, parentNode=None):
+    
+    
+        if parentNode is None:
+            #Find parent node based on deployment name
+            parentNode = self._getTreeItemIdByName(deployment.deploymentTemplate.name)
+    
+        label = deployment.deploymentTemplate.name  + ":" + str(deployment.id)
+        self.tree.AppendItem(parentNode, label)
+        p = DeploymentPanel(deployment, self.displayPanel, -1)
+        self.displayPanel.addPanel(label, p)
+        DeploymentController(p, self.dao)
         
+    def _getTreeItemIdByName(self, name):
+        '''
+        Only iterates through root children
+        '''
+        item, cookie = self.tree.GetFirstChild(self.treeRoot)
+        while item:
+            
+            if name == self.tree.GetItemText(item):
+                return item
+            
+            item, cookie = self.tree.GetNextChild(self.treeRoot, cookie)
+        
+        return None
         
 class DeploymentTemplatePanel(wx.Panel):    
     
-    def __init__(self, deployment, *args, **kwargs):
+    def __init__(self, deployment, dao, *args, **kwargs):
+        
         wx.Panel.__init__(self, *args, **kwargs)
+        self.dao = dao
         
         self.SetSizer(wx.BoxSizer(wx.VERTICAL))
         
@@ -61,5 +88,12 @@ class DeploymentTemplatePanel(wx.Panel):
         self.GetSizer().Add(self.roles, 0, wx.BOTTOM | wx.EXPAND, 5)
         
         self.deployButton = wx.Button(self, wx.ID_ANY, 'Create Deployment')
+        
+        self.deployButton.Bind(wx.EVT_BUTTON, self.showDeploymentCreation)
         self.GetSizer().Add(self.deployButton, 0, wx.ALL, 2)
+        
+    def showDeploymentCreation(self, _):
+        c = DeploymentCreator(self, self.deployment)
+        DeploymentCreatorController(c, self.dao)
+        c.ShowModal()
         

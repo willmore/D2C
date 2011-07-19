@@ -131,7 +131,7 @@ class DeploymentTemplateWizardController:
     
         self.dao.save(deployment)
         
-        wx.CallAfter(Publisher().sendMessage, "DEPLOYMENT CREATED", 
+        wx.CallAfter(Publisher().sendMessage, "DEPLOYMENT TEMPLATE CREATED", 
                              {'deployment':deployment})
         
         self.wizard.container.showPanel("COMPLETION")

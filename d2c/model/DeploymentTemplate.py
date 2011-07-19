@@ -1,8 +1,8 @@
 import os
 import random
-from d2c.model.Deployment import Deployment
-from d2c.model.Role import Role
-from d2c.model.Cloud import Cloud
+from .Deployment import Deployment
+from .Role import Role
+from .Cloud import Cloud
 
 class DeploymentTemplate(object):
     

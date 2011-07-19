@@ -21,17 +21,14 @@ def init_db(dao, confFile):
     dao.addAWSCred(conf.awsCred)
     
     dao.setCredStore(CredStore(dao))
-    deskImg = DesktopImage(None, None, "/home/willmore/images/worker.vdi")
-    myWorkerImg = Image(None, "My Worker", deskImg, [deskImg])
-    
-     
-    dao.add(myWorkerImg) 
+   
     archs = [Architecture('x86'), Architecture('x86_64')]
      
     for a in archs:
         dao.add(a)
          
-    clouds = [EC2Cloud(name="SciCloud", 
+    clouds = [EC2Cloud(None, 
+                       name="SciCloud", 
                         serviceURL="http://172.17.36.21:8773/services/Eucalyptus",
                         ec2Cert="/home/willmore/.euca/cloud-cert.pem",
                         storageURL="http://172.17.36.21:8773/services/Walrus",
@@ -39,20 +36,29 @@ def init_db(dao, confFile):
                                  Kernel("eki-3EB4165A", archs[1], "internal://ami_data/kernels/2.6.35-24-virtual-x86_64.tgz")],
                         instanceTypes=get_instance_types(dao)
                         ),
-              EC2Cloud("eu-west-1", 
+              EC2Cloud(
+                       None,
+                       "eu-west-1", 
                       "https://eu-west-1.ec2.amazonaws.com", 
                       "https://s3.amazonaws.com",
                       "/opt/EC2_TOOLS/etc/ec2/amitools/cert-ec2.pem",
                       instanceTypes=get_instance_types(dao)),
-              EC2Cloud("us-west-1", 
+              EC2Cloud(
+                       None,
+                       "us-west-1", 
                       "https://us-west-1.ec2.amazonaws.com", 
                       "https://s3.amazonaws.com", 
                       "/opt/EC2_TOOLS/etc/ec2/amitools/cert-ec2.pem",
                       get_instance_types(dao)),
-              DesktopCloud("VirtualBox")]
+              DesktopCloud(None, "VirtualBox")]
 
     for cloud in clouds:
         dao.add(cloud)
+        
+    deskImg = DesktopImage(None, None, clouds[3], "/home/willmore/images/worker.vdi")
+    myWorkerImg = Image(None, "My Worker", deskImg, [deskImg])
+    
+    dao.add(myWorkerImg) 
     
     #ami = AMI("ami-47cefa33", srcImg, cloud)
     cloud = clouds[0]
@@ -101,6 +107,8 @@ def init_db(dao, confFile):
     for roleTemp in dTemplate.roleTemplates:
         roleReq[roleTemp] = (ami, m1large, 1)
     deployment = dTemplate.createDeployment(sciCloud, roleReq, conf.awsCred)
+  
+    dao.add(deployment)
   
     roleReq = {}
     for roleTemp in dTemplate.roleTemplates:

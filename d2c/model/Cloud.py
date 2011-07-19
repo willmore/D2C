@@ -11,12 +11,15 @@ import random
 from threading import Thread
 import os
 import libvirt
-from .SourceImage import DesktopImage
 from d2c.ShellExecutor import ShellExecutor
 
 class Cloud(object):
     
-    def __init__(self, name):
+    def __init__(self, id, name):
+        
+        assert isinstance(name, basestring)
+        
+        self.id = id
         self.name = name
         
 class CloudConnection(object):
@@ -32,14 +35,16 @@ class LibVirtInstance(object):
         
         self.id = 'i-' + ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(6))
         self.state = 'requesting' #TODO match with initial state of EC2
-        self.private_ip_address = None
+        #self.private_ip_address = None
+        self.public_dns_name = None
         self.image = image
         self.instanceType = instanceType
         self.dataDir = dataDir
         
     def start(self):
-        #TODO clone
         ShellExecutor().run("dd if=%s of=%s/%s" % (self.image.path, self.dataDir, self.id))
+        #TODO start instance
+        #TODO set self.public_dns_name
         self.state = 'running'
         
     def update(self):
@@ -102,8 +107,8 @@ class LibVirtConn(CloudConnection):
 
 class DesktopCloud(Cloud):
     
-    def __init__(self, name):
-        Cloud.__init__(self, name)
+    def __init__(self, id, name):
+        Cloud.__init__(self, id, name)
         
     def getConnection(self, *args):
         return LibVirtConn()
@@ -135,7 +140,7 @@ class EC2Cloud(Cloud):
     a cloud system.
     '''
     
-    def __init__(self, name, serviceURL, 
+    def __init__(self, id, name, serviceURL, 
                  storageURL, ec2Cert, botoModule=boto, 
                  kernels=list(), 
                  instanceTypes=list()):
@@ -145,7 +150,7 @@ class EC2Cloud(Cloud):
         assert isinstance(storageURL, basestring)
         assert isinstance(ec2Cert, basestring)
         
-        Cloud.__init__(self, name)
+        Cloud.__init__(self, id, name)
         
         self.mylock = threading.RLock()
         self.botoModule = botoModule
@@ -201,10 +206,11 @@ class EC2Cloud(Cloud):
         return self.__ec2Conn
     
     def __eq__(self, other):
-        return self.name == other.name
+        return self.id == other.id
     
     def __ne__(self, other): 
         return not self == other
+    
 
 
         

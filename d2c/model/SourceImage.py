@@ -1,18 +1,25 @@
+from .Cloud import Cloud
+
 
 class SourceImage(object):
 
-    def __init__(self, id, image):
+    def __init__(self, id, image, cloud):
         
         assert id is None or isinstance(id, int)
         assert image is None or isinstance(image, Image)
+        assert isinstance(cloud, Cloud)
         
         self.id = id
         self.image = image
+        self.cloud = cloud
         
 class DesktopImage(SourceImage):
     
-    def __init__(self, id, image, path):
-        SourceImage.__init__(self, id, image)
+    def __init__(self, id, image, cloud, path):
+        SourceImage.__init__(self, id, image, cloud)
+        
+        assert isinstance(path, basestring)
+        
         self.path = path
 
     def getDisplayName(self):
@@ -24,8 +31,25 @@ class Image(object):
         
         assert id is None or isinstance(id, int)
         assert name is None or isinstance(name, basestring)
+        assert isinstance(originalImage, SourceImage)
         
         self.id = id
         self.name = name
         self.originalImage = originalImage
         self.reals = list(reals)
+        
+        if self.originalImage not in self.reals:
+            self.reals.append(self.originalImage)
+        
+    def getHostedSourceImage(self, cloud):
+        '''
+        Return the real image that is hosted on the cloud.
+        '''
+    
+        assert isinstance(cloud, Cloud)
+        
+        for real in self.reals:
+            if real.cloud is cloud:
+                return real
+        
+        return None

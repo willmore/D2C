@@ -45,6 +45,7 @@ class Application:
         
         self._frame.deploymentPanel.tree.Bind(wx.EVT_TREE_SEL_CHANGED, self.deploymentSelect)
         
+        Publisher.subscribe(self._handleNewDeploymentTemplate, "DEPLOYMENT TEMPLATE CREATED")
         Publisher.subscribe(self._handleNewDeployment, "DEPLOYMENT CREATED")
         
         self._frame
@@ -54,9 +55,13 @@ class Application:
     def deploymentSelect(self, event):
         self._frame.deploymentPanel.displayPanel.showPanel(self._frame.deploymentPanel.tree.GetItemText(event.GetItem()))
     
-    def _handleNewDeployment(self, msg):    
+    def _handleNewDeploymentTemplate(self, msg):    
         deployment = msg.data['deployment']
         self.loadDeploymentPanel(deployment)  
+        
+    def _handleNewDeployment(self, msg):    
+        deployment = msg.data['deployment']
+        self._frame.deploymentPanel.addDeployment(deployment)      
         
     def loadDeploymentPanels(self):
         self.deplomentControllers = {}
@@ -65,8 +70,8 @@ class Application:
             
     def loadDeploymentPanel(self, deployment):
         
-        deployPanel = DeploymentTemplatePanel(deployment, self._frame.deploymentPanel.displayPanel)
-        self._frame.deploymentPanel.addDeploymentPanel(deployPanel)
+        deployPanel = DeploymentTemplatePanel(deployment, self._dao, self._frame.deploymentPanel.displayPanel)
+        self._frame.deploymentPanel.addDeploymentTemplatePanel(deployPanel)
         self.deplomentControllers[deployment.id] = DeploymentTemplateController(deployPanel, self._dao)
     
     def addDeployment(self, event):
