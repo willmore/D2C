@@ -26,14 +26,15 @@ def init_db(dao, confFile):
      
     for a in archs:
         dao.add(a)
-         
+
+    
+    
     clouds = [EC2Cloud(None, 
                        name="SciCloud", 
                         serviceURL="http://172.17.36.21:8773/services/Eucalyptus",
                         ec2Cert="/home/willmore/.euca/cloud-cert.pem",
                         storageURL="http://172.17.36.21:8773/services/Walrus",
-                        kernels=[Kernel("eki-B482178C", archs[1], "internal://ami_data/kernels/2.6.27.21-0.1-xen-modules.tgz"),
-                                 Kernel("eki-3EB4165A", archs[1], "internal://ami_data/kernels/2.6.35-24-virtual-x86_64.tgz")],
+                        kernels=[Kernel("eki-3EB4165A", archs[1], "internal://ami_data/kernels/2.6.35-24-virtual-x86_64.tar")],
                         instanceTypes=get_instance_types(dao)
                         ),
               EC2Cloud(
@@ -64,8 +65,10 @@ def init_db(dao, confFile):
     cloud = clouds[0]
     ramdisk = Ramdisk("eri-AEC21764", cloud, archs[1])
     dao.add(ramdisk)
+    '''
     ramdisk = Ramdisk("eri-83141744", cloud, archs[1])
     dao.add(ramdisk)
+    '''
     ami = AMI(None, myWorkerImg, "emi-58091682", cloud, kernel=cloud.kernels[0], ramdisk=ramdisk)
     dao.addAMI(ami)
      

@@ -162,17 +162,32 @@ class AMITools:
             
             self.__logger.write("Modifying new image")
             
-            gf.mount(newDev, "/")
+            rc = gf.fsck("ext4", newDev)
+            
+            self.__logger.write("FSCK on new drive is %d" % rc)
+            
+            #Trying GF restart here because of filesystem corruption issues previously seen
+            
+            #del gf
+            
+            #gf = self.__initGuestFS(outputImg)
+            
+            gf.mount(newDev, "/")     
             
             #Step 2: copy kernel
             contentsPath = kernel.getContentsAbsPath()
             if re.match('.*tgz', contentsPath) or re.match('.*tar\.gz', contentsPath):
                 gf.tgz_in(contentsPath, "/") 
             elif re.match('.*tar', contentsPath):
-                gf.tgz_in(contentsPath, "/")
+                gf.tar_in(contentsPath, "/")
             else:
                 raise Exception("Unknown extension in contents file path: %s" % contentsPath)
-                
+            
+            gf.umount_all()
+            rc = gf.fsck("ext4", newDev)
+            self.__logger.write("Here 1: FSCK check after restart on new drive is %d" % rc)
+            
+            gf.mount(newDev, "/")   
             #Step 3: Save old fstab
             self.__logger.write("Saving image's old fstab")
             self.__logger.write("Executing: mv /etc/fstab")
@@ -182,6 +197,10 @@ class AMITools:
             self.__logger.write("Writing out new EC2 /etc/fstab")
             
             gf.upload(fstab, "/etc/fstab")
+            
+            gf.umount_all()
+            rc = gf.fsck("ext4", newDev)
+            self.__logger.write("Here 2: FSCK check after restart on new drive is %d" % rc)
         
         except Exception as x:
             self.__logger.write("Exception encountered: %s" % str(x))

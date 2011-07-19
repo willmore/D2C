@@ -40,11 +40,17 @@ class LibVirtInstance(object):
         self.image = image
         self.instanceType = instanceType
         self.dataDir = dataDir
+        self.dataFile = "%s/%s" % (self.dataDir, self.id)
+        
         
     def start(self):
-        ShellExecutor().run("dd if=%s of=%s/%s" % (self.image.path, self.dataDir, self.id))
+        
+        ShellExecutor().run("dd if=%s of=%s" % (self.image.path, self.dataFile))
+        
+        
         #TODO start instance
         #TODO set self.public_dns_name
+        
         self.state = 'running'
         
     def update(self):
