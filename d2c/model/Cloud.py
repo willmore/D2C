@@ -6,7 +6,10 @@ from urlparse import urlparse
 import boto
 from boto.ec2.regioninfo import RegionInfo
 import threading
-
+import string
+import random
+from threading import Thread
+import os
 
 class Cloud(object):
     
@@ -18,20 +21,55 @@ class CloudConnection(object):
     def __init__(self):
         pass
 
-class DummyReservation(object):
+class LibVirtInstance(object):
     
     def __init__(self):
-        self.id = 0
-        self.instances = []
+        self.state = 'requesting' #TODO match with initial state of EC2
+        
+    def start(self):
+        self.state = 'running'
 
-class VBoxConn(CloudConnection):
+class LibVirtReservationThread(Thread):
+    
+    def __init__(self, reservation):
+        Thread.__init__(self)
+        self.reservation = reservation
+        
+    def run(self):
+        self.reservation.reserve()
+
+class LibVirtReservation(object):
+    
+    def __init__(self, image, instanceType, count):
+        self.id = ''.join(random.choice(string.ascii_uppercase + string.digits) for x in range(6))
+        self.instances = [LibVirtInstance() for _ in range(count)]
+        self.image = image
+        self.dataDir = "/tmp/d2c/libvirt_reservation%s" % self.id
+        
+    def reserve(self):
+        #TODO Clone
+        #TODO Start libvirt
+        
+        for inst in self.instances:
+            inst.img = self.__clone(self.image, self.dataDir)
+            inst.start()
+            
+    def __clone(self, image, dataDir):
+        return ""
+        
+
+class LibVirtConn(CloudConnection):
     
     def __init__(self):
         CloudConnection.__init__(self)
+        self.reservations = {}
         
     def runInstances(self, image, instanceType, count):
         #TODO action acquire instances
-        return DummyReservation() #because Deployment needs a reservation handle
+        reservation = LibVirtReservation(image, instanceType, count)
+        self.reservations[reservation.id] = reservation
+        LibVirtReservationThread(reservation).start()
+        return reservation
     
     def getAllInstances(self, reservationId=None):
         #TODO return instance objects
@@ -42,7 +80,12 @@ class VBoxConn(CloudConnection):
             - state
             - public_dns_name = ip of vbox instance
         '''
-        pass
+    
+        if reservationId is None:
+            return list(self.reservations.values())
+        else:
+            return [self.reservations[reservationId]] if self.reservations.has_key(reservationId) else list()
+            
 
 class DesktopCloud(Cloud):
     
@@ -50,7 +93,7 @@ class DesktopCloud(Cloud):
         Cloud.__init__(self, name)
         
     def getConnection(self, *args):
-        return VBoxConn()
+        return LibVirtConn()
   
     
 class EC2CloudConn(CloudConnection):
@@ -62,16 +105,16 @@ class EC2CloudConn(CloudConnection):
     def runInstances(self, image, instanceType, count):    
         
         return self.botoConn.run_instances(image.amiId, 
-                                    None,#key_name=str(launchKey) if launchKey is not None else None,
+                                    key_name=None,#key_name=str(launchKey) if launchKey is not None else None,
                                     min_count=count, 
                                     max_count=count, 
                                     instance_type=str(instanceType.name))
         
     def getAllInstances(self, reservationId=None):
         if reservationId is None:
-            self.botoConn.get_all_instances()                    
+            return self.botoConn.get_all_instances()                    
         else:
-            self.botoConn.get_all_instances(filters={'reservation-id':reservationId})
+            return self.botoConn.get_all_instances(filters={'reservation-id':reservationId})
 
 class EC2Cloud(Cloud):
     '''
@@ -134,7 +177,8 @@ class EC2Cloud(Cloud):
             
             regionInfo = RegionInfo(name=str(self.name), endpoint=str(parsedEndpoint.hostname))
 
-            self.__ec2Conn = EC2CloudConn(self.botoModule.connect_ec2(aws_access_key_id=str(awsCred.access_key_id),
+            self.__ec2Conn = EC2CloudConn(self.botoModule.connect_ec2(
+                                              aws_access_key_id=str(awsCred.access_key_id),
                                               aws_secret_access_key=str(awsCred.secret_access_key),
                                               is_secure=parsedEndpoint.scheme == "https",
                                               region=regionInfo,

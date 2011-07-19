@@ -74,8 +74,6 @@ def init_db(dao, confFile):
     tmpSrc = tempfile.NamedTemporaryFile(delete=False)
     tmpSrc.write("blah")
     
-    
-    
     dTemplate = DeploymentTemplate(None, 
                                    "dummyDep", 
                                    dataDir="/home/willmore/.d2c_test/deployments/dummyDep",
@@ -88,16 +86,21 @@ def init_db(dao, confFile):
                                                         contextCred=sshCred,
                                                         launchCred=sshCred
                                         )])
-
     
     dao.add(dTemplate)
-    ec2Cloud = clouds[0]
+    sciCloud = clouds[0]
     vbCloud = clouds[3]
+    
+    m1large = None;
+    for inst in sciCloud.instanceTypes:
+        if inst.name == "m1.large":
+            m1large = inst
+            break
     
     roleReq = {}
     for roleTemp in dTemplate.roleTemplates:
-        roleReq[roleTemp] = (ami, ec2Cloud.instanceTypes[0], 2)
-    deployment = dTemplate.createDeployment(ec2Cloud, roleReq)
+        roleReq[roleTemp] = (ami, m1large, 1)
+    deployment = dTemplate.createDeployment(sciCloud, roleReq, conf.awsCred)
   
     roleReq = {}
     for roleTemp in dTemplate.roleTemplates:
@@ -112,6 +115,8 @@ def get_instance_types(dao):
     X86_64 = dao.getArchitecture('x86_64')
     
     return [InstanceType('t1.micro', 2, 2, 613, 0, (X86, X86_64), 0.025),
+            InstanceType('c1.medium', 2, 1, 1700, 160, (X86,), 0.095),
+            InstanceType('c1.xlarge', 2, 1, 1700, 160, (X86,), 0.095),
             InstanceType('m1.small', 2, 1, 1700, 160, (X86,), 0.095),
             InstanceType('m1.large', 2, 2, 7500, 850, (X86_64,), 0.038),
             InstanceType('m1.xlarge', 2, 4, 15000, 850, (X86_64,), 0.76)]

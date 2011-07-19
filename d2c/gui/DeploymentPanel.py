@@ -17,6 +17,15 @@ class DeploymentPanel(wx.Panel):
         label.SetFont(wx.Font(20, wx.DEFAULT, wx.DEFAULT, wx.BOLD))
         self.GetSizer().Add(label, 0, wx.BOTTOM, 10)
         
+        sizer = wx.BoxSizer(wx.HORIZONTAL)
+        self.GetSizer().Add(sizer, 0, wx.BOTTOM, 5)
+        label = wx.StaticText(self, -1, 'Cloud')
+        label.SetFont(wx.Font(wx.DEFAULT, wx.DEFAULT, wx.DEFAULT, wx.BOLD))
+        sizer.Add(label, 0, wx.RIGHT, 5)
+        self.cloudField = wx.StaticText(self, -1, deployment.cloud.name)
+        sizer.Add(self.cloudField, 0, wx.ALIGN_CENTER)
+        
+        
         self.statusSizer = wx.BoxSizer(wx.HORIZONTAL)
         self.GetSizer().Add(self.statusSizer, 0, wx.BOTTOM, 5)
         label = wx.StaticText(self, -1, 'Status')
@@ -24,6 +33,9 @@ class DeploymentPanel(wx.Panel):
         self.statusSizer.Add(label, 0, wx.RIGHT, 5)
         self.statusField = wx.StaticText(self, -1, deployment.state)
         self.statusSizer.Add(self.statusField, 0, wx.ALIGN_CENTER)
+             
+          
+             
              
         label = wx.StaticText(self, -1, 'Roles')
         label.SetFont(wx.Font(wx.DEFAULT, wx.DEFAULT, wx.DEFAULT, wx.BOLD))

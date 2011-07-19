@@ -1,7 +1,7 @@
 import wx
 from threading import Thread
 from wx.lib.pubsub import Publisher
-
+import sys
 
 class DeploymentThread(Thread):
         
@@ -10,7 +10,11 @@ class DeploymentThread(Thread):
         self.deployment = deployment
             
     def run(self):
-        self.deployment.run()
+        try:
+            self.deployment.run()
+        except Exception as x:
+            wx.CallAfter(Publisher.sendMessage, "DEPLOYMENT EXCEPTION", x)
+            #TODO stop deployment
               
     def pause(self):
         self.deployment.pause()
@@ -30,8 +34,7 @@ class ViewListener:
         self.deploymentView = deploymentView
         
     def notify(self, _):
-        wx.CallAfter(self.deploymentView.update)
-        
+        wx.CallAfter(self.deploymentView.update)     
     
     
 class DeploymentController:
@@ -44,6 +47,13 @@ class DeploymentController:
         self.deploymentView.cancelButton.Bind(wx.EVT_BUTTON, self.handleCancel)
         
         self.deployment = deploymentView.deployment
+        
+        Publisher.subscribe(self.handleException, 
+                            "DEPLOYMENT EXCEPTION")
+    
+    def handleException(self, msg):
+        
+        wx.MessageBox("Unexpected error: %s" % str(msg.data), 'Error!', wx.ICON_ERROR)
 
     def handleCancel(self, _):
         

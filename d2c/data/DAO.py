@@ -169,6 +169,7 @@ class DAO:
         class ActionExtension(MapperExtension):
             
             def __init__(self, daoRef):
+                MapperExtension.__init__(self)
                 self.daoRef = daoRef
             
             def reconstruct_instance(self, mapper, instance):
