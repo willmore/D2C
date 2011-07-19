@@ -4,7 +4,7 @@ import subprocess
 from d2c.RemoteShellExecutor import RemoteShellExecutor
 
 network_xml_file = "/home/sina/.d2c/mynetwork.xml"
-domain_xml_file = "/home/sina/.d2c/mindomain.xml"
+domain_xml_file = "/home/sina/.d2c/mydomain.xml"
 
 def return_xml(xml_location):
     lines = open(xml_location)
@@ -22,11 +22,11 @@ conn = libvirt.open("vbox:///session")
 
 try:
     conn.networkLookupByName("vboxnet0")
-    print "vboxnet0 found, not need to create"
+    print "vboxnet0 found, no need to create"
 except:
     network = libvirt.virConnect.networkDefineXML(conn, return_xml(network_xml_file))
     if(network.create()):
-        print 'An error occured while creating the network'
+        print 'An error occured while creating the network,terminating program.'
         quit(1)
     print "Network Created with Name:"+network.name()
    
@@ -35,18 +35,28 @@ except:
 
 try:
     #TODO: Keyword will come from user 
-    dom = conn.lookupByName('Ubuntu')
+    dom = conn.lookupByName('ubuntu10')
 except:
-    print 'No deployment found with that name!'
-    quit(1)
+    print 'No deployment found with that name,creating the one from xml!'
+    dom = libvirt.virConnect.defineXML(conn, return_xml(domain_xml_file))
     
 dom.create()
 
-while ping('192.168.123.2'):
+print "going to pinging now..."
+
+while ping('192.168.152.2'):
     print "will sleep now"
+
 time.sleep(5)
 
-shell_executor = RemoteShellExecutor('q','192.168.123.2','/home/sina/.ssh/id_rsa')
+shell_executor = RemoteShellExecutor('q','192.168.152.2','/home/sina/.ssh/id_rsa')
 
 shell_executor.run("pwd")
 
+time.sleep(5)
+
+print "will shut down now"
+
+dom.shutdown()
+
+network.undefine()
