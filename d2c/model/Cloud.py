@@ -13,6 +13,7 @@ import os
 import libvirt
 from d2c.ShellExecutor import ShellExecutor
 
+
 class Cloud(object):
     
     def __init__(self, id, name):
@@ -30,7 +31,7 @@ class CloudConnection(object):
 class LibVirtInstance(object):
     
     def __init__(self, image, instanceType, dataDir):
-        
+        from .SourceImage import DesktopImage
         assert isinstance(image, DesktopImage), "image must be of type DesktopImage, is %s" % type(image)
         
         self.id = 'i-' + ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(6))
@@ -46,7 +47,6 @@ class LibVirtInstance(object):
     def start(self):
         
         ShellExecutor().run("dd if=%s of=%s" % (self.image.path, self.dataFile))
-        
         
         #TODO start instance
         #TODO set self.public_dns_name
