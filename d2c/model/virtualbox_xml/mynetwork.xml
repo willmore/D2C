@@ -1,0 +1,11 @@
+<network>
+<name>vboxnet0</name>
+<bridge name="virbr0" />
+<ip address="192.168.152.1" netmask="255.255.255.0">
+  <dhcp>
+    <range start="192.168.152.2" end="192.168.152.254" />
+    <host mac='08:00:27:02:96:28' name='vm-1' ip='192.168.152.152' />
+  </dhcp>
+</ip>
+<ip family="ipv6" address="2001:8794:ca2:3::1" prefix="64" />
+</network>
