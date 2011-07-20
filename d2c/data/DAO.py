@@ -246,11 +246,11 @@ class DAO:
             
         amiTable = Table('ami', metadata,
                             Column('id', Integer, ForeignKey('src_img.id'), primary_key=True),
-                            Column('amiId', String),
-                            Column('kernel_id', String, ForeignKey('kernel.aki'), nullable=False),
+                            Column('amiId', String, nullable=False),
+                            Column('kernel_id', String, ForeignKey('kernel.aki'), nullable=True),
                             Column('ramdisk_id', String, ForeignKey('ramdisk.id'), nullable=True),
                         )
-         
+        
         ramdiskTable = Table('ramdisk', metadata,
                              Column('id', String, primary_key=True),
                              Column('cloud_id', ForeignKey('cloud.id'), nullable=False),

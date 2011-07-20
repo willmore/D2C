@@ -45,7 +45,11 @@ class RolePanelController:
                            initialValues=[(a.source,) for a in self.role.dataCollectors])
         
         self.view.panel.saveButton.Bind(wx.EVT_BUTTON, self.handleSave)
-        
+        self.view.panel.cancelButton.Bind(wx.EVT_BUTTON, self.handleCancel)
+
+    def handleCancel(self, _):
+        self.view.EndModal(wx.CANCEL)
+
     def handleSave(self, _):
         '''
         The simplest approach is to delete all pre-existing role actions and create new ones.
@@ -65,6 +69,8 @@ class RolePanelController:
         self.role.dataCollectors = [DataCollector(d.GetValue(), tmpCred) for d in self.dataCollectors]
         
         self.dao.save(self.role)
+        
+        self.view.EndModal(wx.OK)
         
     def _clearCollections(self, collections):
         for collection in collections:

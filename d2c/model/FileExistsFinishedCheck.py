@@ -2,7 +2,7 @@ from d2c.RemoteShellExecutor import RemoteShellExecutor
 
 class FileExistsFinishedCheck(object):
 
-    def __init__(self, fileName, sshCred):
+    def __init__(self, fileName, sshCred=None):
         
         self.fileName = fileName
         self.cmd = "if [ -f %s ]; then echo exists; fi" % fileName
@@ -33,4 +33,7 @@ class FileExistsFinishedCheck(object):
                             outputLogger=checker).run(self.cmd)
         
         return checker.matchFound
+    
+    def copy(self):
         
+        return FileExistsFinishedCheck(self.fileName)

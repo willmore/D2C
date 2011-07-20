@@ -2,13 +2,13 @@ from d2c.model.InstanceType import InstanceType, Architecture
 from d2c.model.Cloud import EC2Cloud, DesktopCloud
 from d2c.model.Kernel import Kernel
 from d2c.data.CredStore import CredStore
-from d2c.model.UploadAction import UploadAction
 from d2c.model.Ramdisk import Ramdisk
 from d2c.model.SSHCred import SSHCred
 from d2c.model.DataCollector import DataCollector
 from d2c.model.SourceImage import Image, DesktopImage, AMI
 from TestConfig import TestConfig
 from d2c.model.DeploymentTemplate import DeploymentTemplate, RoleTemplate
+from d2c.model.FileExistsFinishedCheck import FileExistsFinishedCheck
 
 from mockito import *
 import tempfile
@@ -60,15 +60,10 @@ def init_db(dao, confFile):
     
     dao.add(myWorkerImg) 
     
-    #ami = AMI("ami-47cefa33", srcImg, cloud)
-    cloud = clouds[0]
-    ramdisk = Ramdisk("eri-AEC21764", cloud, archs[1])
-    dao.add(ramdisk)
-    '''
     ramdisk = Ramdisk("eri-83141744", cloud, archs[1])
     dao.add(ramdisk)
-    '''
-    ami = AMI(None, myWorkerImg, "emi-58091682", cloud, kernel=cloud.kernels[0], ramdisk=ramdisk)
+
+    ami = AMI(None, myWorkerImg, "emi-61AD0E5B", cloud)
     dao.addAMI(ami)
      
     for instance in []:
@@ -88,9 +83,9 @@ def init_db(dao, confFile):
                                    roleTemplates=[RoleTemplate(
                                                         None,
                                                         name="Loner",
-                                                        image = myWorkerImg,
-                                                        uploadActions=[UploadAction(tmpSrc.name, "/tmp/foobar", sshCred)], 
-                                                        dataCollectors=[DataCollector("/tmp", sshCred)],
+                                                        image = myWorkerImg, 
+                                                        dataCollectors=[DataCollector("/tmp/d2c.context")],
+                                                        finishedChecks=[FileExistsFinishedCheck("/tmp/d2c.context")],
                                                         contextCred=sshCred,
                                                         launchCred=sshCred
                                         )])

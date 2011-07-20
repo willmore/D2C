@@ -7,7 +7,7 @@ class DataCollector(object):
 
     def __init__(self, 
                  source, 
-                 sshCred,
+                 sshCred=None,
                  logger=StdOutLogger()):
         
         assert source is not None

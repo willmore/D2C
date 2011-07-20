@@ -45,7 +45,16 @@ class Role(object):
         self.finishedChecks= list(finishedChecks)
         self.dataCollectors= list(dataCollectors)
         self.logger = logger
+        self.sshCred = None
     
+    def setSSHCred(self, sshCred):
+        self.sshCred = sshCred
+        
+        for collection in [self.startActions, self.uploadActions, self.finishedChecks, self.dataCollectors]:
+            for a in collection:
+                a.sshCred = sshCred
+        
+        
     
     def setLogger(self, logger): 
     
@@ -79,16 +88,13 @@ class Role(object):
         
         cloudConn = self.deployment.cloud.getConnection(awsCred)
        
-        launchKey = self.template.launchCred.id if self.template.launchCred is not None else None
-        #launchKey = None
-       
-        self.logger.write("Reserving %d instance(s) of %s with launchKey %s" % (self.count, str(self.image), launchKey))
+        self.logger.write("Reserving %d instance(s) of %s with launchKey %s" % (self.count, str(self.image), self.sshCred.name))
        
         #TODO catch exceptions     
         self.reservation = cloudConn.runInstances(self.image, 
-                                                 #key_name=str(launchKey) if launchKey is not None else None,
                                                  count=self.count, 
-                                                 instanceType=self.instanceType) 
+                                                 instanceType=self.instanceType,
+                                                 keyName=self.sshCred.name) 
         
         #TODO introduce abstraction appropriate exception
         assert self.reservation is not None and self.reservation.id is not None
@@ -127,7 +133,7 @@ class Role(object):
         cmd = "echo -e \"%s\" > /tmp/d2c.context" % ctxt
         
         action = Action(command=cmd, 
-                        sshCred=self.template.contextCred)
+                        sshCred=self.sshCred)
         action.remoteExecutorFactory = self.remoteExecutorFactory
         
         for instance in self.reservation.instances:
