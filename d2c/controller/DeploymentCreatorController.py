@@ -1,7 +1,6 @@
 
 import wx
-from d2c.model.AMI import AMI
-from d2c.model.SourceImage import DesktopImage
+from d2c.model.SourceImage import DesktopImage, AMI
 from wx.lib.pubsub import Publisher
 
 class RoleChoice(object):

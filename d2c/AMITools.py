@@ -34,7 +34,7 @@ class AMITools:
         assert isinstance(manifest, basestring)
         assert isinstance(awsCred, AWSCred)
 
-        return cloud.getConnection(awsCred).register_image(image_location=manifest)
+        return cloud.getConnection(awsCred).registerImage(manifest)
     
     def uploadBundle(self, cloud, bucket, manifest, awsCred):
         
@@ -156,7 +156,7 @@ class AMITools:
             
             newDev = "/dev/vdb" # a guess of name by ordering
        
-            self.__logger.write("DDing from root device %s to new device %s" % (rootDev, newDev))
+            self.__logger.write("Copying main partition from source device")
             
             gf.dd(rootDev, newDev)
             
@@ -164,13 +164,8 @@ class AMITools:
             
             rc = gf.fsck("ext4", newDev)
             
-            self.__logger.write("FSCK on new drive is %d" % rc)
-            
-            #Trying GF restart here because of filesystem corruption issues previously seen
-            
-            #del gf
-            
-            #gf = self.__initGuestFS(outputImg)
+            if rc != 0:
+                raise Exception("FSCK returned code: %d" % rc)
             
             gf.mount(newDev, "/")     
             
@@ -185,22 +180,24 @@ class AMITools:
             
             gf.umount_all()
             rc = gf.fsck("ext4", newDev)
-            self.__logger.write("Here 1: FSCK check after restart on new drive is %d" % rc)
+            if rc != 0:
+                raise Exception("FSCK returned code: %d" % rc)
             
             gf.mount(newDev, "/")   
             #Step 3: Save old fstab
             self.__logger.write("Saving image's old fstab")
-            self.__logger.write("Executing: mv /etc/fstab")
             gf.mv("/etc/fstab", "/etc/fstab.d2c.save")
                     
             #Step 4: write out fstab
-            self.__logger.write("Writing out new EC2 /etc/fstab")
+            self.__logger.write("Writing out new EC2-compatible /etc/fstab")
             
             gf.upload(fstab, "/etc/fstab")
             
             gf.umount_all()
             rc = gf.fsck("ext4", newDev)
-            self.__logger.write("Here 2: FSCK check after restart on new drive is %d" % rc)
+            
+            if rc != 0:
+                raise Exception("FSCK returned code: %d" % rc)
         
         except Exception as x:
             self.__logger.write("Exception encountered: %s" % str(x))

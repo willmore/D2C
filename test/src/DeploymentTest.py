@@ -2,7 +2,7 @@ import unittest
 import time
 from d2c.model.Deployment import Deployment, DeploymentState
 from d2c.model.Role import Role
-from d2c.model.AMI import AMI
+from d2c.model.SourceImage import AMI
 from d2c.model.Configuration import Configuration
 from d2c.model.EC2Cred import EC2Cred
 from d2c.data.DAO import DAO

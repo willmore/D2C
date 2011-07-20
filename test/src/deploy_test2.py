@@ -2,14 +2,13 @@ import sys
 import os
 
 from d2c.data.DAO import DAO
-from d2c.data.CredStore import CredStore
 from d2c.model.Role import Role
 from d2c.model.Deployment import Deployment
 from d2c.model.Action import Action
 from d2c.model.DataCollector import DataCollector
 from d2c.model.FileExistsFinishedCheck import FileExistsFinishedCheck
 from d2c.EC2ConnectionFactory import EC2ConnectionFactory
-from d2c.model.AMI import AMI
+from d2c.model.SourceImage import AMI
 from d2c.model.SSHCred import SSHCred
 from d2c.logger import StdOutLogger
 from TestConfig import TestConfig

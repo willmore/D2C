@@ -1,20 +1,13 @@
-'''
-Created on Feb 16, 2011
-
-@author: willmore
-'''
-
 import os
 import tempfile
 
-from d2c.model.AMI import AMI
 from d2c.logger import StdOutLogger
 from d2c.model.EC2Cred import EC2Cred
 from d2c.model.AWSCred import AWSCred
 from d2c.model.Kernel import Kernel
 from d2c.data.DAO import DAO
 from d2c.model.Cloud import Cloud
-from d2c.model.SourceImage import SourceImage
+from d2c.model.SourceImage import SourceImage, AMI
 
 class UnsupportedImageError(Exception):
     def __init__(self, value):
@@ -88,7 +81,7 @@ class AMICreator:
         newImg = self.__amiTools.ec2izeImage(self.__srcImg, self.__outputDir, 
                                              self.__kernel, self.__cloud.getFStab())       
 
-        self.__logger.write("Bundling AMI")
+        self.__logger.write("Bundling image (preparation for upload to cloud)")
         bundleDir =  self.__outputDir + "/bundle"
         manifest = self.__amiTools.bundleImage(newImg, 
                                                bundleDir, 
@@ -98,16 +91,18 @@ class AMICreator:
                                                self.__kernel,
                                                self.__ramdisk) 
     
-        self.__logger.write("Uploading bundle")
+        self.__logger.write("Uploading bundled image to cloud storage.")
         s3ManifestPath = self.__amiTools.uploadBundle(self.__cloud,
                                                       self.__s3Bucket, 
                                                       manifest, self.__awsCred)
     
-        self.__logger.write("Registering AMI: %s" % s3ManifestPath)
+        self.__logger.write("Registering image manifest %s with cloud: %s" % (s3ManifestPath, self.__cloud.name))
         amiId = self.__amiTools.registerAMI(s3ManifestPath, self.__cloud, self.__awsCred)     
         
         ami = AMI(None, self.__srcImg.image, amiId, self.__cloud, kernel=self.__kernel)
         self.__dao.add(ami)
+        
+        self.__logger.write("Image registered with cloud %s as %s" % (self.__cloud.name, ami.amiId))
         
         return ami    
     

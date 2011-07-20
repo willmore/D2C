@@ -2,8 +2,6 @@
 import wx
 from .ItemList import ItemList, ColumnMapper
 from .ContainerPanel import ContainerPanel
-from d2c.model.AMI import AMI
-from d2c.model.SourceImage import DesktopImage
 
 class DeploymentCreator(wx.Dialog):
     

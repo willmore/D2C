@@ -68,7 +68,7 @@ class LibVirtReservationThread(Thread):
 class LibVirtReservation(object):
     
     def __init__(self, image, instanceType, count):
-        
+        from .SourceImage import DesktopImage
         assert isinstance(image, DesktopImage), "image must be of type DesktopImage, is %s" % type(image)
         
         self.id = 'r' + ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(6))
@@ -139,6 +139,9 @@ class EC2CloudConn(CloudConnection):
             return self.botoConn.get_all_instances()                    
         else:
             return self.botoConn.get_all_instances(filters={'reservation-id':reservationId})
+        
+    def registerImage(self, imageLocation):
+        self.botoConn.register_image(image_location=imageLocation)
 
 class EC2Cloud(Cloud):
     '''

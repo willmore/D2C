@@ -3,8 +3,7 @@ import os
 
 from .ContainerPanel import ContainerPanel
 import d2c.controller.util as util
-from d2c.model.SourceImage import Image, DesktopImage
-from d2c.model.AMI import AMI
+from d2c.model.SourceImage import Image, DesktopImage, AMI
 from .NewAMIWizard import NewAMIWizard
 from d2c.controller.AMIWizardController import AMIWizardController
 from wx.lib.pubsub import Publisher

@@ -1,17 +1,16 @@
 from d2c.model.InstanceType import InstanceType, Architecture
 from d2c.model.Cloud import EC2Cloud, DesktopCloud
 from d2c.model.Kernel import Kernel
-from d2c.model.AMI import AMI
 from d2c.data.CredStore import CredStore
 from d2c.model.UploadAction import UploadAction
 from d2c.model.Ramdisk import Ramdisk
-from TestConfig import TestConfig
-from d2c.model.DeploymentTemplate import DeploymentTemplate, RoleTemplate
-from mockito import *
-
 from d2c.model.SSHCred import SSHCred
 from d2c.model.DataCollector import DataCollector
-from d2c.model.SourceImage import Image, DesktopImage
+from d2c.model.SourceImage import Image, DesktopImage, AMI
+from TestConfig import TestConfig
+from d2c.model.DeploymentTemplate import DeploymentTemplate, RoleTemplate
+
+from mockito import *
 import tempfile
 
 def init_db(dao, confFile):

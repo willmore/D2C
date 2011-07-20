@@ -1,5 +1,5 @@
 import os
-from d2c.model.SourceImage import SourceImage, Image, DesktopImage
+from d2c.model.SourceImage import SourceImage, Image, DesktopImage, AMI
 from d2c.model.EC2Cred import EC2Cred
 from d2c.model.AWSCred import AWSCred
 from d2c.model.Configuration import Configuration
@@ -9,7 +9,6 @@ from d2c.model.InstanceType import InstanceType, Architecture
 from d2c.model.Region import Region
 from d2c.model.Cloud import EC2Cloud, DesktopCloud, Cloud
 from d2c.model.Kernel import Kernel
-from d2c.model.AMI import AMI
 from d2c.model.Action import StartAction
 from d2c.model.UploadAction import UploadAction
 from d2c.model.DataCollector import DataCollector
@@ -46,6 +45,7 @@ class DAO:
             os.makedirs(baseDir, mode=0700)
         
         self.__conn = None
+        self.__credStore = None
         
         self.engine = create_engine('sqlite:///' + self.fileName, 
                                     connect_args={'check_same_thread':False},
@@ -96,8 +96,8 @@ class DAO:
                 MapperExtension.__init__(self)
                 self.daoRef = daoRef
             
-            def reconstruct_instance(self, mapper, instance):
-                self.daoRef._setCloudBotoModule(instance)
+            def reconstruct_instance(self, _, instance):
+                self.daoRef.setCloudBotoModule(instance)
         
         mapper(Cloud, cloudTable, properties={
                                     'deploys': relationship(Deployment, backref='cloud'),
@@ -173,8 +173,8 @@ class DAO:
                 MapperExtension.__init__(self)
                 self.daoRef = daoRef
             
-            def reconstruct_instance(self, mapper, instance):
-                self.daoRef._setRemoteShellExecutorFactory(instance)
+            def reconstruct_instance(self, _, instance):
+                self.daoRef.setRemoteShellExecutorFactory(instance)
         
         actionExtension = ActionExtension(self)
         
@@ -347,11 +347,11 @@ class DAO:
         self.__getConn().commit()
         c.close()
     
-    def _setRemoteShellExecutorFactory(self, action):
+    def setRemoteShellExecutorFactory(self, action):
         action.remoteExecutorFactory = self.remoteExecutorFactory
         action.executorFactory = self.executorFactory
     
-    def _setCloudBotoModule(self, cloud):
+    def setCloudBotoModule(self, cloud):
         assert isinstance(cloud, Cloud)
         cloud.botoModule = self.botoModule
  
@@ -365,8 +365,8 @@ class DAO:
     def getArchitectures(self):
         return self.session.query(Architecture)
     
-    def getArchitecture(self, id):
-        return self.session.query(Architecture).filter_by(arch=id).first()
+    def getArchitecture(self, _id):
+        return self.session.query(Architecture).filter_by(arch=_id).first()
     
     def getImages(self):
         return self.session.query(Image)
@@ -469,11 +469,11 @@ class DAO:
     def getDeploymentTemplates(self):
         return self.session.query(DeploymentTemplate)
              
-    def getEC2Cred(self, id):
+    def getEC2Cred(self, _id):
         
         c = self.__getConn().cursor()
         
-        c.execute("select * from ec2_cred where id = ? limit 1", (id,))
+        c.execute("select * from ec2_cred where id = ? limit 1", (_id,))
         
         row = c.fetchone()
         

@@ -1,12 +1,6 @@
-'''
-Created on Feb 9, 2011
-
-@author: willmore
-'''
 
 import wx
 from wx.lib.pubsub import Publisher as pub
-from .ContainerPanel import ContainerPanel
 from .AMIPanel import AMIPanel
 import pkg_resources
 from .RawImagePanel import RawImagePanel
