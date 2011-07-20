@@ -135,7 +135,8 @@ class DAO:
                                     })
         
         sshCredTable = Table('ssh_cred', metadata,
-                            Column('id', String, primary_key=True),
+                            Column('id', Integer, primary_key=True),
+                            Column('name', String),
                             Column('username', String),
                             Column('privateKey', String)
                             )  
@@ -180,7 +181,7 @@ class DAO:
         
         startActionTable = Table('start_action', metadata,
                             Column('id', Integer, primary_key=True),
-                            Column('action', String),
+                            Column('command', String),
                             Column('role_template_id', ForeignKey('role_template.id')),
                             Column('role_id', ForeignKey('role.id')),
                             Column('deploy_id', ForeignKey('deploy.id'))
@@ -195,7 +196,7 @@ class DAO:
                             Column('role_template_id', ForeignKey('role_template.id')),
                             Column('role_id', ForeignKey('role.id')),
                             Column('deployment_template_id', ForeignKey('deployment_template.id')),
-                            Column('ssh_cred_id', String, ForeignKey('ssh_cred.id'))
+                            Column('ssh_cred_id', ForeignKey('ssh_cred.id'))
                             )
         
         mapper(UploadAction, uploadActionTable, properties={
@@ -208,7 +209,7 @@ class DAO:
                             Column('role_template_id', ForeignKey('role_template.id')),
                             Column('role_id', ForeignKey('role.id')),
                             Column('deployment_template_id', ForeignKey('deployment_template.id')),
-                            Column('ssh_cred_id', String, ForeignKey('ssh_cred.id'))
+                            Column('ssh_cred_id', ForeignKey('ssh_cred.id'))
                             )
         
         mapper(DataCollector, dataCollectorTable, properties={
@@ -277,8 +278,8 @@ class DAO:
                             Column('id', Integer, primary_key=True),
                             Column('name', String),
                             Column('deployment_template_id', String, ForeignKey('deployment_template.id')),
-                            Column('context_cred_id', String, ForeignKey('ssh_cred.id')),
-                            Column('launch_cred_id', String, ForeignKey('ssh_cred.id')),
+                            Column('context_cred_id', ForeignKey('ssh_cred.id')),
+                            Column('launch_cred_id', ForeignKey('ssh_cred.id')),
                             Column('image_id', Integer, ForeignKey('image.id'), nullable=False)
                             )  
         
@@ -368,6 +369,12 @@ class DAO:
         self.session.commit()
         
     def save(self, _):
+        self.session.commit()
+        
+    def delete(self, entity):
+        self.session.delete(entity)
+    
+    def commit(self):
         self.session.commit()
         
     def getArchitectures(self):

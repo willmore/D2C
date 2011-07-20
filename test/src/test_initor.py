@@ -76,7 +76,7 @@ def init_db(dao, confFile):
             instance.cloud = cloud
             dao.addInstanceType(instance)
     
-    sshCred = SSHCred("key", "root", "/home/willmore/.euca/key.private")
+    sshCred = SSHCred(None, "key", "root", "/home/willmore/.euca/key.private")
     dao.add(sshCred)
     
     tmpSrc = tempfile.NamedTemporaryFile(delete=False)
