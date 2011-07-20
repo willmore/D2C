@@ -2,6 +2,7 @@ from d2c.model.InstanceType import InstanceType, Architecture
 from d2c.model.Cloud import EC2Cloud, DesktopCloud
 from d2c.model.Kernel import Kernel
 from d2c.data.CredStore import CredStore
+from d2c.model.UploadAction import UploadAction
 from d2c.model.Ramdisk import Ramdisk
 from d2c.model.SSHCred import SSHCred
 from d2c.model.DataCollector import DataCollector
@@ -60,10 +61,12 @@ def init_db(dao, confFile):
     
     dao.add(myWorkerImg) 
     
+    cloud = clouds[0]
+    
     ramdisk = Ramdisk("eri-83141744", cloud, archs[1])
     dao.add(ramdisk)
 
-    ami = AMI(None, myWorkerImg, "emi-61AD0E5B", cloud)
+    ami = AMI(None, myWorkerImg, "emi-77180ECD", cloud)
     dao.addAMI(ami)
      
     for instance in []:
