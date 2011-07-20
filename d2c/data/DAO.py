@@ -135,7 +135,8 @@ class DAO:
                                     })
         
         sshCredTable = Table('ssh_cred', metadata,
-                            Column('id', String, primary_key=True),
+                            Column('id', Integer, primary_key=True),
+                            Column('name', String),
                             Column('username', String),
                             Column('privateKey', String)
                             )  
@@ -180,32 +181,35 @@ class DAO:
         
         startActionTable = Table('start_action', metadata,
                             Column('id', Integer, primary_key=True),
-                            Column('action', String),
-                            Column('role_id', ForeignKey('role_template.id')),
+                            Column('command', String),
+                            Column('role_template_id', ForeignKey('role_template.id')),
+                            Column('role_id', ForeignKey('role.id')),
                             Column('deploy_id', ForeignKey('deploy.id'))
                             )
         
         mapper(StartAction, startActionTable, extension=actionExtension)
         
-        startActionTable = Table('upload_action', metadata,
+        uploadActionTable = Table('upload_action', metadata,
                             Column('id', Integer, primary_key=True),
                             Column('source', String),
                             Column('destination', String),
-                            Column('role_id', ForeignKey('role_template.id')),
+                            Column('role_template_id', ForeignKey('role_template.id')),
+                            Column('role_id', ForeignKey('role.id')),
                             Column('deployment_template_id', ForeignKey('deployment_template.id')),
-                            Column('ssh_cred_id', String, ForeignKey('ssh_cred.id'))
+                            Column('ssh_cred_id', ForeignKey('ssh_cred.id'))
                             )
         
-        mapper(UploadAction, startActionTable, properties={
+        mapper(UploadAction, uploadActionTable, properties={
                 'sshCred': relationship(SSHCred)}, extension=actionExtension)
         
         
         dataCollectorTable = Table('data_collector', metadata,
                             Column('id', Integer, primary_key=True),
                             Column('source', String),
-                            Column('role_id', ForeignKey('role_template.id')),
+                            Column('role_template_id', ForeignKey('role_template.id')),
+                            Column('role_id', ForeignKey('role.id')),
                             Column('deployment_template_id', ForeignKey('deployment_template.id')),
-                            Column('ssh_cred_id', String, ForeignKey('ssh_cred.id'))
+                            Column('ssh_cred_id', ForeignKey('ssh_cred.id'))
                             )
         
         mapper(DataCollector, dataCollectorTable, properties={
@@ -216,6 +220,7 @@ class DAO:
                             Column('id', Integer, primary_key=True),
                             Column('fileName', String),
                             Column('role_template_id', ForeignKey('role_template.id')),
+                            Column('role_id', ForeignKey('role.id')),
                             Column('deployment_template_id', ForeignKey('deployment_template.id'))
                             )
         
@@ -241,11 +246,11 @@ class DAO:
             
         amiTable = Table('ami', metadata,
                             Column('id', Integer, ForeignKey('src_img.id'), primary_key=True),
-                            Column('amiId', String),
-                            Column('kernel_id', String, ForeignKey('kernel.aki'), nullable=False),
+                            Column('amiId', String, nullable=False),
+                            Column('kernel_id', String, ForeignKey('kernel.aki'), nullable=True),
                             Column('ramdisk_id', String, ForeignKey('ramdisk.id'), nullable=True),
                         )
-         
+        
         ramdiskTable = Table('ramdisk', metadata,
                              Column('id', String, primary_key=True),
                              Column('cloud_id', ForeignKey('cloud.id'), nullable=False),
@@ -273,8 +278,8 @@ class DAO:
                             Column('id', Integer, primary_key=True),
                             Column('name', String),
                             Column('deployment_template_id', String, ForeignKey('deployment_template.id')),
-                            Column('context_cred_id', String, ForeignKey('ssh_cred.id')),
-                            Column('launch_cred_id', String, ForeignKey('ssh_cred.id')),
+                            Column('context_cred_id', ForeignKey('ssh_cred.id')),
+                            Column('launch_cred_id', ForeignKey('ssh_cred.id')),
                             Column('image_id', Integer, ForeignKey('image.id'), nullable=False)
                             )  
         
@@ -301,7 +306,11 @@ class DAO:
         mapper(Role, roleTable, properties={
                                     'instanceType': relationship(InstanceType),
                                     'image' : relationship(SourceImage),
-                                    'roleTemplate' : relationship(RoleTemplate)
+                                    'template' : relationship(RoleTemplate),
+                                    'startActions': relationship(StartAction),
+                                    'uploadActions': relationship(UploadAction),
+                                    'dataCollectors': relationship(DataCollector),
+                                    'finishedChecks': relationship(FileExistsFinishedCheck)
                                      }, extension=actionExtension)
         
         mapper(SourceImage, srcImgTable, polymorphic_on=srcImgTable.c.type, polymorphic_identity='src_img', 
@@ -360,6 +369,12 @@ class DAO:
         self.session.commit()
         
     def save(self, _):
+        self.session.commit()
+        
+    def delete(self, entity):
+        self.session.delete(entity)
+    
+    def commit(self):
         self.session.commit()
         
     def getArchitectures(self):

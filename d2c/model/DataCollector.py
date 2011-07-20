@@ -7,7 +7,7 @@ class DataCollector(object):
 
     def __init__(self, 
                  source, 
-                 sshCred,
+                 sshCred=None,
                  logger=StdOutLogger()):
         
         assert source is not None
@@ -15,6 +15,9 @@ class DataCollector(object):
         self.source = source
         self.logger = logger
         self.sshCred = sshCred
+        
+    def copy(self):
+        return DataCollector(self.source, self.sshCred)
      
     def collect(self, instance, destinationDir): 
         

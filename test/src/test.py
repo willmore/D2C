@@ -1,50 +1,88 @@
-#!/usr/bin/python
-
-# notebook.py
-
 import wx
-import wx.lib.sheet as sheet
 
-class MySheet(sheet.CSheet):
-    def __init__(self, parent):
-        sheet.CSheet.__init__(self, parent)
+class FicheFrameWithFocus( wx.Frame ) :
 
-        self.SetLabelBackgroundColour('#DBD4D4')
-        self.SetNumberRows(50)
-        self.SetNumberCols(50)
+    def __init__( self ) :
 
-class Notebook(wx.Frame):
-    def __init__(self, parent, id, title):
-        wx.Frame.__init__(self, parent, id, title, size=(600, 500))
+        wx.Frame.__init__( self, None, -1 ,"FicheFrameWithFocus", size=(275, 500) )
 
-        menubar = wx.MenuBar()
-        file = wx.Menu()
-        file.Append(101, 'Quit', '' )
-        menubar.Append(file, "&File")
-        self.SetMenuBar(menubar)
-        wx.EVT_MENU(self, 101, self.OnQuit)
-        nb = wx.Notebook(self, -1, style=wx.NB_BOTTOM)
-        self.sheet1 = MySheet(nb)
-        self.sheet2 = MySheet(nb)
-        self.sheet3 = MySheet(nb)
-        nb.AddPage(self.sheet1, "Sheet1")
-        nb.AddPage(self.sheet2, "Sheet2")
-        nb.AddPage(self.sheet3, "Sheet3")
-        self.sheet1.SetFocus()
-        self.StatusBar()
+        self.scroll = wx.ScrolledWindow( self, -1 )
 
-    def StatusBar(self):
-        self.statusbar = self.CreateStatusBar()
+        self.frmPanel = wx.Panel( self.scroll, -1 )
 
-    def OnQuit(self, event):
-        self.Close()
+        # A sizer allows the horizontal scrollbar to appear when needed.
+        flGrSzr = wx.FlexGridSizer( 50, 2, 2, 2 )   # rows, cols, hgap, vgap
 
-class MyApp(wx.App):
-    def OnInit(self):
-         frame = Notebook(None, -1, 'notebook.py')
-         frame.Show(True)
-         frame.Centre()
-         return True
+        for i in range( 50 ) :
 
-app = MyApp(0)
-app.MainLoop()
+            textStr = " Champ (txt) %2d  : " % (i+1)
+            flGrSzr.Add( wx.StaticText( self.frmPanel, -1, textStr ) )
+
+            txtCtrl = wx.TextCtrl( self.frmPanel, -1, size=(100, -1), style=0 )
+            wx.EVT_SET_FOCUS( txtCtrl, self.OnFocus )
+            flGrSzr.Add( txtCtrl )
+
+        #end for
+
+        # Create a border around frmPnlSizer to the edges of the frame.
+        frmPnlSizer = wx.BoxSizer( wx.VERTICAL )
+        frmPnlSizer.Add( flGrSzr, proportion=1, flag=wx.ALL, border=20 )
+
+        self.frmPanel.SetSizer( frmPnlSizer )
+        self.frmPanel.SetAutoLayout( True )
+        self.frmPanel.Layout()
+        self.frmPanel.Fit()     # frmPnlSizer borders will be respected
+
+        self.Center()
+        self.MakeModal( True )
+
+        # Scrolling parameters must be set AFTER all controls have been laid out.
+        self.frmPanelWid, self.frmPanelHgt = self.frmPanel.GetSize()
+        self.unit = 1
+        self.scroll.SetScrollbars( self.unit, self.unit, self.frmPanelWid/self.unit, self.frmPanelHgt/self.unit )
+
+        
+
+    #end __init__ def
+
+    def OnFocus( self, event ) :
+        """
+        This makes the selected (the one in focus) textCtrl to be automatically
+        repositioned to the top-left of the window. One of the scrollbars
+        must have been moved for this to happen.
+
+        The benefits for doing this are dubious. but this demonstrates how it can be done.
+        """
+
+        parentControl = self.FindWindowById( event.GetId() )  # The parent container control
+        parentPosX, parentPosY = parentControl.GetPosition()
+        hx, hy = parentControl.GetSizeTuple()
+        clientSizeX, clientSizeY = self.scroll.GetClientSize()
+
+        sx, sy = self.scroll.GetViewStart()
+        magicNumber = 20        # Where did this value come from ?!
+        sx = sx * magicNumber
+        sy = sy * magicNumber
+
+        if (parentPosY < sy ) :
+            self.scroll.Scroll( 0, parentPosY/self.unit )
+
+        if ( parentPosX < sx ) :
+             self.scroll.Scroll( 0, -1 )
+
+        if (parentPosX + sx) > clientSizeX  :
+            self.scroll.Scroll( 0, -1 )
+
+        if (parentPosY + hy - sy) > clientSizeY :
+            self.scroll.Scroll( 0, parentPosY/self.unit )
+
+    #end OnFocus def
+
+#end FicheFrameWithFocus class
+
+if __name__ == '__main__' :
+
+    myapp = wx.App( redirect=False )
+    appFrame = FicheFrameWithFocus()
+    appFrame.Show()
+    myapp.MainLoop()

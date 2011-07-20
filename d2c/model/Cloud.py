@@ -126,13 +126,13 @@ class EC2CloudConn(CloudConnection):
         CloudConnection.__init__(self)
         self.botoConn = botoConn
         
-    def runInstances(self, image, instanceType, count):    
+    def runInstances(self, image, instanceType, count, keyName):    
         
         return self.botoConn.run_instances(image.amiId, 
-                                    key_name=None,#key_name=str(launchKey) if launchKey is not None else None,
                                     min_count=count, 
                                     max_count=count, 
-                                    instance_type=str(instanceType.name))
+                                    instance_type=str(instanceType.name),
+                                    key_name=keyName)
         
     def getAllInstances(self, reservationId=None):
         if reservationId is None:
@@ -141,7 +141,20 @@ class EC2CloudConn(CloudConnection):
             return self.botoConn.get_all_instances(filters={'reservation-id':reservationId})
         
     def registerImage(self, imageLocation):
-        self.botoConn.register_image(image_location=imageLocation)
+        return self.botoConn.register_image(image_location=imageLocation)
+    
+    def generateKeyPair(self, dataDir, keyPairName):
+        '''
+        Creates a key pair, with the public key being saved in the cloud 
+        and the private saved locally in the directory dataDir.
+        
+        Return the full path location to the new private key.
+        '''
+        if not os.path.exists(dataDir):
+            os.makedirs(dataDir, mode=0700)
+        self.botoConn.create_key_pair(keyPairName).save(dataDir)
+        
+        return os.path.join(dataDir, "%s/%s.pem" % (dataDir, keyPairName))
 
 class EC2Cloud(Cloud):
     '''

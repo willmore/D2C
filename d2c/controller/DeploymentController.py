@@ -1,6 +1,8 @@
 import wx
 from threading import Thread
 from wx.lib.pubsub import Publisher
+from d2c.gui.RolePanel import RoleDialog
+from .RolePanelController import RolePanelController
 import sys
 
 class DeploymentThread(Thread):
@@ -31,10 +33,10 @@ class PersistenceListener:
 class ViewListener:
     
     def __init__(self, deploymentView):
-        self.deploymentView = deploymentView
+        self.view = deploymentView
         
     def notify(self, _):
-        wx.CallAfter(self.deploymentView.update)     
+        wx.CallAfter(self.view.update)     
     
     
 class DeploymentController:
@@ -42,14 +44,26 @@ class DeploymentController:
     def __init__(self, deploymentView, dao):
         
         self.dao = dao
-        self.deploymentView = deploymentView
-        self.deploymentView.deployButton.Bind(wx.EVT_BUTTON, self.handleLaunch)
-        self.deploymentView.cancelButton.Bind(wx.EVT_BUTTON, self.handleCancel)
+        self.view = deploymentView
+        self.view.deployButton.Bind(wx.EVT_BUTTON, self.handleLaunch)
+        self.view.cancelButton.Bind(wx.EVT_BUTTON, self.handleCancel)
         
         self.deployment = deploymentView.deployment
         
         Publisher.subscribe(self.handleException, 
                             "DEPLOYMENT EXCEPTION")
+        
+        self.view.roles.Bind(wx.EVT_LIST_ITEM_RIGHT_CLICK, self.onRolesRightClick)
+    
+    def onRolesRightClick(self, event):
+        item, flags = self.view.roles.HitTest(event.GetPosition())
+        if flags == wx.NOT_FOUND:
+            event.Skip()
+            return
+        self.view.roles.Select(item)
+        
+        self.view.roles.PopupMenu(RolePopupMenu(self.view.roles.getSelectedItems()[0], self.dao),
+                                  event.GetPosition())
     
     def handleException(self, msg):
         
@@ -62,10 +76,10 @@ class DeploymentController:
         
         if wx.YES == ret:
                
-            self.deploymentView.showLogPanel()
+            self.view.showLogPanel()
             
             self.deployment.stop()
-            self.deploymentView.cancelButton.Hide()
+            self.view.cancelButton.Hide()
             
 
     def handleLaunch(self, _):
@@ -76,23 +90,23 @@ class DeploymentController:
         
         if wx.YES == ret:
             
-            self.deploymentView.deployButton.Hide()
+            self.view.deployButton.Hide()
             
-            self.deploymentView.showLogPanel()
+            self.view.showLogPanel()
             
             self.__createLogger()
             
             self.deployment.addAnyStateChangeListener(PersistenceListener(self.dao, self.deployment))
-            self.deployment.addAnyStateChangeListener(ViewListener(self.deploymentView))
+            self.deployment.addAnyStateChangeListener(ViewListener(self.view))
             self.deploymentThread = DeploymentThread(self.deployment)
             self.deploymentThread.start()
-            self.deploymentView.cancelButton.Show()
-            self.deploymentView.Layout()
+            self.view.cancelButton.Show()
+            self.view.Layout()
     
     def __createLogger(self):
         channelId = self.deployment.id
         
-        logger = self.__DeploymentLogger(channelId, self.deploymentView)
+        logger = self.__DeploymentLogger(channelId, self.view)
         
         Publisher.subscribe(logger.receiveMsg, 
                             channelId)
@@ -112,12 +126,33 @@ class DeploymentController:
            
         def receiveMsg(self, msg):
             self.logPanel.appendLogPanelText(msg.data)
-            
+
+class RolePopupMenu(wx.Menu):
+    def __init__(self, role, dao):
+        wx.Menu.__init__(self)
+        
+        self.dao = dao
+        self.role = role
+        
+        item = wx.MenuItem(self, wx.NewId(), "View / Edit Role")
+        self.AppendItem(item)
+        self.Bind(wx.EVT_MENU, self.onEditRole, item)
+
+    def onEditRole(self, event):
+        print "Item One selected in the %s" % self.role.template.name
+        
+        roleDialog = RoleDialog(None, -1, size=(400,400))
+        
+        RolePanelController(roleDialog, self.role, self.dao)
+        
+        roleDialog.ShowModal()
+        roleDialog.Destroy()
+      
 class DeploymentTemplateController:
     
     def __init__(self, deploymentView, dao):
         
         self.dao = dao
-        self.deploymentView = deploymentView
+        self.view = deploymentView
         
         self.deployment = deploymentView.deployment 

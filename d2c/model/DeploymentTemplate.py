@@ -52,5 +52,28 @@ class RoleTemplate(object):
         
     def createRole(self, deployment, cloud, image, instanceType, count):
         
-        return Role(None, image=image, count=count, instanceType=instanceType, 
-                    roleTemplate=self, deployment=deployment)
+        role = Role(None, image=image, count=count, instanceType=instanceType, 
+                    template=self, deployment=deployment)
+        
+        '''
+        Copy all actions from template. We want a copy of the action that may be modified without
+        changing the template's version.
+        '''
+        role.startActions = [a.copy() for a in self.startActions]
+        for a in role.startActions:
+            a.id = None
+            
+        role.uploadActions = [a.copy() for a in self.uploadActions]
+        for a in role.uploadActions:
+            a.id = None
+            
+        role.finishedChecks = [a.copy() for a in self.finishedChecks]
+        for a in role.finishedChecks:
+            a.id = None
+            
+        role.dataCollectors = [a.copy() for a in self.dataCollectors]
+        for a in role.dataCollectors:
+            a.id = None
+            
+        return role
+        

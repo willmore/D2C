@@ -13,6 +13,9 @@ class Action(object):
         self.command = command
         self.sshCred = sshCred
         self.logger = logger
+        
+    def copy(self):
+        return Action(self.command, self.sshCred)
      
     def execute(self, instance):   
             
@@ -31,3 +34,6 @@ class StartAction(Action):
         Action.__init__(self, command, 
                  sshCred,
                  logger)
+        
+    def copy(self):
+        return StartAction(self.command, self.sshCred)

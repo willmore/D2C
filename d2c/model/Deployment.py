@@ -1,6 +1,7 @@
 
 from d2c.logger import StdOutLogger
 import time
+from .SSHCred import SSHCred
 
 class Instance(object):
     '''
@@ -234,6 +235,17 @@ class Deployment(object):
         
         self.__setState(DeploymentState.LAUNCHING_INSTANCES)
         
+        self.logger.write("Creating session key")
+        
+        self.keyPairName = "%s.%d" % (self.deploymentTemplate.name, self.id)
+        
+        keyDirLoc = self.cloud.getConnection(self.awsCred).generateKeyPair(self.dataDir, self.keyPairName)
+        self.logger.write("Session key created: %s" % keyDirLoc)
+        sshCred = SSHCred(id=None, name=self.keyPairName, username="root", privateKey=keyDirLoc)
+        
+        for role in self.roles:
+            role.setSSHCred(sshCred)
+        
         self.logger.write("Launching instances")
                         
         for role in self.roles:
@@ -254,7 +266,7 @@ class Deployment(object):
             allRunning = True
             for state in instStates:
                 if state != 'running':
-                    self.logger.write('All instances not running; continue polling.')
+                    #self.logger.write('All instances not running; continue polling.')
                     allRunning = False
                     break
                 
@@ -300,7 +312,7 @@ class Deployment(object):
         
         res = self.cloud.getConnection(self.awsCred).getAllInstances()
         
-        self.logger.write("Got reservations: %s" % str(res))
+        #self.logger.write("Got reservations: %s" % str(res))
         
         states = []
         for r in res:

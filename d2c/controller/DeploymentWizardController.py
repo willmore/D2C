@@ -8,7 +8,7 @@ from d2c.model.Role import Role
 from d2c.model.Deployment import Deployment
 from d2c.model.InstanceType import InstanceType
 from wx.lib.pubsub import Publisher
-from d2c.model.Action import Action
+from d2c.model.Action import StartAction
 from d2c.model.FileExistsFinishedCheck import FileExistsFinishedCheck
 from d2c.model.DataCollector import DataCollector
 from d2c.model.SSHCred import SSHCred
@@ -171,7 +171,7 @@ class DeploymentWizardController:
         
         assert len(amis) == 1, "Only one AMI at a time supported"
         
-        tmpCred = SSHCred("foobar", "foobar")
+        tmpCred = SSHCred(None, "placeholder", "foobar", "foobar")
     
         uploadActions = []
         for i in range(0, len(self.uploadScripts), 2):
@@ -179,7 +179,7 @@ class DeploymentWizardController:
                                              self.uploadScripts[i+1].GetValue(),
                                              tmpCred))        
         
-        startActions = [Action(s.GetValue(), tmpCred) for s in self.startScripts] 
+        startActions = [StartAction(s.GetValue(), tmpCred) for s in self.startScripts] 
         finishedChecks = [FileExistsFinishedCheck(f.GetValue(), tmpCred) for f in self.endScripts]
         dataCollectors = [DataCollector(d.GetValue(), tmpCred) for d in self.dataCollectors]
         
