@@ -181,29 +181,32 @@ class DAO:
         startActionTable = Table('start_action', metadata,
                             Column('id', Integer, primary_key=True),
                             Column('action', String),
-                            Column('role_id', ForeignKey('role_template.id')),
+                            Column('role_template_id', ForeignKey('role_template.id')),
+                            Column('role_id', ForeignKey('role.id')),
                             Column('deploy_id', ForeignKey('deploy.id'))
                             )
         
         mapper(StartAction, startActionTable, extension=actionExtension)
         
-        startActionTable = Table('upload_action', metadata,
+        uploadActionTable = Table('upload_action', metadata,
                             Column('id', Integer, primary_key=True),
                             Column('source', String),
                             Column('destination', String),
-                            Column('role_id', ForeignKey('role_template.id')),
+                            Column('role_template_id', ForeignKey('role_template.id')),
+                            Column('role_id', ForeignKey('role.id')),
                             Column('deployment_template_id', ForeignKey('deployment_template.id')),
                             Column('ssh_cred_id', String, ForeignKey('ssh_cred.id'))
                             )
         
-        mapper(UploadAction, startActionTable, properties={
+        mapper(UploadAction, uploadActionTable, properties={
                 'sshCred': relationship(SSHCred)}, extension=actionExtension)
         
         
         dataCollectorTable = Table('data_collector', metadata,
                             Column('id', Integer, primary_key=True),
                             Column('source', String),
-                            Column('role_id', ForeignKey('role_template.id')),
+                            Column('role_template_id', ForeignKey('role_template.id')),
+                            Column('role_id', ForeignKey('role.id')),
                             Column('deployment_template_id', ForeignKey('deployment_template.id')),
                             Column('ssh_cred_id', String, ForeignKey('ssh_cred.id'))
                             )
@@ -216,6 +219,7 @@ class DAO:
                             Column('id', Integer, primary_key=True),
                             Column('fileName', String),
                             Column('role_template_id', ForeignKey('role_template.id')),
+                            Column('role_id', ForeignKey('role.id')),
                             Column('deployment_template_id', ForeignKey('deployment_template.id'))
                             )
         
@@ -301,7 +305,11 @@ class DAO:
         mapper(Role, roleTable, properties={
                                     'instanceType': relationship(InstanceType),
                                     'image' : relationship(SourceImage),
-                                    'roleTemplate' : relationship(RoleTemplate)
+                                    'template' : relationship(RoleTemplate),
+                                    'startActions': relationship(StartAction),
+                                    'uploadActions': relationship(UploadAction),
+                                    'dataCollectors': relationship(DataCollector),
+                                    'finishedChecks': relationship(FileExistsFinishedCheck)
                                      }, extension=actionExtension)
         
         mapper(SourceImage, srcImgTable, polymorphic_on=srcImgTable.c.type, polymorphic_identity='src_img', 

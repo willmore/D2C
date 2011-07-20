@@ -70,11 +70,9 @@ class AddRolePanel(wx.Panel):
         
         self.sizer.Add(self.fgs, 0, wx.ALL | wx.EXPAND, 5)
         
-        
-        
         self.sw = wx.ScrolledWindow(self, style=wx.VSCROLL)
         self.sw.SetMinSize((-1, 300))
-        self.SetScrollbar(1,1,1,1)
+        self.sw.SetScrollbars(1,1,1,1)
         self.sizer.Add(self.sw, 0, wx.ALL | wx.EXPAND, 5)
         self.sw.sizer = wx.BoxSizer(wx.VERTICAL)
         

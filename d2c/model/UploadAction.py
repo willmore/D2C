@@ -1,5 +1,4 @@
 from d2c.logger import StdOutLogger
-from d2c.ShellExecutor import ShellExecutor
 import os
 
 class UploadAction(object):
@@ -17,6 +16,9 @@ class UploadAction(object):
         self.destination = destination
         self.logger = logger
         self.sshCred = sshCred
+        
+    def copy(self):      
+        return UploadAction(self.source, self.destination, self.sshCred)
      
     def execute(self, instance):   
             

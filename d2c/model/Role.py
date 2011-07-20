@@ -15,10 +15,14 @@ class Role(object):
                  image, 
                  count,
                  instanceType, 
-                 roleTemplate,
+                 template,
                  deployment=None,
                  reservationId=None,
                  remoteExecutorFactory=None,
+                 startActions=(), 
+                 uploadActions=(),
+                 finishedChecks=(), 
+                 dataCollectors=(),
                  pollRate=15,
                  logger=StdOutLogger()):
         
@@ -28,7 +32,7 @@ class Role(object):
         
         self.id = id
         self.image = image  
-        self.roleTemplate = roleTemplate
+        self.template = template
         self.count = count
         self.instanceType = instanceType
         self.pollRate = pollRate
@@ -36,6 +40,10 @@ class Role(object):
         self.reservation = None #lazy loaded
         self.deployment = deployment
         self.remoteExecutorFactory = remoteExecutorFactory
+        self.startActions= list(startActions)
+        self.uploadActions= list(uploadActions)
+        self.finishedChecks= list(finishedChecks)
+        self.dataCollectors= list(dataCollectors)
         self.logger = logger
     
     
@@ -47,9 +55,9 @@ class Role(object):
         
     def _cascadeLogger(self):
         
-        for actions in [self.roleTemplate.startActions, self.roleTemplate.uploadActions, 
-                        self.roleTemplate.finishedChecks, 
-                        self.roleTemplate.dataCollectors]:
+        for actions in [self.startActions, self.uploadActions, 
+                        self.finishedChecks, 
+                        self.dataCollectors]:
             for a in actions:
                 a.logger = self.logger
       
@@ -71,7 +79,7 @@ class Role(object):
         
         cloudConn = self.deployment.cloud.getConnection(awsCred)
        
-        launchKey = self.roleTemplate.launchCred.id if self.roleTemplate.launchCred is not None else None
+        launchKey = self.template.launchCred.id if self.template.launchCred is not None else None
         #launchKey = None
        
         self.logger.write("Reserving %d instance(s) of %s with launchKey %s" % (self.count, str(self.image), launchKey))
@@ -111,7 +119,7 @@ class Role(object):
         context scheme.
         '''
         
-        if (self.roleTemplate.contextCred is None):
+        if (self.template.contextCred is None):
             self.logger.write("Role has no context cred. Cannot contextualize.")
             return
         
@@ -119,7 +127,7 @@ class Role(object):
         cmd = "echo -e \"%s\" > /tmp/d2c.context" % ctxt
         
         action = Action(command=cmd, 
-                        sshCred=self.roleTemplate.contextCred)
+                        sshCred=self.template.contextCred)
         action.remoteExecutorFactory = self.remoteExecutorFactory
         
         for instance in self.reservation.instances:
@@ -142,15 +150,15 @@ class Role(object):
         '''
         Execute the start action(s) on each instance within the role.
         '''
-        self.__executeActions(self.roleTemplate.uploadActions)
-        self.__executeActions(self.roleTemplate.startActions)
+        self.__executeActions(self.uploadActions)
+        self.__executeActions(self.startActions)
                 
     def executeStopCommands(self):
         '''
         Execute the end action(s) on each instance within the role.
         '''
           
-        self.__executeActions(self.roleTemplate.stopActions) 
+        self.__executeActions(self.stopActions) 
                 
     def checkFinished(self):
         '''
@@ -162,7 +170,7 @@ class Role(object):
             self.reservation = self.__getReservation()
             
         for instance in self.reservation.instances:
-            for check in self.roleTemplate.finishedChecks:
+            for check in self.finishedChecks:
                 if not check.check(instance):
                     self.logger.write("Returning False for finished test")
                     return False
@@ -188,7 +196,7 @@ class Role(object):
         if self.reservation is None:
             self.reservation = self.__getReservation()
         
-        for collector in self.roleTemplate.dataCollectors:
+        for collector in self.dataCollectors:
             for instance in self.reservation.instances:
                 collector.collect(instance, 
                                   os.path.join(self.deployment.dataDir, self.id, instance.id, collector.source))
