@@ -9,9 +9,11 @@ class UploadAction(object):
                  sshCred,
                  logger=StdOutLogger()):
         
-        assert isinstance(source, basestring)
+        assert isinstance(source, basestring) 
+        assert len(source) > 0
         assert isinstance(destination, basestring)
-        
+        assert len(destination) > 0
+    
         self.source = source
         self.destination = destination
         self.logger = logger
