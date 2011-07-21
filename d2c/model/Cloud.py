@@ -80,6 +80,7 @@ class LibVirtInstance(object):
         
     def start(self):
         
+        self.image.path = self.image.path.replace(' ', '\\ ')
         ShellExecutor().run("dd if=%s of=%s" % (self.image.path, self.dataFile))
         
         domain_xml_file  = GenerateXML.generateXML(self.dataFile,1,524288)
@@ -125,6 +126,10 @@ class LibVirtInstance(object):
         #TODO set self.public_dns_name
         
         self.public_dns_name  = '192.168.152.2'
+        
+        #TODO set self.private_ip_address
+        
+        self.private_ip_address = '192.168.152.2'
         
         self.state = 'running'
         
