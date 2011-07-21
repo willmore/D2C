@@ -80,10 +80,52 @@ class LibVirtInstance(object):
         
         ShellExecutor().run("dd if=%s of=%s" % (self.image.path, self.dataFile))
         
-        #TODO start instance
+        domain_xml_file  = GenerateDomainXml.GenerateXML.generateXML('/home/sina/VirtualBox VMs/ubuntu1004/ubuntu1004.vdi',1,524288)
+        network_xml_file = pkg_resources.resource_filename("model", "virtualbox_xml/mynetwork.xml")
+        
+        def return_xml(xml_location):
+            lines = open(xml_location)
+            xml = ''
+            for line in lines:
+                xml = xml+line
+            return xml
+
+        def ping(ip):
+            return subprocess.call("ping -c 1 %s" % ip, shell=True, stdout=open('/dev/null', 'w'), stderr=subprocess.STDOUT)
+        
+        conn = libvirt.open("vbox:///session")
+
+        try:
+            conn.networkLookupByName("vboxnet0")
+            print "vboxnet0 found, no need to create"
+        except:
+            network = libvirt.virConnect.networkDefineXML(conn, return_xml(network_xml_file))
+            if(network.create()):
+                print 'An error occured while creating the network,terminating program.'
+                quit(1)
+            print "Network Created with Name:"+network.name()
+   
+        dom = libvirt.virConnect.defineXML(conn, domain_xml_file)
+    
+        dom.create()
+
+        print "going to pinging now..."
+
+        while ping('192.168.152.2'):
+            print "will sleep now"
+
+        time.sleep(5)
+
+        shell_executor = RemoteShellExecutor('q','192.168.152.2','%s/.ssh/id_rsa'%(os.getenv('HOME')))
+
+        shell_executor.run("pwd")        
+        
         #TODO set self.public_dns_name
         
+        self.public_dns_name  = '192.168.152.2'
+        
         self.state = 'running'
+        
         
     def update(self):
         pass

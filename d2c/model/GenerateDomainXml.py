@@ -5,10 +5,11 @@ import random
 import pkg_resources
 
 class GenerateXML:
+    
     @staticmethod   
     def generateXML(vdi_image,noOfCPU,memory):
 
-        source_xml =  pkg_resources.resource_filename("test", "virtualbox_xml/mydomain.xml")
+        source_xml =  pkg_resources.resource_filename("model", "virtualbox_xml/mydomain.xml")
         
         def randomizeName():
             s="abcdef123"
@@ -44,6 +45,3 @@ class GenerateXML:
         print doc.toxml()
         
         return doc.toxml()
-    
-    
-    #print generateXML(sys.argv[1],sys.argv[2],sys.argv[3])

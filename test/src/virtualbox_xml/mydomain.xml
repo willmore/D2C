@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?><domain type="vbox">
+  <name>ubuntu1005</name>
+  <memory>524288</memory>
+  <currentMemory>524288</currentMemory>
+  <vcpu>1</vcpu>
+  <os>
+    <type arch="x86_64">hvm</type>
+    <boot dev="hd"/>
+  </os>
+  <features>
+    <acpi/>
+  </features>
+  <clock offset="localtime"/>
+  <on_poweroff>destroy</on_poweroff>
+  <on_reboot>destroy</on_reboot>
+  <on_crash>destroy</on_crash>
+  <devices>
+    <disk device="disk" type="file">
+      <source file="/home/sina/VirtualBox VMs/ubuntu1004/ubuntu1004.vdi"/>
+      <target bus="sata" dev="sda"/>
+    </disk>
+    <interface type="network">
+      <mac address="08:00:27:02:96:28"/>
+      <source network="vboxnet0"/>
+      <model type="82540EM"/>
+    </interface>
+  </devices>
+</domain>
