@@ -164,7 +164,7 @@ class LibVirtConn(CloudConnection):
         CloudConnection.__init__(self)
         self.reservations = {}
         
-    def runInstances(self, image, instanceType, count):
+    def runInstances(self, image, instanceType, count, keyName):
         #TODO action acquire instances
         reservation = LibVirtReservation(image, instanceType, count)
         self.reservations[reservation.id] = reservation
