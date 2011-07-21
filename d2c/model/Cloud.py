@@ -12,6 +12,7 @@ from threading import Thread
 import os
 import libvirt
 from d2c.ShellExecutor import ShellExecutor
+from .GenerateDomainXml import GenerateXML
 
 
 class Cloud(object):
@@ -80,7 +81,7 @@ class LibVirtInstance(object):
         
         ShellExecutor().run("dd if=%s of=%s" % (self.image.path, self.dataFile))
         
-        domain_xml_file  = GenerateDomainXml.GenerateXML.generateXML('/home/sina/VirtualBox VMs/ubuntu1004/ubuntu1004.vdi',1,524288)
+        domain_xml_file  = GenerateXML.generateXML(self.dataFile,1,524288)
         network_xml_file = pkg_resources.resource_filename("model", "virtualbox_xml/mynetwork.xml")
         
         def return_xml(xml_location):

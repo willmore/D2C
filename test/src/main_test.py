@@ -8,7 +8,7 @@ from d2c.AMITools import AMIToolsFactory
 import test_initor
 
 
-def main(argv=None):
+def main(argv=sys.argv):
     
     SQLITE_FILE = "%s/.d2c_test/d2c_db.sqlite" % os.path.expanduser('~') 
     if os.path.exists(SQLITE_FILE):
@@ -17,9 +17,7 @@ def main(argv=None):
         
     dao = DAO(SQLITE_FILE)
     
-    
-
-    test_initor.init_db(dao, "/home/willmore/scicloud.conf")
+    test_initor.init_db(dao, argv[1])
 
     app = Application(dao, AMIToolsFactory())
     app.MainLoop()
