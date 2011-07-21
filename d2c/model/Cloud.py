@@ -17,12 +17,13 @@ from .GenerateDomainXml import GenerateXML
 
 class Cloud(object):
     
-    def __init__(self, id, name):
+    def __init__(self, id, name, instanceTypes=()):
         
         assert isinstance(name, basestring)
         
         self.id = id
         self.name = name
+        self.instanceTypes=list(instanceTypes)
         
 class CloudConnection(object):
     
@@ -184,12 +185,20 @@ class LibVirtConn(CloudConnection):
             return list(self.reservations.values())
         else:
             return [self.reservations[reservationId]] if self.reservations.has_key(reservationId) else list()
-            
+    
+    def generateKeyPair(self, dataDir, keyPairName):
+        '''
+        Creates a key pair, with the public key being saved in the cloud 
+        and the private saved locally in the directory dataDir.
+        
+        Return the full path location to the new private key.
+        '''
+        return ""   
 
 class DesktopCloud(Cloud):
     
-    def __init__(self, id, name):
-        Cloud.__init__(self, id, name)
+    def __init__(self, id, name, instanceTypes):
+        Cloud.__init__(self, id, name, instanceTypes)
         
     def getConnection(self, *args):
         return LibVirtConn()
@@ -247,7 +256,7 @@ class EC2Cloud(Cloud):
         assert isinstance(storageURL, basestring)
         assert isinstance(ec2Cert, basestring)
         
-        Cloud.__init__(self, id, name)
+        Cloud.__init__(self, id, name, instanceTypes)
         
         self.mylock = threading.RLock()
         self.botoModule = botoModule
@@ -255,7 +264,6 @@ class EC2Cloud(Cloud):
         self.storageURL = storageURL
         self.ec2Cert = ec2Cert
         self.kernels = list(kernels)
-        self.instanceTypes = list(instanceTypes)
         self.storage = WalrusStorage("placeholder_name", storageURL)
         self.deployments = list()
        

@@ -89,10 +89,10 @@ class ImageTab(wx.Panel):
         
         
     def addImage(self, _):
-        dialog = AddImageDialog(None, -1, 'Add Image', size=(400,200))
+        dialog = AddImageDialog(self.dao, None, -1, 'Add Image', size=(400,400))
         
         if dialog.ShowModal() == wx.ID_OK:
-            deskImg = DesktopImage(None, None, dialog.path.GetValue())
+            deskImg = DesktopImage(None, None, self.dao.getCloud(dialog.cloud.GetValue()), dialog.path.GetValue())
             img = Image(None, dialog.name.GetValue(), deskImg, [deskImg])
             self.dao.add(img)
             self.addImagePanel(ImagePanel(img, self.displayPanel, -1)) 
@@ -103,11 +103,12 @@ class ImageTab(wx.Panel):
         
 class AddImageDialog(wx.Dialog):
     
-    def __init__(self, *args, **kwargs):
+    def __init__(self, dao, *args, **kwargs):
         wx.Dialog.__init__(self, *args, **kwargs)
         
-        self.name = wx.TextCtrl(self, size=(100, -1))
-        self.path = wx.TextCtrl(self, size=(100, -1))
+        self.name = wx.TextCtrl(self, -1, size=(100, -1))
+        self.path = wx.TextCtrl(self, -1, size=(100, -1))
+        self.cloud = wx.ComboBox(self, -1, choices=[c.name for c in dao.getClouds()])
         self.browseButton = wx.Button(self, -1, "Browse")
         
         self.browseButton.Bind(wx.EVT_BUTTON, self.onFindImage)
@@ -127,6 +128,9 @@ class AddImageDialog(wx.Dialog):
         vbox.Add(wx.StaticText(self, -1, "Add a desktop image:"), 0 , wx.ALL, 2)
         vbox.Add(self.path, 0, wx.EXPAND | wx.ALL, 2)
         vbox.Add(self.browseButton, 0, wx.ALIGN_RIGHT | wx.ALL, 2)
+        
+        vbox.Add(wx.StaticText(self, -1, "Select associated cloud:"), 0 , wx.ALL, 2)
+        vbox.Add(self.cloud, 0, wx.ALL, 2)
         vbox.Add(wx.Panel(self, -1, size=(-1, 10)), 0, wx.EXPAND)
         vbox.Add(self.createButton, 0, wx.ALIGN_RIGHT | wx.ALL, 2)
         vbox.Add(self.cancelButton, 0, wx.ALIGN_RIGHT | wx.ALL, 2)

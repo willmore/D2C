@@ -144,7 +144,7 @@ class DeploymentTemplateWizardController:
         assert len(images) == 1, "Only one image at a time supported"
         image = images[0]
         
-        tmpCred = SSHCred(None, "foobar", "foobar")
+        tmpCred = SSHCred(None, None, "foobar", "foobar")
     
         uploadActions = []
         for i in range(0, len(self.uploadScripts), 2):

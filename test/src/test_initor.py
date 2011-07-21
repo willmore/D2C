@@ -51,7 +51,7 @@ def init_db(dao, confFile):
                       "https://s3.amazonaws.com", 
                       "/opt/EC2_TOOLS/etc/ec2/amitools/cert-ec2.pem",
                       get_instance_types(dao)),
-              DesktopCloud(None, "VirtualBox")]
+              DesktopCloud(None, "VirtualBox", [InstanceType('defaultType', 1, 1, 512, 0, (dao.getArchitecture('x86_64'),), 0.025)])]
 
     for cloud in clouds:
         dao.add(cloud)
