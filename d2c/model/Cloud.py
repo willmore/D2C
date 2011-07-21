@@ -27,6 +27,38 @@ class CloudConnection(object):
     
     def __init__(self):
         pass
+    
+    
+    def getInstanceStates(self, reservationIds):
+        '''
+        Return a iterable of string states for all instances
+        for the reservation IDs.
+        '''  
+        
+        if len(reservationIds) == 0:
+            raise Exception("reservationIds parameter does not contain at least one entry.")
+        
+        #self.logger.write("Getting instances states for reservation-id(s): %s" % str(reservationIds))
+        
+        # Filter only works in boto 2.0. Add back when we move from 1.9 to 2.0
+        #res = self.cloud.getConnection(self.awsCred).get_all_instances(filters={'reservation-id':reservationIds})
+        
+        res = self.getAllInstances()
+        
+        #self.logger.write("Got reservations: %s" % str(res))
+        
+        states = []
+        for r in res:
+            if r.id in reservationIds:
+                for i in r.instances:
+                    states.append(i.state)
+        
+        #self.logger.write("Instance states for reservations %s are %s" % (str(reservationIds), str(states)))
+        
+        return states
+    
+    def getAllInstances(self):
+        pass
 
 class LibVirtInstance(object):
     

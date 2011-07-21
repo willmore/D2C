@@ -239,7 +239,9 @@ class Deployment(object):
         
         self.keyPairName = "%s.%d" % (self.deploymentTemplate.name, self.id)
         
-        keyDirLoc = self.cloud.getConnection(self.awsCred).generateKeyPair(self.dataDir, self.keyPairName)
+        conn = self.cloud.getConnection(self.awsCred)
+        
+        keyDirLoc = conn.generateKeyPair(self.dataDir, self.keyPairName)
         self.logger.write("Session key created: %s" % keyDirLoc)
         sshCred = SSHCred(id=None, name=self.keyPairName, username="root", privateKey=keyDirLoc)
         
@@ -261,9 +263,10 @@ class Deployment(object):
             if not self.runLifecycle:
                 return
            
-            instStates = self.__getInstanceStates(reservationIds)
+            instStates = conn.getInstanceStates(reservationIds)
             
             allRunning = True
+            
             for state in instStates:
                 if state != 'running':
                     #self.logger.write('All instances not running; continue polling.')
@@ -298,31 +301,6 @@ class Deployment(object):
     def __setState(self, state):
         self.state = state
         self.monitor.notify(state)
-        
-    def __getInstanceStates(self, reservationIds):
-        '''
-        Return a iterable of string states for all instances
-        for the reservation IDs.
-        '''  
-        
-        self.logger.write("Getting instances states for reservation-id(s): %s" % str(reservationIds))
-        
-        # Filter only works in boto 2.0. Add back when we move from 1.9 to 2.0
-        #res = self.cloud.getConnection(self.awsCred).get_all_instances(filters={'reservation-id':reservationIds})
-        
-        res = self.cloud.getConnection(self.awsCred).getAllInstances()
-        
-        #self.logger.write("Got reservations: %s" % str(res))
-        
-        states = []
-        for r in res:
-            if r.id in reservationIds:
-                for i in r.instances:
-                    states.append(i.state)
-        
-        self.logger.write("Instance states for reservations %s are %s" % (str(reservationIds), str(states)))
-        
-        return states
         
         
     def __startRoles(self):
