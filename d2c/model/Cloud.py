@@ -70,7 +70,7 @@ class LibVirtInstance(object):
         
         self.id = 'i-' + ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(6))
         self.state = 'requesting' #TODO match with initial state of EC2
-        #self.private_ip_address = None
+        self.private_ip_address = None
         self.public_dns_name = None
         self.image = image
         self.instanceType = instanceType

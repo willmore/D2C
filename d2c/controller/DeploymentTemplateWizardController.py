@@ -80,6 +80,10 @@ class DeploymentTemplateWizardController:
                 evtBtn = evt.GetEventObject()
                 evtBtn.SetLabel("Remove")
                 evtBtn.Bind(wx.EVT_BUTTON, handleRemove)
+                
+                for field in evtBtn.fields:
+                    textControls.append(field)
+                
             sizer = wx.BoxSizer(wx.HORIZONTAL)
             
             fields = []
@@ -91,14 +95,12 @@ class DeploymentTemplateWizardController:
                 
                 field = wx.TextCtrl(parent, -1)
                 sizer.Add(field, 1)
-                fields.append(field)
-                textControls.append(field)
-                
+                fields.append(field)                
                 
             btn = wx.Button(parent, -1, "Add")
             btn.Bind(wx.EVT_BUTTON, handleAdd)
             sizer.Add(btn, 0)
-            
+            btn.fields = fields
             boxsizer.Add(sizer, 0, wx.EXPAND)
             
             createEmptyChecker(btn, *fields)
