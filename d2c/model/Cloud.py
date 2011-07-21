@@ -13,6 +13,7 @@ import os
 import libvirt
 from d2c.ShellExecutor import ShellExecutor
 from .GenerateDomainXml import GenerateXML
+import subprocess
 
 
 class Cloud(object):
