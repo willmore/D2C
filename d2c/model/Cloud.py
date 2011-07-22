@@ -16,6 +16,7 @@ from .GenerateDomainXml import GenerateXML
 import subprocess
 from d2c.RemoteShellExecutor import RemoteShellExecutor
 import time
+import guestfs
 
 
 class Cloud(object):
@@ -67,7 +68,7 @@ class CloudConnection(object):
 
 class LibVirtInstance(object):
     
-    def __init__(self, image, instanceType, dataDir):
+    def __init__(self, image, instanceType, dataDir, pubKeyFile):
         from .SourceImage import DesktopImage
         assert isinstance(image, DesktopImage), "image must be of type DesktopImage, is %s" % type(image)
         
@@ -79,6 +80,31 @@ class LibVirtInstance(object):
         self.instanceType = instanceType
         self.dataDir = dataDir
         self.dataFile = "%s/%s" % (self.dataDir, self.id)
+        self.pubKeyFile = pubKeyFile
+    
+    def __insertKey(self, imageFile, publicKeyPath):
+        
+        file = open(publicKeyPath, "r")
+        publicKey = file.read()
+        file.close()
+        
+        gf = guestfs.GuestFS ()
+        gf.set_trace(1)
+        gf.set_autosync(1)
+        
+        gf.add_drive(imageFile)    
+        gf.launch() 
+        
+        roots = gf.inspect_os()
+        assert (len(roots) == 1) #Only supporting one main partition for now
+        rootDev = roots[0]
+        gf.mount(rootDev, "/")
+        gf.mkdir_mode("/root/.ssh", 0755)
+        gf.write("/root/.ssh/authorized_keys", publicKey)
+        gf.chown(0, 0, "/root/.ssh")
+        gf.chown(0, 0, "/root/.ssh/authorized_keys")
+
+        del gf #sync and shutdown
         
     def start(self):
         
@@ -88,6 +114,8 @@ class LibVirtInstance(object):
         
         #Change the HD UUID, otherwise VirtualBox will refuse to use it if same UUID is already registered
         ShellExecutor().run("VBoxManage internalcommands sethduuid %s" % self.dataFile)
+        
+        self.__insertKey(self.dataFile, self.pubKeyFile)
         
         domain_xml_file  = GenerateXML.generateXML(self.dataFile,1,524288)
         network_xml_file = pkg_resources.resource_filename(__package__, "virtualbox_xml/mynetwork.xml")
@@ -148,13 +176,15 @@ class LibVirtReservationThread(Thread):
 
 class LibVirtReservation(object):
     
-    def __init__(self, image, instanceType, count):
+    def __init__(self, image, instanceType, count, pubKeyFile):
         from .SourceImage import DesktopImage
         assert isinstance(image, DesktopImage), "image must be of type DesktopImage, is %s" % type(image)
         
         self.id = 'r' + ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(6))
-        self.dataDir = "/tmp/d2c/libvirt_reservation%s/" % self.id    
-        self.instances = [LibVirtInstance(image, instanceType, self.dataDir) for _ in range(count)]        
+        self.dataDir = "/tmp/d2c/libvirt_reservation%s/" % self.id  
+        self.pubKeyFile = pubKeyFile 
+        self.instances = [LibVirtInstance(image, instanceType, self.dataDir, self.pubKeyFile) for _ in range(count)]        
+       
         
         os.makedirs(self.dataDir)
         
@@ -168,10 +198,11 @@ class LibVirtConn(CloudConnection):
     def __init__(self):
         CloudConnection.__init__(self)
         self.reservations = {}
+        self.publicKeyMap = {}
         
     def runInstances(self, image, instanceType, count, keyName):
         #TODO action acquire instances
-        reservation = LibVirtReservation(image, instanceType, count)
+        reservation = LibVirtReservation(image, instanceType, count, self.publicKeyMap[keyName])
         self.reservations[reservation.id] = reservation
         LibVirtReservationThread(reservation).start()
         return reservation
@@ -200,7 +231,20 @@ class LibVirtConn(CloudConnection):
         
         Return the full path location to the new private key.
         '''
-        return ""   
+        if not os.path.exists(dataDir):
+            os.makedirs(dataDir, mode=0700)
+        
+        privKeyFile = os.path.join(dataDir, "%s/%s" % (dataDir, keyPairName))
+        
+        ShellExecutor().run("ssh-keygen -t rsa -P \"\" -f %s" % privKeyFile)
+        
+        pubKeyFile = "%s.pub" % privKeyFile
+        
+        assert os.path.exists(pubKeyFile)
+        
+        self.publicKeyMap[keyPairName] = pubKeyFile
+        
+        return os.path.join(dataDir, "%s/%s.pem" % (dataDir, keyPairName)) 
 
 class DesktopCloud(Cloud):
     

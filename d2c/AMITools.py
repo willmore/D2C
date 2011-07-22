@@ -167,7 +167,6 @@ class AMITools:
             if rc != 0:
                 raise Exception("FSCK returned code: %d" % rc)
             
-            gf.mount(newDev, "/")     
             
             #Step 2: copy kernel
             contentsPath = kernel.getContentsAbsPath()
