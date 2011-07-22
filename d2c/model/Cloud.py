@@ -107,6 +107,34 @@ class LibVirtInstance(object):
 
         del gf #sync and shutdown
         
+    def __setStaticIp(self,imageFile,IP):
+        
+        static_ip_file = pkg_resources.resource_filename(__package__, "virtualbox_xml/static_ip.txt")
+        
+        file = open(static_ip_file, "r")
+        static_ip = file.read()
+        file.close()
+
+        static_ip=static_ip.replace('$ip',IP)
+        
+        print static_ip
+        
+        gf = guestfs.GuestFS ()
+        gf.set_trace(1)
+        gf.set_autosync(1)
+        
+        gf.add_drive(imageFile)    
+        gf.launch() 
+        
+        roots = gf.inspect_os()
+        assert (len(roots) == 1) #Only supporting one main partition for now
+        rootDev = roots[0]
+        gf.mount(rootDev, "/")
+        
+        gf.write("/etc/network/interfaces", static_ip)
+        
+        del gf #sync and shutdown   
+        
     def start(self):
         
         self.image.path = self.image.path.replace(' ', '\\ ')
@@ -117,6 +145,10 @@ class LibVirtInstance(object):
         ShellExecutor().run("VBoxManage internalcommands sethduuid %s" % self.dataFile)
         
         self.__insertKey(self.dataFile, self.pubKeyFile)
+        
+        #TODO : lastoctet will increment for multiple instance cases
+        lastoctet = 100
+        IP = '192.168.152.%s' %(lastoctet)
         
         domain_xml_file  = GenerateXML.generateXML(self.dataFile,1,524288)
         network_xml_file = pkg_resources.resource_filename(__package__, "virtualbox_xml/mynetwork.xml")
@@ -154,13 +186,13 @@ class LibVirtInstance(object):
 
         time.sleep(5)
 
-        shell_executor = RemoteShellExecutor('q','192.168.152.2','%s/.ssh/id_rsa'%(os.getenv('HOME')))
+        shell_executor = RemoteShellExecutor('q',IP,'%s/.ssh/id_rsa'%(os.getenv('HOME')))
 
         shell_executor.run("pwd")        
                 
-        self.public_dns_name  = '192.168.152.2'        
-        self.private_ip_address = '192.168.152.2'
-        self.private_dns_name = '192.168.152.2'
+        self.public_dns_name  = IP        
+        self.private_ip_address = IP
+        self.private_dns_name = IP
         
         self.state = 'running'      
         
