@@ -23,6 +23,9 @@ class DummyConn:
         self.instances = []
         self.reservations = {}
     
+    def create_key_pair(self, keyPairName):
+        return mock(boto.ec2.keypair.KeyPair)
+    
     def get_all_instances(self, ids = None, filters={}):
 
         return filter(lambda r: r.id in filters['reservation-id'], 

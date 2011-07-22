@@ -19,7 +19,7 @@ from d2c.RemoteShellExecutor import RemoteShellExecutorFactory
 from d2c.ShellExecutor import ShellExecutorFactory
 from d2c.model.DeploymentTemplate import DeploymentTemplate, RoleTemplate
 
-from sqlalchemy import Table, Column, Integer, String, MetaData, ForeignKey, create_engine, Boolean
+from sqlalchemy import Table, Column, Integer, String, MetaData, ForeignKey, create_engine, Boolean, UniqueConstraint
 from sqlalchemy.orm import sessionmaker, mapper, relationship
 from sqlalchemy.orm.interfaces import MapperExtension
 
@@ -110,12 +110,13 @@ class DAO:
         mapper(DesktopCloud, cloudTable, inherits=Cloud, polymorphic_identity='desktop')
       
         deploymentTable = Table('deploy', metadata,
-                            Column('id', Integer, primary_key=True),
+                            Column('id', String, primary_key=True),
                             Column('cloud_id', ForeignKey('cloud.id'), nullable=False),
                             Column('aws_cred_id', String, ForeignKey("aws_cred.name")),
                             Column('deployment_template_id', String, ForeignKey("deployment_template.id")),
                             Column('state', String, nullable=False),
-                            Column('dataDir', String)
+                            Column('dataDir', String),
+                            Column('pollRate', Integer)
                             )  
         
         mapper(Deployment, deploymentTable, properties={
@@ -144,13 +145,16 @@ class DAO:
         mapper(SSHCred, sshCredTable)
         
         instanceTypeTable = Table('instance_type', metadata,
-                            Column('name', String, primary_key=True),
-                            Column('cloud_id', ForeignKey('cloud.id'), primary_key=True, nullable=False),
+                            Column('id', Integer, primary_key=True),
+                            Column('name', String),
+                            Column('cloud_id', ForeignKey('cloud.id'), nullable=False),
                             Column('cpu', Integer),
                             Column('cpuCount', Integer),
                             Column('memory', Integer),
                             Column('disk', Integer),
-                            Column('costPerHour', Integer)
+                            Column('costPerHour', Integer),
+                            
+                            UniqueConstraint('name', 'cloud_id')
                             )
         
         archTable = Table('architecture', metadata,
@@ -158,8 +162,8 @@ class DAO:
                          )
         
         instanceArchTable = Table('instance_arch_assoc', metadata,
-                                  Column('instance', Integer, ForeignKey('instance_type.name')),
-                                  Column('arch', Integer, ForeignKey('architecture.arch')),
+                                  Column('instance', ForeignKey('instance_type.id')),
+                                  Column('arch', ForeignKey('architecture.arch')),
                                   )
         
         mapper(InstanceType, instanceTypeTable, 
@@ -221,10 +225,11 @@ class DAO:
                             Column('fileName', String),
                             Column('role_template_id', ForeignKey('role_template.id')),
                             Column('role_id', ForeignKey('role.id')),
-                            Column('deployment_template_id', ForeignKey('deployment_template.id'))
+                            Column('deployment_template_id', ForeignKey('deployment_template.id')),
+                            Column('ssh_cred_id', ForeignKey('ssh_cred.id'))
                             )
         
-        mapper(FileExistsFinishedCheck, finishedCheckTable, extension=actionExtension)
+        mapper(FileExistsFinishedCheck, finishedCheckTable, properties={'sshCred': relationship(SSHCred)}, extension=actionExtension)
           
         srcImgTable = Table('src_img', metadata,
                             Column('id', Integer, primary_key=True),
@@ -300,7 +305,7 @@ class DAO:
                             Column('template_id', ForeignKey('role_template.id'), nullable=False),
                             Column('count', Integer),
                             Column('pollRate', Integer),
-                            Column('instance_type_id', String, ForeignKey('instance_type.name'))
+                            Column('instance_type_id', ForeignKey('instance_type.id'))
                             )  
         
         mapper(Role, roleTable, properties={

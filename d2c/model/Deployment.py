@@ -104,9 +104,11 @@ class Deployment(object):
                  state=DeploymentState.NOT_RUN, 
                  listeners={},
                  logger=StdOutLogger(), 
-                 pollRate=30,
+                 pollRate=15,
                  deploymentTemplate=None):
-                        
+                    
+        assert isinstance(dataDir, basestring) and len(dataDir) > 0
+            
         self.id = id
         self.dataDir = dataDir
         self.cloud = cloud
@@ -237,7 +239,7 @@ class Deployment(object):
         
         self.logger.write("Creating session key")
         
-        self.keyPairName = "%s.%d" % (self.deploymentTemplate.name, self.id)
+        self.keyPairName = "%s.%s" % (self.deploymentTemplate.name, self.id)
         
         conn = self.cloud.getConnection(self.awsCred)
         
@@ -273,7 +275,7 @@ class Deployment(object):
                     allRunning = False
                     break
                 
-        self.logger.write(" running")
+        self.logger.write("The deployment's instance have booted.")
         '''
         Wait a bit for the systems to really boot up.
         TODO: replace hardcoded wait time with a valid test, perhaps ping.
@@ -329,10 +331,10 @@ class Deployment(object):
     def __monitorForDone(self):
         
         monitorRoles = list(self.roles)
-        
+        self.logger.write("Monitoring instances for done conditions")
         while len(monitorRoles) > 0:
             monitorRoles = [role for role in monitorRoles if not role.checkFinished()]
-            self.logger.write("Monitor role len is %d" % len(monitorRoles))
+            #self.logger.write("Monitor role len is %d" % len(monitorRoles))
             time.sleep(self.pollRate)
                 
         self.__setState(DeploymentState.JOB_COMPLETED)

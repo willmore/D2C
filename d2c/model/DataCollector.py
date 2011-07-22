@@ -10,7 +10,7 @@ class DataCollector(object):
                  sshCred=None,
                  logger=StdOutLogger()):
         
-        assert source is not None
+        assert isinstance(source, basestring) and source[0] == '/'
         
         self.source = source
         self.logger = logger
@@ -19,18 +19,15 @@ class DataCollector(object):
     def copy(self):
         return DataCollector(self.source, self.sshCred)
      
-    def collect(self, instance, destinationDir): 
+    def collect(self, instance, destination): 
         
-        dest = "%s/%s/" % (destinationDir, instance.id)
-        
-        if not os.path.exists(os.path.dirname(dest)):
-            os.makedirs(os.path.dirname(dest))
-        
-        dest = dest + os.path.basename(self.source)
+        destDir = os.path.dirname(destination)
+        if not os.path.exists(destDir):
+            os.makedirs(destDir)
         
         cmd = "scp -r -i %s -o StrictHostKeyChecking=no %s@%s:%s %s" % (self.sshCred.privateKey, 
                                                                         self.sshCred.username,
                                                                         instance.public_dns_name, 
                                                                         self.source,
-                                                                        dest)
+                                                                        destination)
         self.executorFactory.executor(self.logger).run(cmd)

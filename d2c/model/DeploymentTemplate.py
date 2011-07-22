@@ -4,9 +4,15 @@ from .Deployment import Deployment
 from .Role import Role
 from .Cloud import Cloud
 
+import string
+
 class DeploymentTemplate(object):
     
     def __init__(self, id, name, dataDir, roleTemplates, deployments=()):
+        
+        assert isinstance(name, basestring) and len(name) > 0
+        assert isinstance(dataDir, basestring) and len(dataDir) > 0
+        
         self.id = id
         self.name = name
         self.dataDir = dataDir
@@ -18,11 +24,11 @@ class DeploymentTemplate(object):
         assert isinstance(cloud, Cloud)
         assert len(roleCounts) == len(self.roleTemplates)
         
+        id = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(6))
+        dataDir = os.path.join(self.dataDir, id)
+        deployment = Deployment(id, dataDir, cloud=cloud, deploymentTemplate=self, awsCred=awsCred)
+        
         roles = []
-        
-        dataDir = os.path.join(self.dataDir, str(random.randint(1,1000)))
-        
-        deployment = Deployment(None, dataDir, cloud=cloud, deploymentTemplate=self, awsCred=awsCred)
         
         for roleTemp, (image, instanceType, count) in roleCounts.iteritems():
             assert roleTemp in self.roleTemplates

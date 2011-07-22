@@ -21,13 +21,14 @@ def init_db(dao, confFile):
     dao.addAWSCred(conf.awsCred)
     
     dao.setCredStore(CredStore(dao))
+    X86 = Architecture('x86')
+    X86_64 = Architecture('x86_64')
+    
    
-    archs = [Architecture('x86'), Architecture('x86_64')]
+    archs = [X86, X86_64]
      
     for a in archs:
         dao.add(a)
-
-    
     
     clouds = [EC2Cloud(None, 
                        name="SciCloud", 
@@ -35,7 +36,12 @@ def init_db(dao, confFile):
                         ec2Cert="/home/willmore/.euca/cloud-cert.pem",
                         storageURL="http://172.17.36.21:8773/services/Walrus",
                         kernels=[Kernel("eki-3EB4165A", archs[1], "internal://ami_data/kernels/2.6.35-24-virtual-x86_64.tar")],
-                        instanceTypes=get_instance_types(dao)
+                        instanceTypes=[
+                                       InstanceType('m1.small', 2, 1, 256, 2, (X86,), 0.0),
+                                       InstanceType('m1.large', 2, 2, 1792, 15, (X86_64,), 0.0),
+                                       InstanceType('m1.xlarge', 2, 1, 1792, 20, (X86_64,), 0.0),
+                                       InstanceType('c1.medium', 2, 2, 512, 5, (X86_64,), 0.0),
+                                       InstanceType('c1.xlarge', 2, 4, 1792, 20, (X86_64,), 0.0)]
                         ),
               EC2Cloud(
                        None,

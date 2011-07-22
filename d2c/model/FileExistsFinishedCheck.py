@@ -5,7 +5,7 @@ class FileExistsFinishedCheck(object):
     def __init__(self, fileName, sshCred=None):
         
         self.fileName = fileName
-        self.cmd = "if [ -f %s ]; then echo exists; fi" % fileName
+        
         self.sshCred = sshCred
     
     class LineChecker:
@@ -26,11 +26,11 @@ class FileExistsFinishedCheck(object):
         '''    
         
         checker = self.LineChecker('exists')
-
+        cmd = "if [ -f %s ]; then echo exists; fi" % self.fileName
         RemoteShellExecutor(self.sshCred.username, 
                             instance.public_dns_name, 
 						    self.sshCred.privateKey, 
-                            outputLogger=checker).run(self.cmd)
+                            outputLogger=checker).run(cmd)
         
         return checker.matchFound
     

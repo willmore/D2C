@@ -4,6 +4,7 @@ from wx.lib.pubsub import Publisher
 from d2c.gui.RolePanel import RoleDialog
 from .RolePanelController import RolePanelController
 import sys
+import traceback
 
 class DeploymentThread(Thread):
         
@@ -15,8 +16,9 @@ class DeploymentThread(Thread):
         try:
             self.deployment.run()
         except Exception as x:
-            wx.CallAfter(Publisher.sendMessage, "DEPLOYMENT EXCEPTION", x)
-            #TODO stop deployment
+            exc_type, exc_value, exc_traceback = sys.exc_info()
+            trace = "".join(traceback.format_exception(exc_type, exc_value, exc_traceback))
+            wx.CallAfter(Publisher.sendMessage, "DEPLOYMENT EXCEPTION", (x,trace))
               
     def pause(self):
         self.deployment.pause()
@@ -67,7 +69,7 @@ class DeploymentController:
     
     def handleException(self, msg):
         
-        wx.MessageBox("Unexpected error: %s" % str(msg.data), 'Error!', wx.ICON_ERROR)
+        wx.MessageBox("Unexpected error: %s\nTrace%s" % (str(msg.data[0]), msg.data[1]), 'Error!', wx.ICON_ERROR)
 
     def handleCancel(self, _):
         

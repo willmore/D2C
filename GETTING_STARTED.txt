@@ -1,0 +1,100 @@
+Desktop to Cloud (D2C) Getting Started Guide
+
+To launch
+
+Steps for creating and launching your first deployment with D2C.
+
+
+1. Get access to an EC2-compatible cloud and insert 
+	- For Amazon EC2: http://aws.amazon.com/ec2/
+	- For University of Tartu's SciCloud: https://scicloud1.mt.ut.ee:8443/#apply
+	
+	After signing up for either of the above clouds, you will be given access credentials.
+	You will need the following credentials:
+		User ID
+		Key ID
+		Secret Access Key
+		EC2 Certificate
+		EC2 Private Key
+	
+	Getting your credentials for SciCloud:
+	
+		Go to: https://scicloud1.mt.ut.ee:8443/#credentials
+		Download credentials by clicking "Download Credentials"
+		Unzip the directory and rename it to /home/<userid>/.euca
+		
+		From the file /home/<userid>/.euca/.eucarc you will find your credentials.
+		In the D2C user interface, click on the keys "Account Settings" icon to enter the creds.
+		Field mappings from the .eucarc file are:
+			
+			AWS User ID = EC2_USER_ID
+			AWS Key ID = EC2_ACCESS_KEY
+			AWS Secret Access Key = EC2_SECRET_KEY
+			EC2 Certificate = EC2_CERT
+			EC2 Private Key = EC2_PRIVATE_KEY
+			
+		Please not that values must be inserted fully expanded. 
+		I.E., ${EUCA_KEY_DIR}/euca2-user-5a32032a-cert.pem should become:
+		/home/user/euca2-user-5a32032a-cert.pem
+		
+	Getting your credentials for Amazon EC2:
+		TODO: add documentation
+		
+2. Registering your VirtualBox image to D2C
+	
+	In the interface, navigate to the "Images" tab. Click the "Add Image" button.
+	Enter a name for you image and the location of the .vdi file. 
+	In the "Select associated cloud" dropdown, select "VirtualBox".
+	
+3. Creating a cloud image
+	
+	In the "Images" tab, click the name of your new image, then click the name of your VirtualBox VDI image.
+	Next, click "Create AMI." Select the cloud you wish to migrate your VDI to. Next select a kernel and ramdisk.
+	Next choose a bucket to store your image in. This can be any string name, such as "chris_1" or "experiment_images."
+	Next click "Create AMI." Now, sit back and relax or play sudoku, as this may take a while. The total time depends on your 
+	image size and connection speed to the cloud provider.
+	
+4. Create a Deployment Template.
+
+	A deployment template specifies the roles of machines in your experiment, and their general scripting.
+	
+	Click the "Deployment Template Creation Wizard" icon (two connected computers). 
+	Choose a name and click "Next."
+	For each of the logical roles in your system,:
+		Click "Add New Role."
+		Select an image. Choose a name.
+		The following fields are optional:
+			Uploads
+			Start Scripts
+			File Done Check
+			Data to Collect
+		Click "Add New Role."
+		
+	When done adding roles, click "Finish."
+	
+5. Create a Cloud Specific Deployment
+
+	After creating your template, you need to create a cloud specific deployment which will specify 
+	the cloud to run on, the images to use, the type of machines to use and their number. This will define
+	the concrete parameters for the execution of your experiment.
+	
+	Navigate to the "Deployments" tab. Select your deployment template. Next choose "Create Deployment."
+	Select the cloud to run on. Choose the host count and instance (machine) type for each role.
+	Click "OK" to create the deployment.
+	
+	You can review the deployment definition by navigating to it in the tree navigator. 
+	It will be listed under the deployment template.
+	To modify a role settings, right click the role name.
+	
+6. Launch the Deployment (Run Experiment)
+
+	Navigate to your deployment and click "Deploy."
+	D2C will now create the requested number of instances on the target cloud and execute your experiment
+	scripts. When the experiment finishes (as determined by the finished check) D2C will download specified files 
+	from the remote instances and the stop the deployment.
+
+	
+	
+	
+
+	

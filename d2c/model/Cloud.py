@@ -74,13 +74,14 @@ class LibVirtInstance(object):
         
         self.id = 'i-' + ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(6))
         self.state = 'requesting' #TODO match with initial state of EC2
-        self.private_ip_address = None
+        self.private_dns_name = None
         self.public_dns_name = None
         self.image = image
         self.instanceType = instanceType
         self.dataDir = dataDir
         self.dataFile = "%s/%s" % (self.dataDir, self.id)
         self.pubKeyFile = pubKeyFile
+        self.dom = None
     
     def __insertKey(self, imageFile, publicKeyPath):
         
@@ -142,9 +143,9 @@ class LibVirtInstance(object):
                 quit(1)
             print "Network Created with Name:"+network.name()
    
-        dom = libvirt.virConnect.defineXML(conn, domain_xml_file)
+        self.dom = libvirt.virConnect.defineXML(conn, domain_xml_file)
     
-        dom.create()
+        self.dom.create()
 
         print "going to pinging now..."
 
@@ -159,9 +160,15 @@ class LibVirtInstance(object):
                 
         self.public_dns_name  = '192.168.152.2'        
         self.private_ip_address = '192.168.152.2'
+        self.private_dns_name = '192.168.152.2'
         
         self.state = 'running'      
         
+    def stop(self):
+        if self.dom is not None:
+            self.dom.destroy()
+            self.dom.undefine()
+    
     def update(self):
         pass
 
@@ -239,7 +246,7 @@ class LibVirtConn(CloudConnection):
         ShellExecutor().run("ssh-keygen -t rsa -P \"\" -f %s" % privKeyFile)
         
         pubKeyFile = "%s.pub" % privKeyFile
-        
+        os.chmod(privKeyFile, 0600)
         assert os.path.exists(pubKeyFile)
         
         self.publicKeyMap[keyPairName] = pubKeyFile
@@ -294,7 +301,9 @@ class EC2CloudConn(CloudConnection):
             os.makedirs(dataDir, mode=0700)
         self.botoConn.create_key_pair(keyPairName).save(dataDir)
         
-        return os.path.join(dataDir, "%s/%s.pem" % (dataDir, keyPairName))
+        privKey = os.path.join(dataDir, "%s/%s.pem" % (dataDir, keyPairName))
+        os.chmod(privKey, 0600)
+        return privKey
 
 class EC2Cloud(Cloud):
     '''

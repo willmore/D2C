@@ -86,7 +86,7 @@ class Role(object):
         
         cloudConn = self.deployment.cloud.getConnection(awsCred)
        
-        self.logger.write("Reserving %d instance(s) of %s with launchKey %s" % (self.count, str(self.image), self.sshCred.name))
+        self.logger.write("Reserving %d instance(s) of %s with launchKey %s" % (self.count, str(self.image.image.name), self.sshCred.name))
        
         #TODO catch exceptions     
         self.reservation = cloudConn.runInstances(self.image, 
@@ -123,10 +123,6 @@ class Role(object):
         context scheme.
         '''
         
-        if (self.template.contextCred is None):
-            self.logger.write("Role has no context cred. Cannot contextualize.")
-            return
-        
         ctxt = string.join(ips, "\n")
         cmd = "echo -e \"%s\" > /tmp/d2c.context" % ctxt
         
@@ -148,7 +144,8 @@ class Role(object):
         for instance in self.reservation.instances: 
             instance.update()
         
-        return [str(i.private_ip_address) for i in self.reservation.instances]
+        return [str(i.private_ip_address) if i.private_ip_address is not None else str(i.private_dns_name) 
+                    for i in self.reservation.instances]
         
     def executeStartCommands(self):
         '''
@@ -202,8 +199,12 @@ class Role(object):
         
         for collector in self.dataCollectors:
             for instance in self.reservation.instances:
+                
+                dest = os.path.join(self.deployment.dataDir, str(self.id), str(instance.id), collector.source[1:])
+                
+                self.logger.write("Downloading data from instance %s to %s" % (instance.id, dest))
                 collector.collect(instance, 
-                                  os.path.join(self.deployment.dataDir, self.id, instance.id, collector.source))
+                                  dest)
     
     def shutdown(self):
         
@@ -220,10 +221,8 @@ class Role(object):
         monitorInstances = self.reservation.instances
        
         while len(monitorInstances) > 0:
-            self.logger.write("Shutdown monitor length = %d" % len(monitorInstances))
             for instance in self.reservation.instances:
                 instance.update()
-                self.logger.write("Instance state = %s" % instance.state)
                   
             monitorInstances = filter(lambda inst: inst.state != 'terminated', monitorInstances) 
             
@@ -232,7 +231,7 @@ class Role(object):
                 
             time.sleep(self.pollRate)
         
-        self.logger.write("Reservation %s terminated" % self.reservation.id)
+        self.logger.write("Reservation %s successfully terminated" % self.reservation.id)
         
     def __str__(self):
         return "{id:%s, image: %s}" % (self.id, self.image)

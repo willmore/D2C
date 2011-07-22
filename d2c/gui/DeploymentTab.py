@@ -17,7 +17,7 @@ class DeploymentTab(wx.Panel):
         self.dao = dao
         
         self.splitter = wx.SplitterWindow(self, -1)
-        self.splitter.SetMinimumPaneSize(150)
+        self.splitter.SetMinimumPaneSize(200)
         vbox = wx.BoxSizer(wx.VERTICAL)
 
         self.tree = wx.TreeCtrl(self.splitter, -1, wx.DefaultPosition, 

@@ -32,7 +32,7 @@ class DataCollectorTest(unittest.TestCase):
         instance.public_dns_name = 'localhost'
         
         sshCred = SSHCred("willmore", "/home/willmore/.ssh/id_rsa_nopw")
-        collector = DataCollector(src, dest, sshCred)
+        collector = DataCollector(src, sshCred)
         collector.collect(instance)
         
         self.assertTrue(os.path.exists(dest))

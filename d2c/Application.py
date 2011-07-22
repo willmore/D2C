@@ -82,7 +82,7 @@ class Application:
         
     def showConf(self, event):
         
-        conf = ConfPanel(None, size=(600,300))
+        conf = ConfPanel(None, size=(800,400))
         ConfController(conf, self._dao)
         conf.ShowModal()
         conf.Destroy()
