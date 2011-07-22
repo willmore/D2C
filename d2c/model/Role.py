@@ -53,8 +53,6 @@ class Role(object):
         for collection in [self.startActions, self.uploadActions, self.finishedChecks, self.dataCollectors]:
             for a in collection:
                 a.sshCred = sshCred
-        
-        
     
     def setLogger(self, logger): 
     

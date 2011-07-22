@@ -57,7 +57,7 @@ def init_db(dao, confFile):
         dao.add(cloud)
         
     deskImg = DesktopImage(None, None, clouds[3], "/home/willmore/images/worker.vdi")
-    myWorkerImg = Image(None, "My Worker", deskImg, [deskImg])
+    myWorkerImg = Image(None, "Worker", deskImg, [deskImg])
     
     dao.add(myWorkerImg) 
     
@@ -85,12 +85,13 @@ def init_db(dao, confFile):
                                    dataDir="/home/willmore/.d2c_test/deployments/dummyDep",
                                    roleTemplates=[RoleTemplate(
                                                         None,
-                                                        name="Loner",
+                                                        name="Worker",
                                                         image = myWorkerImg, 
                                                         dataCollectors=[DataCollector("/tmp/d2c.context")],
                                                         finishedChecks=[FileExistsFinishedCheck("/tmp/d2c.context")],
-                                                        contextCred=sshCred,
-                                                        launchCred=sshCred
+                                                        #contextCred=sshCred,
+                                                        #launchCred=sshCred
+                                                    
                                         )])
     
     dao.add(dTemplate)
@@ -105,14 +106,14 @@ def init_db(dao, confFile):
     
     roleReq = {}
     for roleTemp in dTemplate.roleTemplates:
-        roleReq[roleTemp] = (ami, m1large, 1)
+        roleReq[roleTemp] = (ami, m1large, 2)
     deployment = dTemplate.createDeployment(sciCloud, roleReq, conf.awsCred)
   
     dao.add(deployment)
   
     roleReq = {}
     for roleTemp in dTemplate.roleTemplates:
-        roleReq[roleTemp] = (deskImg, None, 2)
+        roleReq[roleTemp] = (deskImg, vbCloud.instanceTypes[0], 1)
     deployment = dTemplate.createDeployment(vbCloud, roleReq)
     
     dao.add(deployment)

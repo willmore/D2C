@@ -9,7 +9,7 @@ class GenerateXML:
     @staticmethod   
     def generateXML(vdi_image,noOfCPU,memory):
 
-        source_xml =  pkg_resources.resource_filename("model", "virtualbox_xml/mydomain.xml")
+        source_xml =  pkg_resources.resource_filename(__package__, "virtualbox_xml/mydomain.xml")
         
         def randomizeName():
             s="abcdef123"

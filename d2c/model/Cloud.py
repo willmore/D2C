@@ -13,6 +13,9 @@ import os
 import libvirt
 from d2c.ShellExecutor import ShellExecutor
 from .GenerateDomainXml import GenerateXML
+import subprocess
+from d2c.RemoteShellExecutor import RemoteShellExecutor
+import time
 
 
 class Cloud(object):
@@ -25,12 +28,12 @@ class Cloud(object):
         self.name = name
         self.instanceTypes=list(instanceTypes)
         
+        
 class CloudConnection(object):
     
     def __init__(self):
         pass
-    
-    
+     
     def getInstanceStates(self, reservationIds):
         '''
         Return a iterable of string states for all instances
@@ -77,14 +80,17 @@ class LibVirtInstance(object):
         self.dataDir = dataDir
         self.dataFile = "%s/%s" % (self.dataDir, self.id)
         
-        
     def start(self):
         
         self.image.path = self.image.path.replace(' ', '\\ ')
         ShellExecutor().run("dd if=%s of=%s" % (self.image.path, self.dataFile))
+        os.chmod(self.dataFile,  0755)
+        
+        #Change the HD UUID, otherwise VirtualBox will refuse to use it if same UUID is already registered
+        ShellExecutor().run("VBoxManage internalcommands sethduuid %s" % self.dataFile)
         
         domain_xml_file  = GenerateXML.generateXML(self.dataFile,1,524288)
-        network_xml_file = pkg_resources.resource_filename("model", "virtualbox_xml/mynetwork.xml")
+        network_xml_file = pkg_resources.resource_filename(__package__, "virtualbox_xml/mynetwork.xml")
         
         def return_xml(xml_location):
             lines = open(xml_location)
@@ -122,17 +128,11 @@ class LibVirtInstance(object):
         shell_executor = RemoteShellExecutor('q','192.168.152.2','%s/.ssh/id_rsa'%(os.getenv('HOME')))
 
         shell_executor.run("pwd")        
-        
-        #TODO set self.public_dns_name
-        
-        self.public_dns_name  = '192.168.152.2'
-        
-        #TODO set self.private_ip_address
-        
+                
+        self.public_dns_name  = '192.168.152.2'        
         self.private_ip_address = '192.168.152.2'
         
-        self.state = 'running'
-        
+        self.state = 'running'      
         
     def update(self):
         pass
@@ -189,7 +189,9 @@ class LibVirtConn(CloudConnection):
         if reservationId is None:
             return list(self.reservations.values())
         else:
-            return [self.reservations[reservationId]] if self.reservations.has_key(reservationId) else list()
+            if not self.reservations.has_key(reservationId):
+                raise Exception("No reservation found for id: %s" % reservationId)
+            return [self.reservations[reservationId]]
     
     def generateKeyPair(self, dataDir, keyPairName):
         '''
@@ -204,9 +206,14 @@ class DesktopCloud(Cloud):
     
     def __init__(self, id, name, instanceTypes):
         Cloud.__init__(self, id, name, instanceTypes)
+        self.__conn = None
         
     def getConnection(self, *args):
-        return LibVirtConn()
+        
+        if (not hasattr(self, "conn")) or self.conn is None:
+            self.conn = LibVirtConn()
+        
+        return self.conn
   
     
 class EC2CloudConn(CloudConnection):

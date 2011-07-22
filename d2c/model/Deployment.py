@@ -273,7 +273,7 @@ class Deployment(object):
                     allRunning = False
                     break
                 
-        self.logger.write("All instances now running")
+        self.logger.write(" running")
         '''
         Wait a bit for the systems to really boot up.
         TODO: replace hardcoded wait time with a valid test, perhaps ping.
