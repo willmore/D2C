@@ -1,8 +1,3 @@
-'''
-Created on Mar 16, 2011
-
-@author: willmore
-'''
 import wx
 from d2c.model.DeploymentTemplate import DeploymentTemplate, RoleTemplate
 from wx.lib.pubsub import Publisher
@@ -12,6 +7,8 @@ from d2c.model.DataCollector import DataCollector
 from d2c.model.SSHCred import SSHCred
 from d2c.model.UploadAction import UploadAction
 from .util import createEmptyChecker
+
+import os
 
 def fieldsNotEmpty(self, *fields):
     for f in fields:
@@ -129,7 +126,7 @@ class DeploymentTemplateWizardController:
         roles = self.wizard.roleWizard.getPanel("ROLES").roleList.getItems()
         
         deployment = DeploymentTemplate(None, self.newName, roleTemplates=roles, 
-                                        dataDir="~/.d2c/deployments/%s" % self.newName)
+                                        dataDir=os.path.expanduser("~/.d2c/deployments/%s" % self.newName))
     
         self.dao.save(deployment)
         
