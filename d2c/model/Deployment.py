@@ -84,7 +84,17 @@ class DeploymentState:
     DATA_COLLECTED = 'DATA_COLLECTED'
     SHUTTING_DOWN = 'SHUTTING_DOWN'
     COMPLETED = 'COMPLETED'
-          
+
+
+class StateEvent(object):
+    '''
+    Records when a Deployment entered a state.
+    '''
+    
+    def __init__(self, state, time):
+        self.state = state
+        self.time = time
+           
 
 class Deployment(object):
     '''
@@ -105,7 +115,8 @@ class Deployment(object):
                  listeners={},
                  logger=StdOutLogger(), 
                  pollRate=15,
-                 deploymentTemplate=None):
+                 deploymentTemplate=None,
+                 stateEvents=()):
                     
         assert isinstance(dataDir, basestring) and len(dataDir) > 0
             
@@ -123,6 +134,7 @@ class Deployment(object):
         self.pollRate = pollRate
         
         self.stopInstances = False
+        self.stateEvents = list(stateEvents)
     
     def setLogger(self, logger, cascade=True):
         self.logger = logger
@@ -219,12 +231,13 @@ class Deployment(object):
                 break
             startIdx += 1 
         
-        for (_, transition) in stageList[startIdx:]:
+        for (state, transition) in stageList[startIdx:]:
             if not self.runLifecycle: # Extra check to see we are still alive.
                 if self.stopInstances:
-                    self.__shutdown()
-                
+                    self.__shutdown()        
                 return
+            
+            self.stateEvents.append(StateEvent(state, time.time()))
             
             if transition is None:
                 continue

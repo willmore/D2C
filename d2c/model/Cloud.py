@@ -3,7 +3,7 @@ import pkg_resources
 from .Storage import WalrusStorage
 from d2c.model.AWSCred import AWSCred
 from urlparse import urlparse
-import boto
+#import boto
 from boto.ec2.regioninfo import RegionInfo
 import threading
 import string
@@ -344,7 +344,7 @@ class EC2Cloud(Cloud):
     '''
     
     def __init__(self, id, name, serviceURL, 
-                 storageURL, ec2Cert, botoModule=boto, 
+                 storageURL, ec2Cert, botoModule, 
                  kernels=list(), 
                  instanceTypes=list()):
         

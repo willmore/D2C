@@ -3,7 +3,7 @@ from d2c.model.SourceImage import SourceImage, Image, DesktopImage, AMI
 from d2c.model.EC2Cred import EC2Cred
 from d2c.model.AWSCred import AWSCred
 from d2c.model.Configuration import Configuration
-from d2c.model.Deployment import Deployment
+from d2c.model.Deployment import Deployment, StateEvent
 from d2c.model.Role import Role
 from d2c.model.InstanceType import InstanceType, Architecture
 from d2c.model.Region import Region
@@ -109,6 +109,16 @@ class DAO:
         
         mapper(DesktopCloud, cloudTable, inherits=Cloud, polymorphic_identity='desktop')
       
+        stateEventTable = Table('state_event', metadata,
+                                Column('deployment_id', ForeignKey('deploy.id'), primary_key=True),
+                                Column('state', String, primary_key=True),
+                                Column('time', Integer, nullable=False)
+                                )
+        
+        mapper(StateEvent, stateEventTable, properties={
+                                    'deployment': relationship(Deployment, backref='stateEvents')
+                                    })
+        
         deploymentTable = Table('deploy', metadata,
                             Column('id', String, primary_key=True),
                             Column('cloud_id', ForeignKey('cloud.id'), nullable=False),
