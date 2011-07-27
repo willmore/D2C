@@ -40,8 +40,8 @@ class GenerateXML:
         #xml_file = open(generated_xml_file, "w")
         #doc.writexml(xml_file, encoding="utf-8")
         #xml_file.close()
-        print "generated xml file:"
-        print doc.toxml()
+        #print "generated xml file:"
+        #print doc.toxml()
         
         return doc.toxml()
     
