@@ -45,7 +45,7 @@ def init(dao):
     if dao.getConfValue('version') is not None:
 		return
 	
-    #dao.setConfValue('version', '0.1')
+    dao.setConfValue('version', '0.1')
 
     X86 = Architecture('x86')
     X86_64 = Architecture('x86_64')

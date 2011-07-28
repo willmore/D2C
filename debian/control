@@ -13,7 +13,7 @@ Depends: ${misc:Depends}, ${python:Depends},
  python-boto (>=1.9b), virtualbox-ose (>=4.0.4-dfsg),
  python-wxgtk2.8 (>= 2.8.10.1), python-sqlite (>= 1.0.1),
  libguestfs0 (>= 1.11.8), python-guestfs (>=1.11.8),
- ec2-ami-tools (>= 1.3.49953), euca2ools (>= 1.3.1)
+ ec2-ami-tools (>= 1.3.49953), euca2ools (>= 1.3.1),
  python-sqlalchemy (>= 0.6.4-3),
  python-rrdtool (>= 1.4.3)
 Description: Desktop-2-Cloud: Deploy your local VM images on the Cloud
