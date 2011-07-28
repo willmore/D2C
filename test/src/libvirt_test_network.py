@@ -23,14 +23,20 @@ def ping(ip):
 conn = libvirt.open("vbox:///session")
 
 try:
-    conn.networkLookupByName("vboxnet0")
-    print "vboxnet0 found, no need to create"
+    network = conn.networkLookupByName("vboxnet0")
+    print "vboxnet0 found, will destroy vboxnet0"
+    network.destroy()
+    time.sleep(5)
+    network.undefine()
+    print "vboxnet0 undefined"
 except:
-    network = libvirt.virConnect.networkDefineXML(conn, return_xml(network_xml_file))
-    if(network.create()):
-        print 'An error occured while creating the network,terminating program.'
-        quit(1)
-    print "Network Created with Name:"+network.name()
+    print "vboxnet0 not found, will create it now"
+    
+network = libvirt.virConnect.networkDefineXML(conn, return_xml(network_xml_file))
+if(network.create()):
+    print 'An error occured while creating the network,terminating program.'
+    quit(1)
+print "Network Created with Name:"+network.name()
    
 #dom = libvirt.virConnect.defineXML(conn, return_xml(domain_xml_file))
 #dom.create()

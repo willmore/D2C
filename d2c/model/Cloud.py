@@ -150,6 +150,8 @@ class LibVirtInstance(object):
         lastoctet = 100
         IP = '192.168.152.%s' %(lastoctet)
         
+        self.__setStaticIp(self.dataFile,IP)
+        
         domain_xml_file  = GenerateXML.generateXML(self.dataFile,1,524288)
         network_xml_file = pkg_resources.resource_filename(__package__, "virtualbox_xml/mynetwork.xml")
         
@@ -165,23 +167,31 @@ class LibVirtInstance(object):
         
         conn = libvirt.open("vbox:///session")
 
+        #create vboxnet0 network
         try:
-            conn.networkLookupByName("vboxnet0")
-            print "vboxnet0 found, no need to create"
+            network = conn.networkLookupByName("vboxnet0")
+            print "vboxnet0 found, will destroy vboxnet0"
+            network.destroy()
+            time.sleep(5)
+            network.undefine()
+            print "vboxnet0 undefined"
         except:
-            network = libvirt.virConnect.networkDefineXML(conn, return_xml(network_xml_file))
-            if(network.create()):
-                print 'An error occured while creating the network,terminating program.'
-                quit(1)
-            print "Network Created with Name:"+network.name()
+            print "vboxnet0 not found, will create it now"
+            
+        network = libvirt.virConnect.networkDefineXML(conn, return_xml(network_xml_file))
+        if(network.create()):
+            print 'An error occured while creating the network,terminating program.'
+            quit(1)
+        print "Network Created with Name:"+network.name()
    
+        #create domain
         self.dom = libvirt.virConnect.defineXML(conn, domain_xml_file)
     
         self.dom.create()
 
-        print "going to pinging now..."
+        print "pinging now..."
 
-        while ping('192.168.152.2'):
+        while ping(IP):
             print "will sleep now"
 
         time.sleep(5)
