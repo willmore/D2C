@@ -24,7 +24,14 @@ class DummyConn:
         self.reservations = {}
     
     def create_key_pair(self, keyPairName):
-        return mock(boto.ec2.keypair.KeyPair)
+        mockPair = mock(boto.ec2.keypair.KeyPair)
+        def save(path):
+            #os.makedirs(path)
+            open("%s/%s.pem" % (path, keyPairName), "w").close()
+            
+        mockPair.save = save
+        
+        return mockPair
     
     def get_all_instances(self, ids = None, filters={}):
 
