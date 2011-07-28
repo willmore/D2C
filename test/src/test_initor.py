@@ -29,6 +29,8 @@ def init_db(dao, confFile):
     for a in archs:
         dao.add(a)
     
+    boto=dao.botoModule
+    
     clouds = [EC2Cloud(None, 
                        name="SciCloud", 
                         serviceURL="http://172.17.36.21:8773/services/Eucalyptus",
@@ -40,23 +42,26 @@ def init_db(dao, confFile):
                                        InstanceType('m1.large', 2, 2, 1792, 15, (X86_64,), 0.0),
                                        InstanceType('m1.xlarge', 2, 1, 1792, 20, (X86_64,), 0.0),
                                        InstanceType('c1.medium', 2, 2, 512, 5, (X86_64,), 0.0),
-                                       InstanceType('c1.xlarge', 2, 4, 1792, 20, (X86_64,), 0.0)]
-                        ),
+                                       InstanceType('c1.xlarge', 2, 4, 1792, 20, (X86_64,), 0.0)],
+                        botoModule=boto),
               EC2Cloud(
                        None,
                        "eu-west-1", 
                       "https://eu-west-1.ec2.amazonaws.com", 
                       "https://s3.amazonaws.com",
                       "/opt/EC2_TOOLS/etc/ec2/amitools/cert-ec2.pem",
-                      instanceTypes=get_instance_types(dao)),
+                      instanceTypes=get_instance_types(dao),
+                      botoModule=boto),
               EC2Cloud(
                        None,
                        "us-west-1", 
                       "https://us-west-1.ec2.amazonaws.com", 
                       "https://s3.amazonaws.com", 
                       "/opt/EC2_TOOLS/etc/ec2/amitools/cert-ec2.pem",
-                      get_instance_types(dao)),
+                      botoModule=boto,
+                      instanceTypes=get_instance_types(dao)),
               DesktopCloud(None, "VirtualBox", [InstanceType('defaultType', 1, 1, 512, 0, (dao.getArchitecture('x86_64'),), 0.0)])]
+
 
     for cloud in clouds:
         dao.add(cloud)
