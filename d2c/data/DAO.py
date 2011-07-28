@@ -445,6 +445,17 @@ class DAO:
                              awsUserId=awsUserId,
                              ec2Cred=ec2Cred,
                              awsCred=awsCred)
+    
+    def getConfValue(self, key):
+        c = self.__getConn().cursor()
+        v = self.getConfigurationValue(c, key)
+        c.close()
+        return v
+    
+    def setConfValue(self, key, value):
+        c = self.__getConn().cursor()
+        self.saveConfigurationValue(c, key, value)
+        c.close()
         
     def getConfigurationValue(self, cursor, key): 
         h = cursor.execute("select value from conf where key=? limit 1", (key,)) 

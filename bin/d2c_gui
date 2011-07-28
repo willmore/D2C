@@ -6,6 +6,13 @@ import os
 from d2c.AMITools import AMIToolsFactory
 from d2c.Application import Application
 from d2c.data.DAO import DAO
+from d2c.model.InstanceType import InstanceType, Architecture
+from d2c.model.Cloud import EC2Cloud, DesktopCloud
+from d2c.model.Kernel import Kernel
+from d2c.data.CredStore import CredStore
+from d2c.model.Ramdisk import Ramdisk
+
+
 
 class Usage(Exception):
     def __init__(self, msg):
@@ -35,14 +42,13 @@ def main(argv=None):
 
 def init(dao):
 	
-	if dao.getConfigurationValue('version') is not None:
+    if dao.getConfValue('version') is not None:
 		return
 	
-	dao.setConfigurationValue('version', '0.1')
-	
-	X86 = Architecture('x86')
+    #dao.setConfValue('version', '0.1')
+
+    X86 = Architecture('x86')
     X86_64 = Architecture('x86_64')
-    
     archs = [X86, X86_64]
      
     for a in archs:
@@ -94,6 +100,18 @@ def init(dao):
         for cloud in clouds:
             instance.cloud = cloud
             dao.addInstanceType(instance)
+            
+def get_instance_types(dao):
+        
+    X86 = dao.getArchitecture('x86')
+    X86_64 = dao.getArchitecture('x86_64')
+    
+    return [InstanceType('t1.micro', 2, 2, 613, 0, (X86, X86_64), 0.025),
+            InstanceType('c1.medium', 2, 1, 1700, 160, (X86,), 0.095),
+            InstanceType('c1.xlarge', 2, 1, 1700, 160, (X86,), 0.095),
+            InstanceType('m1.small', 2, 1, 1700, 160, (X86,), 0.095),
+            InstanceType('m1.large', 2, 2, 7500, 850, (X86_64,), 0.038),
+            InstanceType('m1.xlarge', 2, 4, 15000, 850, (X86_64,), 0.76)]
 
 if __name__ == "__main__":
     sys.exit(main())
