@@ -24,7 +24,6 @@ def init_db(dao, confFile):
     X86 = Architecture('x86')
     X86_64 = Architecture('x86_64')
     
-   
     archs = [X86, X86_64]
      
     for a in archs:
@@ -57,7 +56,7 @@ def init_db(dao, confFile):
                       "https://s3.amazonaws.com", 
                       "/opt/EC2_TOOLS/etc/ec2/amitools/cert-ec2.pem",
                       get_instance_types(dao)),
-              DesktopCloud(None, "VirtualBox", [InstanceType('defaultType', 1, 1, 512, 0, (dao.getArchitecture('x86_64'),), 0.025)])]
+              DesktopCloud(None, "VirtualBox", [InstanceType('defaultType', 1, 1, 512, 0, (dao.getArchitecture('x86_64'),), 0.0)])]
 
     for cloud in clouds:
         dao.add(cloud)

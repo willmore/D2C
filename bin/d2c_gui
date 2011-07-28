@@ -28,8 +28,72 @@ def main(argv=None):
     
     SQLITE_FILE = "%s/.d2c/d2c_db.sqlite" % os.path.expanduser('~') 
     
-    app = Application(DAO(SQLITE_FILE), AMIToolsFactory())
+    dao = DAO(SQLITE_FILE)
+    init(dao)
+    app = Application(dao, AMIToolsFactory())
     app.MainLoop()
+
+def init(dao):
+	
+	if dao.getConfigurationValue('version') is not None:
+		return
+	
+	dao.setConfigurationValue('version', '0.1')
+	
+	X86 = Architecture('x86')
+    X86_64 = Architecture('x86_64')
+    
+    archs = [X86, X86_64]
+     
+    for a in archs:
+        dao.add(a)
+    
+    clouds = [EC2Cloud(None, 
+                       name="SciCloud", 
+                        serviceURL="http://172.17.36.21:8773/services/Eucalyptus",
+                        ec2Cert="/home/willmore/.euca/cloud-cert.pem",
+                        storageURL="http://172.17.36.21:8773/services/Walrus",
+                        kernels=[Kernel("eki-3EB4165A", archs[1], "internal://ami_data/kernels/2.6.35-24-virtual-x86_64.tar")],
+                        instanceTypes=[
+                                       InstanceType('m1.small', 2, 1, 256, 2, (X86,), 0.0),
+                                       InstanceType('m1.large', 2, 2, 1792, 15, (X86_64,), 0.0),
+                                       InstanceType('m1.xlarge', 2, 1, 1792, 20, (X86_64,), 0.0),
+                                       InstanceType('c1.medium', 2, 2, 512, 5, (X86_64,), 0.0),
+                                       InstanceType('c1.xlarge', 2, 4, 1792, 20, (X86_64,), 0.0)]
+                        ),
+              EC2Cloud(
+                       None,
+                       "eu-west-1", 
+                      "https://eu-west-1.ec2.amazonaws.com", 
+                      "https://s3.amazonaws.com",
+                      "/opt/EC2_TOOLS/etc/ec2/amitools/cert-ec2.pem",
+                      instanceTypes=get_instance_types(dao)),
+              EC2Cloud(
+                       None,
+                       "us-west-1", 
+                      "https://us-west-1.ec2.amazonaws.com", 
+                      "https://s3.amazonaws.com", 
+                      "/opt/EC2_TOOLS/etc/ec2/amitools/cert-ec2.pem",
+                      get_instance_types(dao)),
+              DesktopCloud(None, "VirtualBox", [InstanceType('defaultType', 1, 1, 512, 0, (dao.getArchitecture('x86_64'),), 0.0)])]
+
+    for cloud in clouds:
+        dao.add(cloud)
+        
+    deskImg = DesktopImage(None, None, clouds[3], "/home/willmore/images/worker.vdi")
+    myWorkerImg = Image(None, "Worker", deskImg, [deskImg])
+    
+    dao.add(myWorkerImg) 
+    
+    cloud = clouds[0]
+    
+    ramdisk = Ramdisk("eri-83141744", cloud, archs[1])
+    dao.add(ramdisk)
+     
+    for instance in []:
+        for cloud in clouds:
+            instance.cloud = cloud
+            dao.addInstanceType(instance)
 
 if __name__ == "__main__":
     sys.exit(main())

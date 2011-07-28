@@ -400,16 +400,16 @@ class DAO:
     def saveConfiguration(self, conf):
         c = self.__getConn().cursor()
         
-        self.__saveConfigurationValue(c, 'ec2ToolHome', conf.ec2ToolHome)
-        self.__saveConfigurationValue(c, 'awsUserId', conf.awsUserId)
+        self.saveConfigurationValue(c, 'ec2ToolHome', conf.ec2ToolHome)
+        self.saveConfigurationValue(c, 'awsUserId', conf.awsUserId)
         
         if conf.ec2Cred is not None:
-            self.__saveConfigurationValue(c, 'defaultEC2Cred', conf.ec2Cred.id)
+            self.saveConfigurationValue(c, 'defaultEC2Cred', conf.ec2Cred.id)
             self.saveEC2Cred(conf.ec2Cred)
   
         if conf.awsCred is not None:
-            self.__saveConfigurationValue(c, 'awsAccessKeyId', conf.awsCred.access_key_id)
-            self.__saveConfigurationValue(c, 'awsSecretAccessKey', conf.awsCred.secret_access_key)
+            self.saveConfigurationValue(c, 'awsAccessKeyId', conf.awsCred.access_key_id)
+            self.saveConfigurationValue(c, 'awsSecretAccessKey', conf.awsCred.secret_access_key)
         
         self.__getConn().commit()
         c.close()
@@ -417,13 +417,13 @@ class DAO:
     def getConfiguration(self):
         c = self.__getConn().cursor()
         
-        ec2ToolHome = self.__getConfigurationValue(c, 'ec2ToolHome')
-        awsUserId = self.__getConfigurationValue(c, 'awsUserId')
+        ec2ToolHome = self.getConfigurationValue(c, 'ec2ToolHome')
+        awsUserId = self.getConfigurationValue(c, 'awsUserId')
               
-        awsAccessKeyId = self.__getConfigurationValue(c, 'awsAccessKeyId')
-        awsSecretAccessKey = self.__getConfigurationValue(c, 'awsSecretAccessKey')
+        awsAccessKeyId = self.getConfigurationValue(c, 'awsAccessKeyId')
+        awsSecretAccessKey = self.getConfigurationValue(c, 'awsSecretAccessKey')
         
-        defEC2Cred = self.__getConfigurationValue(c, 'defaultEC2Cred')
+        defEC2Cred = self.getConfigurationValue(c, 'defaultEC2Cred')
         
         self.__getConn().commit()
         c.close()
@@ -436,7 +436,7 @@ class DAO:
                              ec2Cred=ec2Cred,
                              awsCred=awsCred)
         
-    def __getConfigurationValue(self, cursor, key): 
+    def getConfigurationValue(self, cursor, key): 
         h = cursor.execute("select value from conf where key=? limit 1", (key,)) 
         
         r = h.fetchone()
@@ -447,7 +447,7 @@ class DAO:
             return None
                             
         
-    def __saveConfigurationValue(self, cursor, key, value):
+    def saveConfigurationValue(self, cursor, key, value):
 
         if None is cursor.execute("select * from conf where key==?", (key,)).fetchone():
             cursor.execute("insert into conf (key, value) values (?,?)", (key, value))

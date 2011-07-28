@@ -109,7 +109,7 @@ class LibVirtInstance(object):
         
     def __setStaticIp(self,imageFile,IP):
         
-        static_ip_file = pkg_resources.resource_filename(__package__, "virtualbox_xml/static_ip.txt")
+        static_ip_file = pkg_resources.resource_filename(__package__, "virtualbox_xml/static_ip.txt") 
         
         file = open(static_ip_file, "r")
         static_ip = file.read()
@@ -131,6 +131,9 @@ class LibVirtInstance(object):
         rootDev = roots[0]
         gf.mount(rootDev, "/")
         
+        #Remove udev net rules so our new network device is assigned eth0
+        # We could write a file that explicitly binds a known eth* to our known mac address..
+        gf.rm('/etc/udev/rules.d/70-persistent-net.rules')
         gf.write("/etc/network/interfaces", static_ip)
         
         del gf #sync and shutdown   
@@ -192,14 +195,10 @@ class LibVirtInstance(object):
         print "pinging now..."
 
         while ping(IP):
-            print "will sleep now"
+            pass
 
-        time.sleep(5)
-
-        shell_executor = RemoteShellExecutor('q',IP,'%s/.ssh/id_rsa'%(os.getenv('HOME')))
-
-        shell_executor.run("pwd")        
-                
+        print "Host up"
+        
         self.public_dns_name  = IP        
         self.private_ip_address = IP
         self.private_dns_name = IP
@@ -209,6 +208,7 @@ class LibVirtInstance(object):
     def stop(self):
         if self.dom is not None:
             self.dom.destroy()
+            time.sleep(5)
             self.dom.undefine()
     
     def update(self):
@@ -293,7 +293,7 @@ class LibVirtConn(CloudConnection):
         
         self.publicKeyMap[keyPairName] = pubKeyFile
         
-        return os.path.join(dataDir, "%s/%s.pem" % (dataDir, keyPairName)) 
+        return os.path.join(dataDir, "%s/%s" % (dataDir, keyPairName)) 
 
 class DesktopCloud(Cloud):
     

@@ -4,16 +4,17 @@ import sys
 import random
 import pkg_resources
 
-class GenerateXML:
+class GenerateXML(object):
+    
+    @staticmethod
+    def randomizeName():
+        s="abcdef123"
+        return ''.join(random.sample(s,len(s)))
     
     @staticmethod   
     def generateXML(vdi_image,noOfCPU,memory):
 
         source_xml =  pkg_resources.resource_filename(__package__, "virtualbox_xml/mydomain.xml")
-        
-        def randomizeName():
-            s="abcdef123"
-            return ''.join(random.sample(s,len(s)))
         
         # set path of vdi image
         doc = parse(source_xml)
@@ -22,7 +23,7 @@ class GenerateXML:
         
         # set domain name
         node = doc.getElementsByTagName('name')
-        node[0].firstChild.nodeValue = randomizeName()
+        node[0].firstChild.nodeValue = GenerateXML.randomizeName()
         
         # set cpu number
         node = doc.getElementsByTagName('vcpu')

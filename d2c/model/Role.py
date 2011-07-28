@@ -202,9 +202,10 @@ class Role(object):
                 
                 dest = os.path.join(self.deployment.dataDir, str(self.id), str(instance.id), collector.source[1:])
                 
-                self.logger.write("Downloading data from instance %s to %s" % (instance.id, dest))
+                self.logger.write("Downloading data from instance %s to %s... " % (instance.id, dest))
                 collector.collect(instance, 
                                   dest)
+                self.logger.write("Done")
     
     def shutdown(self):
         
