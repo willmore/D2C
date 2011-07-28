@@ -42,7 +42,7 @@ def main(argv=None):
 
 def init(dao):
 	
-    if dao.getConfValue('version') is not None:
+    if os.path.exists(dao.fileName):
 		return
 	
     #dao.setConfValue('version', '0.1')
@@ -85,10 +85,7 @@ def init(dao):
 
     for cloud in clouds:
         dao.add(cloud)
-        
-    deskImg = DesktopImage(None, None, clouds[3], "/home/willmore/images/worker.vdi")
-    myWorkerImg = Image(None, "Worker", deskImg, [deskImg])
-    
+            
     dao.add(myWorkerImg) 
     
     cloud = clouds[0]
