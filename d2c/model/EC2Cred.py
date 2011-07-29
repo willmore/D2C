@@ -4,7 +4,7 @@ Created on Feb 15, 2011
 @author: willmore
 '''
 
-class EC2Cred:
+class EC2Cred(object):
     
     cert = None #file path
     private_key = None #file path
