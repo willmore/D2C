@@ -27,7 +27,12 @@ from sqlalchemy.orm.interfaces import MapperExtension
 import boto
 
 import string
-import sqlite3
+
+class ConfValue(object):
+    
+    def __init__(self, key, value):
+        self.key = key
+        self.value = value
 
 class DAO:
     
@@ -44,7 +49,6 @@ class DAO:
         if not os.path.isdir(baseDir):
             os.makedirs(baseDir, mode=0700)
         
-        self.__conn = None
         self.__credStore = None
         
         self.engine = create_engine('sqlite:///' + self.fileName, 
@@ -57,13 +61,6 @@ class DAO:
 
     def setCredStore(self, credStore):
         self.__credStore = credStore
-        
-    def __getConn(self):
-        if self.__conn is None:
-            self.__conn = sqlite3.connect(self.fileName, check_same_thread=False)
-            self.__conn.row_factory = sqlite3.Row
-
-        return self.__conn
         
     def _init_db(self):
         
@@ -348,28 +345,30 @@ class DAO:
                         'ramdisk': relationship(Ramdisk)
                     })
         
+        
+                
+        ec2CredTable = Table('ec2_cred', metadata,
+                            Column('id', String, primary_key=True),
+                            Column('cert', String),
+                            Column('private_key', String)
+                            )  
+      
+        mapper(EC2Cred, ec2CredTable)
+        
+        confValueTable = Table('conf', metadata,
+                            Column('key', String, primary_key=True),
+                            Column('value', String))  
+      
+        mapper(ConfValue, confValueTable)
+        
         metadata.create_all(self.engine)
-        
-        c = self.__getConn().cursor()
-        
-        
-        
-        c.execute('''create table if not exists ec2_cred
-                    (id string primary key, 
-                    cert text, 
-                    private_key text)''')
-        
-        c.execute('''create table if not exists conf
-                    (key text, value text)''')
-          
-        c.execute('''create table if not exists deploy_role_instance
+        '''  
+        c.execute(create table if not exists deploy_role_instance
                     (instance text primary key, -- AWS instance ID
                     role_name text,
                     role_deploy text,
-                    foreign key(role_name, role_deploy) references role(name, deploy))''')
-    
-        self.__getConn().commit()
-        c.close()
+                    foreign key(role_name, role_deploy) references role(name, deploy)))
+        '''
     
     def setRemoteShellExecutorFactory(self, action):
         action.remoteExecutorFactory = self.remoteExecutorFactory
@@ -408,38 +407,27 @@ class DAO:
         return self.session.query(DesktopImage)
         
     def saveConfiguration(self, conf):
-        c = self.__getConn().cursor()
         
-        self.saveConfigurationValue(c, 'ec2ToolHome', conf.ec2ToolHome)
-        self.saveConfigurationValue(c, 'awsUserId', conf.awsUserId)
+        self.setConfValue('ec2ToolHome', conf.ec2ToolHome)
+        self.setConfValue('awsUserId', conf.awsUserId)
         
         if conf.ec2Cred is not None:
-            self.saveConfigurationValue(c, 'defaultEC2Cred', conf.ec2Cred.id)
-            self.saveEC2Cred(conf.ec2Cred)
+            self.setConfValue('defaultEC2Cred', conf.ec2Cred.id)
+            self.add(conf.ec2Cred)
   
         if conf.awsCred is not None:
-            self.saveConfigurationValue(c, 'awsAccessKeyId', conf.awsCred.access_key_id)
-            self.saveConfigurationValue(c, 'awsSecretAccessKey', conf.awsCred.secret_access_key)
-        
-        self.__getConn().commit()
-        c.close()
+            self.addAWSCred(conf.awsCred)
         
     def getConfiguration(self):
-        c = self.__getConn().cursor()
         
-        ec2ToolHome = self.getConfigurationValue(c, 'ec2ToolHome')
-        awsUserId = self.getConfigurationValue(c, 'awsUserId')
-              
-        awsAccessKeyId = self.getConfigurationValue(c, 'awsAccessKeyId')
-        awsSecretAccessKey = self.getConfigurationValue(c, 'awsSecretAccessKey')
+        ec2ToolHome = self.getConfValue('ec2ToolHome')
+        awsUserId = self.getConfValue('awsUserId')
+
         
-        defEC2Cred = self.getConfigurationValue(c, 'defaultEC2Cred')
-        
-        self.__getConn().commit()
-        c.close()
+        defEC2Cred = self.getConfValue('defaultEC2Cred')
         
         ec2Cred = self.getEC2Cred(defEC2Cred) if defEC2Cred is not None else None
-        awsCred = AWSCred("mainKey", awsAccessKeyId, awsSecretAccessKey) if (awsAccessKeyId is not None and awsSecretAccessKey is not None) else None
+        awsCred = self.getAWSCred("mainKey")
             
         return Configuration(ec2ToolHome=ec2ToolHome,
                              awsUserId=awsUserId,
@@ -447,39 +435,26 @@ class DAO:
                              awsCred=awsCred)
     
     def getConfValue(self, key):
-        c = self.__getConn().cursor()
-        v = self.getConfigurationValue(c, key)
-        c.close()
-        return v
+        val = self.session.query(ConfValue).filter_by(key=key).scalar()
+        if val is None:
+            return None
+        else:
+            return val.value
     
     def setConfValue(self, key, value):
-        c = self.__getConn().cursor()
-        self.saveConfigurationValue(c, key, value)
-        c.close()
         
-    def getConfigurationValue(self, cursor, key): 
-        h = cursor.execute("select value from conf where key=? limit 1", (key,)) 
-        
-        r = h.fetchone()
-        
-        if r is not None:
-            return r[0]
+        val = self.session.query(ConfValue).filter_by(key=key).scalar()
+        if val is None:
+            val = ConfValue(key, value)
+            self.add(val)
         else:
-            return None
-                            
-        
-    def saveConfigurationValue(self, cursor, key, value):
-
-        if None is cursor.execute("select * from conf where key==?", (key,)).fetchone():
-            cursor.execute("insert into conf (key, value) values (?,?)", (key, value))
-        else:
-            cursor.execute("update conf set value=? where key=?", (value, key))
+            val.value = value
+            self.save(val)
     
     def getAMIs(self):
         return self.session.query(AMI)
     
     def addAMI(self, ami):
-        
         self.session.add(ami)
         self.session.commit()
        
@@ -488,21 +463,7 @@ class DAO:
         self.session.commit()
         
     def getAWSCred(self, name):
-        
-        c = self.__getConn().cursor()
-        c.execute("select * from aws_cred where name = ? limit 1", (name,))
-        row = c.fetchone()
-        c.close()
-        
-        return AWSCred(row['name'], row['access_key_id'], row['secret_access_key']) if row is not None else None
-    
-    def addRoleInstance(self, roleDeployment, roleName, instanceId):
-        c = self.__getConn().cursor()
-
-        c.execute("insert into deploy_role_instance (instance, role_name, role_deploy) values (?,?,?)", 
-                      (instanceId, roleName, roleDeployment))
-        self.__getConn().commit()
-        c.close()  
+        return self.session.query(AWSCred).filter_by(name=name).one()
     
     def getDeployments(self):
         return self.session.query(Deployment)
@@ -511,44 +472,13 @@ class DAO:
         return self.session.query(DeploymentTemplate)
              
     def getEC2Cred(self, _id):
-        
-        c = self.__getConn().cursor()
-        
-        c.execute("select * from ec2_cred where id = ? limit 1", (_id,))
-        
-        row = c.fetchone()
-        
-        c.close()
-        
-        return EC2Cred(row['id'], row['cert'], row['private_key'])
-    
-    def saveEC2Cred(self, ec2Cred):
-        
-        c = self.__getConn().cursor()
-        
-        c.execute("delete from ec2_cred where id=?", (ec2Cred.id,))
-        c.execute("insert into ec2_cred (id, cert, private_key) values (?,?,?)",
-                 (ec2Cred.id, ec2Cred.cert, ec2Cred.private_key))
-        self.__getConn().commit()
-        c.close()
-  
+        return self.session.query(EC2Cred).filter_by(id=_id).one()
     
     def __instanceType(self, name):
         '''
         Map string name to InstanceType enum.
         '''
         return getattr(InstanceType, string.replace(name.swapcase(), ".", "_"))
-    
-    def getRegions(self):
-        c = self.__getConn().cursor()
-        
-        c.execute("select * from region")
-    
-        regions = [Region(row['name'], row['endpoint'], row['ec2cert']) for row in c]
-        
-        c.close()
-        
-        return regions
             
     def getClouds(self):    
         return self.session.query(Cloud).all()

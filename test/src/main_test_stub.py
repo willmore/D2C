@@ -26,7 +26,6 @@ class DummyConn:
     def create_key_pair(self, keyPairName):
         mockPair = mock(boto.ec2.keypair.KeyPair)
         def save(path):
-            #os.makedirs(path)
             open("%s/%s.pem" % (path, keyPairName), "w").close()
             
         mockPair.save = save

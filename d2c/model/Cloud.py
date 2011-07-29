@@ -423,6 +423,28 @@ class EC2Cloud(Cloud):
     def __ne__(self, other): 
         return not self == other
     
+    
+class CloudCred(object):
+    
+    def __init__(self, 
+                 id,
+                 name,
+                 awsUserId,
+                 awsKeyId,
+                 awsSecretAccessKey,
+                 ec2CloudCert,
+                 ec2Cert,
+                 ec2PrivateKey):
+        
+        self.id = id
+        self.name = name
+        self.awsUserId = awsUserId
+        self.awsKeyId = awsKeyId
+        self.awsSecretAccessKey = awsSecretAccessKey
+        self.ec2CloudCert = ec2CloudCert
+        self.ec2Cert = ec2Cert
+        self.ec2PrivateKey = ec2PrivateKey
+    
 
 
         
