@@ -34,6 +34,8 @@ class DeploymentTemplate(object):
             assert roleTemp in self.roleTemplates
             roles.append(roleTemp.createRole(deployment, cloud, image, instanceType, count))
         
+        deployment.roles = roles
+        
         self.deployments.append(deployment)
         
         return deployment

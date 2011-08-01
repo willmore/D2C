@@ -150,6 +150,18 @@ class Deployment(object):
         for role in self.roles:
             role.setLogger(self.logger)
     
+    def roleRunTime(self):
+        startTime = 0
+        endTime = 0
+        
+        for e in self.stateEvents:
+            if e.state == DeploymentState.ROLES_STARTED:
+                startTime = e.time
+            elif e.state == DeploymentState.JOB_COMPLETED:
+                endTime = e.time
+                
+        return endTime - startTime
+    
     def setCloud(self, cloud):
 
         if self.cloud is not cloud:

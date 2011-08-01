@@ -62,7 +62,7 @@ v, success = leastsq(e, v0, args=(realProbSize, cpu, counts, times), maxfev=1000
 def plot_fit():
     print 'Estimater parameters: ', v
     #print 'Real parameters: ', v_real
-    probSize = linspace(xmin,xmax,n*5)
+    probSize = linspace(xmin,xmax,5)
     cpus = array([1500, 2500, 3500])
     
     plots= []
