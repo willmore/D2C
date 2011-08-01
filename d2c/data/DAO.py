@@ -123,7 +123,8 @@ class DAO:
                             Column('deployment_template_id', String, ForeignKey("deployment_template.id")),
                             Column('state', String, nullable=False),
                             Column('dataDir', String),
-                            Column('pollRate', Integer)
+                            Column('pollRate', Integer),
+                            Column('problemSize', Integer, nullable=False)
                             )  
         
         mapper(Deployment, deploymentTable, properties={

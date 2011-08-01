@@ -1,88 +1,37 @@
-import wx
+from pylab import *
+from numpy import *
+from scipy.optimize import leastsq
 
-class FicheFrameWithFocus( wx.Frame ) :
+## Parametric function: 'v' is the parameter vector, 'x' the independent varible
+fp = lambda v, x: v[0]/(x**v[1])*sin(v[2]*x)
 
-    def __init__( self ) :
+## Noisy function (used to generate data to fit)
+v_real = [1.5, 0.1, 2.]
+fn = lambda x: fp(v_real, x)
 
-        wx.Frame.__init__( self, None, -1 ,"FicheFrameWithFocus", size=(275, 500) )
+## Error function
+e = lambda v, x, y: (fp(v,x)-y)
 
-        self.scroll = wx.ScrolledWindow( self, -1 )
+## Generating noisy data to fit
+n = 30
+xmin = 0.1
+xmax = 5
+#x = linspace(xmin,xmax,n)
+x = array([0.1, 0.3, 0.5, 1.0])
+y = fn(x) + rand(len(x))*0.2*(fn(x).max()-fn(x).min())
 
-        self.frmPanel = wx.Panel( self.scroll, -1 )
+## Initial parameter value
+v0 = [3., 1, 4.]
 
-        # A sizer allows the horizontal scrollbar to appear when needed.
-        flGrSzr = wx.FlexGridSizer( 50, 2, 2, 2 )   # rows, cols, hgap, vgap
+## Fitting
+v, success = leastsq(e, v0, args=(x,y), maxfev=10000)
 
-        for i in range( 50 ) :
+## Plot
+def plot_fit():
+    print 'Estimater parameters: ', v
+    print 'Real parameters: ', v_real
+    X = linspace(xmin,xmax,n*5)
+    plot(x,y,'ro', X, fp(v,X))
 
-            textStr = " Champ (txt) %2d  : " % (i+1)
-            flGrSzr.Add( wx.StaticText( self.frmPanel, -1, textStr ) )
-
-            txtCtrl = wx.TextCtrl( self.frmPanel, -1, size=(100, -1), style=0 )
-            wx.EVT_SET_FOCUS( txtCtrl, self.OnFocus )
-            flGrSzr.Add( txtCtrl )
-
-        #end for
-
-        # Create a border around frmPnlSizer to the edges of the frame.
-        frmPnlSizer = wx.BoxSizer( wx.VERTICAL )
-        frmPnlSizer.Add( flGrSzr, proportion=1, flag=wx.ALL, border=20 )
-
-        self.frmPanel.SetSizer( frmPnlSizer )
-        self.frmPanel.SetAutoLayout( True )
-        self.frmPanel.Layout()
-        self.frmPanel.Fit()     # frmPnlSizer borders will be respected
-
-        self.Center()
-        self.MakeModal( True )
-
-        # Scrolling parameters must be set AFTER all controls have been laid out.
-        self.frmPanelWid, self.frmPanelHgt = self.frmPanel.GetSize()
-        self.unit = 1
-        self.scroll.SetScrollbars( self.unit, self.unit, self.frmPanelWid/self.unit, self.frmPanelHgt/self.unit )
-
-        
-
-    #end __init__ def
-
-    def OnFocus( self, event ) :
-        """
-        This makes the selected (the one in focus) textCtrl to be automatically
-        repositioned to the top-left of the window. One of the scrollbars
-        must have been moved for this to happen.
-
-        The benefits for doing this are dubious. but this demonstrates how it can be done.
-        """
-
-        parentControl = self.FindWindowById( event.GetId() )  # The parent container control
-        parentPosX, parentPosY = parentControl.GetPosition()
-        hx, hy = parentControl.GetSizeTuple()
-        clientSizeX, clientSizeY = self.scroll.GetClientSize()
-
-        sx, sy = self.scroll.GetViewStart()
-        magicNumber = 20        # Where did this value come from ?!
-        sx = sx * magicNumber
-        sy = sy * magicNumber
-
-        if (parentPosY < sy ) :
-            self.scroll.Scroll( 0, parentPosY/self.unit )
-
-        if ( parentPosX < sx ) :
-             self.scroll.Scroll( 0, -1 )
-
-        if (parentPosX + sx) > clientSizeX  :
-            self.scroll.Scroll( 0, -1 )
-
-        if (parentPosY + hy - sy) > clientSizeY :
-            self.scroll.Scroll( 0, parentPosY/self.unit )
-
-    #end OnFocus def
-
-#end FicheFrameWithFocus class
-
-if __name__ == '__main__' :
-
-    myapp = wx.App( redirect=False )
-    appFrame = FicheFrameWithFocus()
-    appFrame.Show()
-    myapp.MainLoop()
+plot_fit()
+show()

@@ -116,7 +116,8 @@ class Deployment(object):
                  logger=StdOutLogger(), 
                  pollRate=15,
                  deploymentTemplate=None,
-                 stateEvents=()):
+                 stateEvents=(),
+                 problemSize=0):
                     
         assert isinstance(dataDir, basestring) and len(dataDir) > 0
             
@@ -135,6 +136,8 @@ class Deployment(object):
         
         self.stopInstances = False
         self.stateEvents = list(stateEvents)
+    
+        self.problemSize = problemSize
     
     def setLogger(self, logger, cascade=True):
         self.logger = logger

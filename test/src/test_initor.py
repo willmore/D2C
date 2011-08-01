@@ -118,6 +118,7 @@ def init_db(dao, confFile):
     for roleTemp in dTemplate.roleTemplates:
         roleReq[roleTemp] = (ami, m1large, 2)
     deployment = dTemplate.createDeployment(sciCloud, roleReq, conf.awsCred)
+    deployment.problemSize = 35
   
     dao.add(deployment)
   
@@ -125,6 +126,7 @@ def init_db(dao, confFile):
     for roleTemp in dTemplate.roleTemplates:
         roleReq[roleTemp] = (deskImg, vbCloud.instanceTypes[0], 1)
     deployment = dTemplate.createDeployment(vbCloud, roleReq)
+    deployment.problemSize = 60
     
     dao.add(deployment)
     
