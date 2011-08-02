@@ -17,10 +17,19 @@ import boto
 
 from d2c.model.CompModel import CompModel
 
+
+
 def run():
     deploymentTemp = init()
 
     model = PolyCompModel(deploymentTemp)
+    global clouds
+    costModel = model.costModel(clouds[1])
+    
+    for size in [400, 800, 1200, 1600]:
+        best = costModel(size)
+        print size, best
+        
     realProbSize = array([dp.probSize for dp in model.dataPoints])
     times = array([dp.time for dp in model.dataPoints])
     
@@ -38,6 +47,7 @@ def run():
     legend([p[0] for p in plots], labels)
 
     show()
+    
 
 def init():
     
@@ -45,6 +55,8 @@ def init():
     X86_64 = Architecture('x86_64')
     
     archs = [X86, X86_64]
+    
+    global clouds
     
     clouds = [EC2Cloud(None, 
                        name="SciCloud", 
@@ -66,11 +78,11 @@ def init():
                       "https://s3.amazonaws.com",
                       "/opt/EC2_TOOLS/etc/ec2/amitools/cert-ec2.pem",
                       instanceTypes=[
-                                       InstanceType('m1.small', 2, 1, 256, 2, (X86,), 0.0),
-                                       InstanceType('m1.large', 2, 2, 1792, 15, (X86_64,), 0.0),
-                                       InstanceType('m1.xlarge', 2, 1, 1792, 20, (X86_64,), 0.0),
-                                       InstanceType('c1.medium', 2, 2, 512, 5, (X86_64,), 0.0),
-                                       InstanceType('c1.xlarge', 2, 4, 1792, 20, (X86_64,), 0.0)],
+                                       InstanceType('m1.small', 2, 1, 256, 2, (X86,), 0.095),
+                                       InstanceType('m1.large', 2, 2, 1792, 15, (X86_64,), 0.38),
+                                       InstanceType('m1.xlarge', 2, 1, 1792, 20, (X86_64,), 0.76),
+                                       InstanceType('c1.medium', 2, 2, 512, 5, (X86_64,), 0.19),
+                                       InstanceType('c1.xlarge', 2, 4, 1792, 20, (X86_64,), 0.76)],
                       botoModule=boto),
               EC2Cloud(
                        None,
@@ -113,38 +125,40 @@ def init():
     vbCloud = clouds[3]
     
     m1large = None;
+    m1small = None
     for inst in sciCloud.instanceTypes:
         if inst.name == "m1.large":
             m1large = inst
-            break
+        if inst.name == "m1.small":
+            m1small = inst
     
     #deployments = []
     
     roleReq = {}
     for roleTemp in dTemplate.roleTemplates:
-        roleReq[roleTemp] = (ami, m1large, 2)
+        roleReq[roleTemp] = (ami, m1small, 1)
     deployment = dTemplate.createDeployment(sciCloud, roleReq, AWSCred(None, 'foo', 'bar'))
     deployment.problemSize = 35
     deployment.stateEvents = [StateEvent(DeploymentState.ROLES_STARTED, 0),
-                              StateEvent(DeploymentState.JOB_COMPLETED, 100)]
+                              StateEvent(DeploymentState.JOB_COMPLETED, 1000)]
     
     #deployments.append(deployment)
     
     roleReq = {}
     for roleTemp in dTemplate.roleTemplates:
-        roleReq[roleTemp] = (ami, m1large, 2)
+        roleReq[roleTemp] = (ami, m1large, 1)
     deployment = dTemplate.createDeployment(sciCloud, roleReq, AWSCred(None, 'foo', 'bar'))
-    deployment.problemSize = 70
+    deployment.problemSize = 35
     deployment.stateEvents = [StateEvent(DeploymentState.ROLES_STARTED, 0),
-                              StateEvent(DeploymentState.JOB_COMPLETED, 215)]
+                              StateEvent(DeploymentState.JOB_COMPLETED, 600)]
     
     roleReq = {}
     for roleTemp in dTemplate.roleTemplates:
-        roleReq[roleTemp] = (ami, m1large, 3)
+        roleReq[roleTemp] = (ami, m1large, 1)
     deployment = dTemplate.createDeployment(sciCloud, roleReq, AWSCred(None, 'foo', 'bar'))
     deployment.problemSize = 70
     deployment.stateEvents = [StateEvent(DeploymentState.ROLES_STARTED, 0),
-                              StateEvent(DeploymentState.JOB_COMPLETED, 180)]
+                              StateEvent(DeploymentState.JOB_COMPLETED, 1400)]
     
     #deployments.append(deployment)
     
