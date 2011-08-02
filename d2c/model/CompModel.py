@@ -1,5 +1,6 @@
 from numpy import true_divide, array
 from scipy.optimize import leastsq
+import numpy
 
 import math
 import sys
@@ -45,7 +46,23 @@ class CompModel(object):
             return (bestCost, bestTime, bestType, bestCount)
         
         return model
- 
+
+# http://en.wikipedia.org/wiki/Amdahl's_law#Parallelization
+def pEstimated(speedUp, numberProcessors):
+    return (1 / speedUp - 1) / (1 / numberProcessors - 1)
+
+def speedUp(n, p):
+    '''
+    Return speedup for n processors given parallelizable percentage p.
+    '''
+    return 1 / ((p / n) + (1 - p))
+
+def runTime(t1, p, n):
+    '''
+    Runtime of a fixed problem size, given base runtime t1 and speedup(n, p)
+    '''
+    return t1 / speedUp(n, p)
+
 class AmdahlsCompModel(CompModel):       
         
     def __init__(self, deploymentTemplate):
@@ -67,36 +84,22 @@ class AmdahlsCompModel(CompModel):
         #Get T(1)
         t1s = [(d.time, d.probSize) for d in self.dataPoints if d.machineCount == 1]
                 
-                
+        ps = []        
         for t1,size in t1s:
             txs = [(d.time, d.machineCount) for d in self.dataPoints if d.probSize == size and 
-                    d.machineCount == 1]
+                    d.machineCount != 1]
             
-            
-            # p = (speedUp(n) - 1) / speedUp(2)
-            
-            p = [tx[1] * (t1 - tx[0] - 1) / (t1 - tx[0]) for tx in txs ]
-                
-       
+
+            # SpeedUp(x) = t1 / t(x)             
+            ps.append([pEstimated(true_divide(t1, tx), np) for tx,np in txs ])
+           
+        # Lets just take the mean for now 
+        p = numpy.mean(ps)
         
         
-        def runTime(v, probSize, machineCpu, count):
-            x = true_divide(probSize , machineCpu * count)
-            return v[0] + v[1] * x #+ v[2] * (x**2) #+ v[3] * (x**3)
+        sizeFactor = lambda probSize, baseRunTime : baseRunTime + (t1s[0][0] / t1s[0][1]) * probSize
         
-        # Error Function
-        ef = lambda v, probSize, cpu, cnt, t: (runTime(v, probSize, cpu, cnt)-t)
-        
-        realProbSize = array([d.probSize for d in self.dataPoints])
-        cpu = array([d.cpu for d in self.dataPoints])
-        counts = array([d.machineCount for d in self.dataPoints])
-        times = array([d.time for d in self.dataPoints])
-        
-        v0 = [1,1,1]
-        testVal = ((v0[:4],)+(realProbSize, cpu, counts, times))
-        v, success = leastsq(ef, v0, args=(realProbSize, cpu, counts, times), maxfev=10000)
-        
-        self.modelFunc = lambda ps, cpu, count: runTime(v, ps, cpu, count)
+        self.modelFunc = lambda probSize, cpu, count: sizeFactor(probSize, runTime(t1, p, count))
     
 class PolyCompModel(CompModel):
     

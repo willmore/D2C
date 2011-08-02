@@ -11,7 +11,7 @@ from d2c.model.DeploymentTemplate import DeploymentTemplate, RoleTemplate
 from d2c.model.FileExistsFinishedCheck import FileExistsFinishedCheck
 from d2c.model.AWSCred import AWSCred
 from d2c.model.Deployment import DeploymentState, StateEvent
-from d2c.model.CompModel import PolyCompModel
+from d2c.model.CompModel import PolyCompModel, AmdahlsCompModel
 import boto
 
 
@@ -22,7 +22,8 @@ from d2c.model.CompModel import CompModel
 def run():
     deploymentTemp = init()
 
-    model = PolyCompModel(deploymentTemp)
+    #model = PolyCompModel(deploymentTemp)
+    model = AmdahlsCompModel(deploymentTemp)
     global clouds
     costModel = model.costModel(clouds[1])
     
@@ -39,10 +40,9 @@ def run():
     
     probSize = linspace(0,200,5)
     
-    for cpu in [2]:
-        for count in range(1,5):
-            plots.append(plot(probSize, model.modelFunc(probSize, cpu, count)))
-            labels.append("%d:%d" % (cpu,count))
+    for count in range(1,5):
+        plots.append(plot(probSize, model.modelFunc(probSize, None, count)))
+        labels.append("%d" % count)
     
     legend([p[0] for p in plots], labels)
 
@@ -146,7 +146,7 @@ def init():
     
     roleReq = {}
     for roleTemp in dTemplate.roleTemplates:
-        roleReq[roleTemp] = (ami, m1large, 1)
+        roleReq[roleTemp] = (ami, m1small, 2)
     deployment = dTemplate.createDeployment(sciCloud, roleReq, AWSCred(None, 'foo', 'bar'))
     deployment.problemSize = 35
     deployment.stateEvents = [StateEvent(DeploymentState.ROLES_STARTED, 0),
@@ -154,11 +154,11 @@ def init():
     
     roleReq = {}
     for roleTemp in dTemplate.roleTemplates:
-        roleReq[roleTemp] = (ami, m1large, 1)
+        roleReq[roleTemp] = (ami, m1small, 2)
     deployment = dTemplate.createDeployment(sciCloud, roleReq, AWSCred(None, 'foo', 'bar'))
     deployment.problemSize = 70
     deployment.stateEvents = [StateEvent(DeploymentState.ROLES_STARTED, 0),
-                              StateEvent(DeploymentState.JOB_COMPLETED, 1400)]
+                              StateEvent(DeploymentState.JOB_COMPLETED, 1200)]
     
     #deployments.append(deployment)
     
