@@ -5,13 +5,8 @@ from scipy.optimize import leastsq
 from d2c.model.InstanceType import InstanceType, Architecture
 from d2c.model.Cloud import EC2Cloud, DesktopCloud
 from d2c.model.Kernel import Kernel
-from d2c.data.CredStore import CredStore
-from d2c.model.UploadAction import UploadAction
-from d2c.model.Ramdisk import Ramdisk
-from d2c.model.SSHCred import SSHCred
 from d2c.model.DataCollector import DataCollector
 from d2c.model.SourceImage import Image, DesktopImage, AMI
-from TestConfig import TestConfig
 from d2c.model.DeploymentTemplate import DeploymentTemplate, RoleTemplate
 from d2c.model.FileExistsFinishedCheck import FileExistsFinishedCheck
 from d2c.model.AWSCred import AWSCred
@@ -35,7 +30,7 @@ def run():
     
     probSize = linspace(0,200,5)
     
-    for cpu in []:
+    for cpu in [2]:
         for count in range(1,5):
             plots.append(plot(probSize, model.modelFunc(probSize, cpu, count)))
             labels.append("%d:%d" % (cpu,count))
@@ -142,6 +137,14 @@ def init():
     deployment.problemSize = 70
     deployment.stateEvents = [StateEvent(DeploymentState.ROLES_STARTED, 0),
                               StateEvent(DeploymentState.JOB_COMPLETED, 215)]
+    
+    roleReq = {}
+    for roleTemp in dTemplate.roleTemplates:
+        roleReq[roleTemp] = (ami, m1large, 3)
+    deployment = dTemplate.createDeployment(sciCloud, roleReq, AWSCred(None, 'foo', 'bar'))
+    deployment.problemSize = 70
+    deployment.stateEvents = [StateEvent(DeploymentState.ROLES_STARTED, 0),
+                              StateEvent(DeploymentState.JOB_COMPLETED, 180)]
     
     #deployments.append(deployment)
     

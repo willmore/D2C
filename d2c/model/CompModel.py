@@ -35,13 +35,17 @@ class PolyCompModel(object):
             return v[0] + v[1] * x + v[2] * (x**2) #+ v[3] * (x**3)
         
         # Error Function
-        ef = lambda v, probSize, cpu, cnt, t: (runTime(v,probSize,cpu, cnt)-t)
+        ef = lambda v, probSize, cpu, cnt, t: (runTime(v, probSize, cpu, cnt)-t)
+        
         realProbSize = array([d.probSize for d in self.dataPoints])
         cpu = array([d.cpu for d in self.dataPoints])
         counts = array([d.machineCount for d in self.dataPoints])
         times = array([d.time for d in self.dataPoints])
         
-        v0 = [1,1,1,1]
+        
+        
+        v0 = [1,1,1]
+        testVal = ((v0[:4],)+(realProbSize, cpu, counts, times))
         v, success = leastsq(ef, v0, args=(realProbSize, cpu, counts, times), maxfev=10000)
         
         self.modelFunc = lambda ps, cpu, count: runTime(v, ps, cpu, count)
