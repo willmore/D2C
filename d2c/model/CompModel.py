@@ -89,6 +89,11 @@ def runTime(t1, p, n):
     '''
     return t1 / speedUp(n, p)
 
+def sum(v1, v2):
+    return v1 + v2
+
+def sumOfSquares(f, dps):
+    return reduce(sum, [(f(dp.probSize, dp.cpu, dp.machineCount) - dp.time)**2 for dp in dps])
 
 class AmdahlsCompModel(CompModel):       
         
@@ -155,12 +160,17 @@ class AmdahlsCompModel(CompModel):
         Find all pairs where cpu count is same but prob size increases
         '''
         if scaleFunction == 'linear':
-            sf = self.__generateLinearScaleFunction()[0]
+            sfs = self.__generateLinearScaleFunction()
         elif scaleFunction == 'log':
-            sf = self.__generateLogScaleFunction()[0]
+            sfs = self.__generateLogScaleFunction()
         
+        functions = [lambda probSize, cpu, count: sf(probSize, (t1s[0][1],runTime(t1, p, count)))
+                     for sf in sfs]
         
-        self.modelFunc = lambda probSize, cpu, count: sf(probSize, (t1s[0][1],runTime(t1, p, count)))
+        bestSf = reduce(lambda f1, f2 : f1 if sumOfSquares(f1, self.dataPoints) < sumOfSquares(f2, self.dataPoints) else f2, 
+                        functions)
+        
+        self.modelFunc = bestSf
     
     def __generateLogScaleFunction(self):
         
