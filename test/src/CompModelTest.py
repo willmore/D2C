@@ -1,7 +1,7 @@
 from pylab import *
 from numpy import *
 import numpy
-from scipy.optimize import leastsq
+#from scipy.optimize import leastsq
 from d2c.model.InstanceType import InstanceType, Architecture
 from d2c.model.Cloud import EC2Cloud, DesktopCloud
 from d2c.model.Kernel import Kernel
@@ -16,7 +16,7 @@ import boto
 
 import unittest
 
-from d2c.model.CompModel import CompModel, pEstimated, speedUp, runTime
+from d2c.model.CompModel import CompModel, pEstimated, speedUp, runTime, DataPoint
 
 class CompModelTest(unittest.TestCase):
 
@@ -36,10 +36,60 @@ class CompModelTest(unittest.TestCase):
         n = 4
         t = runTime(t1, p, n)
         self.assertEquals(round(t, 2), 61.8)
+        
+    def testAmdahlModelConical(self):
+        points = [DataPoint(cpuCount=1, cpu=1, time=1000, probSize=35), 
+                  DataPoint(cpuCount=2, cpu=1, time=600, probSize=35), 
+                  DataPoint(cpuCount=2, cpu=1, time=1200, probSize=70)]
+        
+        model = AmdahlsCompModel(dataPoints=points)
+        
+        self.assertEquals(1000, model.modelFunc(probSize=35, cpu=1, count=1))
+        self.assertEquals(600, model.modelFunc(probSize=35, cpu=1, count=2))
+        self.assertEquals(1200, model.modelFunc(probSize=70, cpu=1, count=2))
+        
+        plots= []
+        plots.append(plot([35, 35, 70],[1000, 600, 1200],'ro')) 
+        labels = ['real']
+    
+        probSize = linspace(0,200,5)
+    
+        for count in range(1,5):
+            plots.append(plot(probSize, model.modelFunc(probSize, None, count)))
+            labels.append("%d" % count)
+    
+            legend([p[0] for p in plots], labels)
+
+        show()
+         
 
 def run():
+     
+     
+    points = [DataPoint(cpuCount=1, cpu=1, time=1000, probSize=35), 
+              DataPoint(cpuCount=2, cpu=1, time=600, probSize=35), 
+              DataPoint(cpuCount=2, cpu=1, time=1200, probSize=70)]
     
+    model = AmdahlsCompModel(dataPoints=points)
     
+    #self.assertEquals(1000, model.modelFunc(probSize=35, cpu=1, count=1))
+    #self.assertEquals(600, model.modelFunc(probSize=35, cpu=1, count=2))
+    #self.assertEquals(1200, model.modelFunc(probSize=70, cpu=1, count=2))
+    
+    plots= []
+    plots.append(plot([35, 35, 70],[1000, 600, 1200],'ro')) 
+    labels = ['real']
+    
+    probSize = linspace(0,200,5)
+    
+    for count in range(1,5):
+        plots.append(plot(probSize, model.modelFunc(probSize, None, count)))
+        labels.append("%d" % count)
+    
+        legend([p[0] for p in plots], labels)
+    
+    show()     
+     
     deploymentTemp = init()
 
     #model = PolyCompModel(deploymentTemp)
@@ -184,9 +234,10 @@ def init():
     
     return dTemplate
     
-#run()
+
 
 if __name__ == "__main__":
+    run()
     #import sys;sys.argv = ['', 'Test.testName']
     unittest.main()
 

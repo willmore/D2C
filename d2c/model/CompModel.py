@@ -7,11 +7,23 @@ import sys
 
 class DataPoint(object):
     
-    def __init__(self, deployment):
-        self.machineCount = reduce(lambda x,y: x+y, [r.count * r.instanceType.cpuCount for r in deployment.roles])
-        self.cpu = deployment.roles[0].instanceType.cpu
-        self.time = deployment.roleRunTime()
-        self.probSize = deployment.problemSize
+    def __init__(self, deployment=None, cpuCount=None, 
+                 cpu=None, time=None, probSize=None):
+        
+        if deployment is not None and \
+            (cpuCount is not None or cpu is not None or time is not None or probSize is not None):
+            raise Exception("Illegal arguments")
+        
+        if deployment is not None:
+            self.machineCount = reduce(lambda x,y: x+y, [r.count * r.instanceType.cpuCount for r in deployment.roles])
+            self.cpu = deployment.roles[0].instanceType.cpu
+            self.time = deployment.roleRunTime()
+            self.probSize = deployment.problemSize
+        else:
+            self.machineCount = cpuCount
+            self.cpu = cpu
+            self.time = time
+            self.probSize = probSize
         
 
 def toDataPoints(deploymentTemplate):
@@ -142,7 +154,21 @@ class AmdahlsCompModel(CompModel):
         # Lets just take the mean for now 
         p = numpy.mean(pEstimates)
         
-        sizeFactor = lambda probSize, baseRunTime : baseRunTime + (t1s[0][0] / t1s[0][1]) * probSize
+        
+        '''
+        Now to calculate scaling of problem size.
+        Find all pairs where cpu count is same but prob size increases
+        '''
+        slopes = []
+        for dp1 in self.dataPoints:
+            slopes.extend([true_divide((dp1.time - dp2.time), (dp1.probSize - dp2.probSize)) 
+                           for dp2 in self.dataPoints 
+                           if dp2 is not dp1 and dp2.machineCount == dp1.machineCount])
+            
+        slope = numpy.mean(slopes)
+        b = t1s[0][0] - slope * t1s[0][1]
+        
+        sizeFactor = lambda probSize, sx: probSize * slope + (sx - slope * t1s[0][1]) 
         
         self.modelFunc = lambda probSize, cpu, count: sizeFactor(probSize, runTime(t1, p, count))
     
