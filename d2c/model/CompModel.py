@@ -163,6 +163,8 @@ class AmdahlsCompModel(CompModel):
             sfs = self.__generateLinearScaleFunction()
         elif scaleFunction == 'log':
             sfs = self.__generateLogScaleFunction()
+        elif scaleFunction == 'nlog':
+            sfs = self.__generateNLogScaleFunction()
         
         functions = [lambda probSize, cpu, count: sf(probSize, (t1s[0][1],runTime(t1, p, count)))
                      for sf in sfs]
@@ -201,8 +203,73 @@ class AmdahlsCompModel(CompModel):
             funcs.append(lambda ps, dp: runTime(v, ps) + (dp[1] - runTime(v, dp[0])))
         
         return funcs
+
+    def __generateNLogScaleFunction(self):
+        
+        funcs = []
+        
+        for dp1 in self.dataPoints:
+            
+            points = [dp2 for dp2 in self.dataPoints 
+                           if dp2 is not dp1 and dp2.machineCount == dp1.machineCount]
+            points.append(dp1)
+            
+            if len(points) < 2:
+                continue
+            
+            points = [(dp.probSize, dp.time) for dp in points]
+            
+            def runTime(v, probSize):
+                return v[0] + v[1] * probSize * numpy.log(probSize)
+            
+            ef = lambda v, probSize, t: (runTime(v, probSize)-t)
+            
+            v0 = [1,1]
+            v, success = leastsq(ef, v0, 
+                                 args=(array([x for x,y in points]),
+                                       array([y for x,y in points])), 
+                                 maxfev=10000)
+            
+            funcs.append(lambda ps, dp: runTime(v, ps) + (dp[1] - runTime(v, dp[0])))
+        
+        return funcs
         
     def __generateLinearScaleFunction(self):
+        
+        
+        def runTime(v, probSize):
+            return v[0] + v[1]*probSize
+        
+        ef = lambda v, probSize, t: (runTime(v, probSize)-t)
+        
+        funcs = []
+        
+        for dp1 in self.dataPoints:
+            
+            points = [dp2 for dp2 in self.dataPoints 
+                           if dp2 is not dp1 and dp2.machineCount == dp1.machineCount]
+            points.append(dp1)
+        
+            if len(points) < 2:
+                continue
+            
+            points = [(dp.probSize, dp.time) for dp in points]
+            
+            v0 = [1,1]
+            v, success = leastsq(ef, v0, 
+                                 args=(array([x for x,y in points]),
+                                       array([y for x,y in points])), 
+                                 maxfev=10000)
+            
+            funcs.append(lambda ps, dp: runTime(v, ps) + (dp[1] - runTime(v, dp[0])))
+        
+        return funcs
+        
+    def __generateLinearScaleFunctionOld(self):
+        
+        
+        #def runtime(v, probSize):
+        #    return v[0]
         
         #slopeIntersectPairs = []
         slopes = []
