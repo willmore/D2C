@@ -92,13 +92,13 @@ def runTime(t1, p, n):
 
 class AmdahlsCompModel(CompModel):       
         
-    def __init__(self, deploymentTemplate=None, dataPoints=None):
+    def __init__(self, deploymentTemplate=None, dataPoints=None, scaleFunction='linear'):
         
         CompModel.__init__(self, deploymentTemplate, dataPoints)
         
-        self.__generateModel()
+        self.__generateModel(scaleFunction)
     
-    def __generateModel(self):
+    def __generateModel(self, scaleFunction='linear'):
         '''
         The performance model is based on two assumptions:
             1. Runtime scales non-linearly using Amdahl's law as
@@ -107,7 +107,6 @@ class AmdahlsCompModel(CompModel):
             2. The runtime scales linearly as the problem size increases and the
                number of processors remains fixed.
         '''
-        
         
         '''
         Calculate parameters for scaling based on Amdahl's Law
@@ -119,20 +118,17 @@ class AmdahlsCompModel(CompModel):
         '''
         t1s = [(d.time, d.probSize) for d in self.dataPoints if d.machineCount == 1]
            
-           
         '''
         If we don't have a T(1), bail.
         '''   
         if len(t1s) == 0:
             raise Exception("Unable to create model. \
-                             Require at least one data point where the CPU count is 1.")
-                
+                             Require at least one data point where the CPU count is 1.")        
                 
         '''
         Next we find values of T(x) where the number of processors is x > 1 and the problem
         size is N (same size as T(1)).
         '''
-        
         
         ''' ps is a mapping from problem size N to a list of (x, runTime) tuples '''
         ps = {}        
@@ -154,23 +150,61 @@ class AmdahlsCompModel(CompModel):
         # Lets just take the mean for now 
         p = numpy.mean(pEstimates)
         
-        
         '''
         Now to calculate scaling of problem size.
         Find all pairs where cpu count is same but prob size increases
         '''
+        if scaleFunction == 'linear':
+            sf = self.__generateLinearScaleFunction()[0]
+        elif scaleFunction == 'log':
+            sf = self.__generateLogScaleFunction()[0]
+        
+        
+        self.modelFunc = lambda probSize, cpu, count: sf(probSize, (t1s[0][1],runTime(t1, p, count)))
+    
+    def __generateLogScaleFunction(self):
+        
+        funcs = []
+        
+        for dp1 in self.dataPoints:
+            
+            points = [dp2 for dp2 in self.dataPoints 
+                           if dp2 is not dp1 and dp2.machineCount == dp1.machineCount]
+            points.append(dp1)
+            
+            if len(points) < 1:
+                continue
+            
+            points = [(dp.probSize, dp.time) for dp in points]
+            
+            def runTime(v, probSize):
+                return v[0] * numpy.log(probSize)
+            
+            ef = lambda v, probSize, t: (runTime(v, probSize)-t)
+            
+            v0 = [1]
+            v, success = leastsq(ef, v0, 
+                                 args=(array([x for x,y in points]),
+                                       array([y for x,y in points])), 
+                                 maxfev=10000)
+            
+            funcs.append(lambda ps, dp: runTime(v, ps) + (dp[1] - runTime(v, dp[0])))
+        
+        return funcs
+        
+    def __generateLinearScaleFunction(self):
+        
+        #slopeIntersectPairs = []
         slopes = []
         for dp1 in self.dataPoints:
             slopes.extend([true_divide((dp1.time - dp2.time), (dp1.probSize - dp2.probSize)) 
                            for dp2 in self.dataPoints 
                            if dp2 is not dp1 and dp2.machineCount == dp1.machineCount])
-            
-        slope = numpy.mean(slopes)
-        b = t1s[0][0] - slope * t1s[0][1]
+
+        #dp = (x,y)
+        return [lambda probSize, dp: probSize * slope + (dp[1] - slope * dp[0])
+                for slope in slopes]
         
-        sizeFactor = lambda probSize, sx: probSize * slope + (sx - slope * t1s[0][1]) 
-        
-        self.modelFunc = lambda probSize, cpu, count: sizeFactor(probSize, runTime(t1, p, count))
     
 class PolyCompModel(CompModel):
     
