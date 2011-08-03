@@ -46,7 +46,11 @@ class CompModelTest(unittest.TestCase):
         
         self.assertEquals(1000, model.modelFunc(probSize=35, cpu=1, count=1))
         self.assertEquals(600, model.modelFunc(probSize=35, cpu=1, count=2))
+        self.assertAlmostEquals(400, model.modelFunc(probSize=35, cpu=1, count=4))
+        self.assertAlmostEquals(300, model.modelFunc(probSize=35, cpu=1, count=8))
+        
         self.assertEquals(1200, model.modelFunc(probSize=70, cpu=1, count=2))
+        self.assertEquals(2400, model.modelFunc(probSize=140, cpu=1, count=2))
         return 
         plots= []
         plots.append(plot([35, 35, 70],[1000, 600, 1200],'ro')) 
