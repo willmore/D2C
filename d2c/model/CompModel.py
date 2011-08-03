@@ -12,11 +12,22 @@ class DataPoint(object):
         self.cpu = deployment.roles[0].instanceType.cpu
         self.time = deployment.roleRunTime()
         self.probSize = deployment.problemSize
+        
+
+def toDataPoints(deploymentTemplate):
+    '''
+    Map a DeploymentTemplate to a list of DataPoints
+    '''
+    return [DataPoint(d) for d in deploymentTemplate.deployments]
     
 class CompModel(object):
 
-    def __init__(self):
-        pass
+    def __init__(self, deploymentTemplate=None, dataPoints=None):
+        if deploymentTemplate is not None and \
+            dataPoints is not None:
+            raise Exception("Only one of deploymentTemplate and dataPoints may be set (not None)")
+        
+        self.dataPoints = toDataPoints(deploymentTemplate) if deploymentTemplate is not None else dataPoints
         
         
     def costModel(self, cloud):
@@ -49,7 +60,10 @@ class CompModel(object):
 
 # http://en.wikipedia.org/wiki/Amdahl's_law#Parallelization
 def pEstimated(speedUp, numberProcessors):
-    return (1 / speedUp - 1) / (1 / numberProcessors - 1)
+    assert numberProcessors > 1
+    assert speedUp > 0
+    assert numberProcessors == int(numberProcessors)
+    return (true_divide(1, speedUp) - 1) / (true_divide(1, numberProcessors) - 1)
 
 def speedUp(n, p):
     '''
@@ -63,39 +77,70 @@ def runTime(t1, p, n):
     '''
     return t1 / speedUp(n, p)
 
+
 class AmdahlsCompModel(CompModel):       
         
-    def __init__(self, deploymentTemplate):
+    def __init__(self, deploymentTemplate=None, dataPoints=None):
         
-        CompModel.__init__(self)
+        CompModel.__init__(self, deploymentTemplate, dataPoints)
         
-        self.deploymentTemplate = deploymentTemplate
-        self.dataPoints = []
-        self.__collectDataPoints()
-        self.__bestFit()
-        
-    def __collectDataPoints(self):
-        
-        for dep in self.deploymentTemplate.deployments:
-            self.dataPoints.append(DataPoint(dep))
+        self.__generateModel()
     
-    def __bestFit(self):
+    def __generateModel(self):
+        '''
+        The performance model is based on two assumptions:
+            1. Runtime scales non-linearly using Amdahl's law as
+               the problem size remains fixed and the number of processors
+               increases.
+            2. The runtime scales linearly as the problem size increases and the
+               number of processors remains fixed.
+        '''
         
-        #Get T(1)
+        
+        '''
+        Calculate parameters for scaling based on Amdahl's Law
+        '''
+        
+        '''
+        The first step is to get T(1) which is the runtime of calculating problem size N
+        of one processor. 
+        '''
         t1s = [(d.time, d.probSize) for d in self.dataPoints if d.machineCount == 1]
+           
+           
+        '''
+        If we don't have a T(1), bail.
+        '''   
+        if len(t1s) == 0:
+            raise Exception("Unable to create model. \
+                             Require at least one data point where the CPU count is 1.")
                 
-        ps = []        
-        for t1,size in t1s:
-            txs = [(d.time, d.machineCount) for d in self.dataPoints if d.probSize == size and 
+                
+        '''
+        Next we find values of T(x) where the number of processors is x > 1 and the problem
+        size is N (same size as T(1)).
+        '''
+        
+        
+        ''' ps is a mapping from problem size N to a list of (x, runTime) tuples '''
+        ps = {}        
+        for t1,N in t1s:
+            ps[N] = [(d.time, d.machineCount) for d in self.dataPoints if d.probSize == N and 
                     d.machineCount != 1]
             
-
-            # SpeedUp(x) = t1 / t(x)             
-            ps.append([pEstimated(true_divide(t1, tx), np) for tx,np in txs ])
+        '''
+        Now we generate estimates for P, the percentage of the program measured that is parallelizable,
+        based on (N, T(1), T(x)) tuples
+        
+        p can be calculated given speed increase (x) = T(1) / T(x) and x
+        '''    
+        pEstimates = []
+        for t1, t1_N in t1s:
+            for (tx, x) in ps[t1_N]:
+                pEstimates.append(pEstimated(true_divide(t1, tx), x))
            
         # Lets just take the mean for now 
-        p = numpy.mean(ps)
-        
+        p = numpy.mean(pEstimates)
         
         sizeFactor = lambda probSize, baseRunTime : baseRunTime + (t1s[0][0] / t1s[0][1]) * probSize
         

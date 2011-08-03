@@ -14,12 +14,32 @@ from d2c.model.Deployment import DeploymentState, StateEvent
 from d2c.model.CompModel import PolyCompModel, AmdahlsCompModel
 import boto
 
+import unittest
 
-from d2c.model.CompModel import CompModel
+from d2c.model.CompModel import CompModel, pEstimated, speedUp, runTime
 
+class CompModelTest(unittest.TestCase):
 
+    def testPEstimated(self):
+        SU = true_divide(1000,600)
+        NP = 2
+        p = pEstimated(SU, NP)
+        self.assertEquals(0.80, p)
+    
+    def testSpeedUp(self):
+        SU = speedUp(2, 0.895)
+        self.assertEquals(round(SU, 2), 1.81)
+    
+    def testRunTime(self):
+        t1 = 188
+        p = 0.895
+        n = 4
+        t = runTime(t1, p, n)
+        self.assertEquals(round(t, 2), 61.8)
 
 def run():
+    
+    
     deploymentTemp = init()
 
     #model = PolyCompModel(deploymentTemp)
@@ -164,5 +184,10 @@ def init():
     
     return dTemplate
     
-run()
+#run()
+
+if __name__ == "__main__":
+    #import sys;sys.argv = ['', 'Test.testName']
+    unittest.main()
+
     
