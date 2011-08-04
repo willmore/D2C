@@ -175,7 +175,20 @@ class AmdahlsCompModel(CompModel):
                                             else f2, 
                         functions)
         
+        
+        ''' The real function corrects for cpu speed '''
         self.modelFunc = lambda probSize, cpu, count: bestSf(probSize, count) / cpu
+    
+    def modelSumOfSquares(self, dataPoints):
+        '''
+        Given a set of real data points, return the sum of squares of using 
+        difference of observed time and expected time.
+        '''
+        def sumOfSquares(dps):
+            return reduce(sum, [(self.modelFunc(dp.probSize, dp.cpu, dp.machineCount) - dp.time)**2 for dp in dps])
+        
+        return sumOfSquares(dataPoints)
+        
     
     def __generateLogScaleFunction(self):
         
