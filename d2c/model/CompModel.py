@@ -24,6 +24,8 @@ class DataPoint(object):
             self.cpu = cpu
             self.time = time
             self.probSize = probSize
+            
+        self.normalizedTime = self.cpu * self.time
         
 
 def toDataPoints(deploymentTemplate):
@@ -93,7 +95,7 @@ def sum(v1, v2):
     return v1 + v2
 
 def sumOfSquares(f, dps):
-    return reduce(sum, [(f(dp.probSize, dp.cpu, dp.machineCount) - dp.time)**2 for dp in dps])
+    return reduce(sum, [(f(dp.probSize, dp.machineCount) - dp.normalizedTime)**2 for dp in dps])
 
 class AmdahlsCompModel(CompModel):       
         
@@ -121,7 +123,7 @@ class AmdahlsCompModel(CompModel):
         The first step is to get T(1) which is the runtime of calculating problem size N
         of one processor. 
         '''
-        t1s = [(d.time, d.probSize) for d in self.dataPoints if d.machineCount == 1]
+        t1s = [(d.normalizedTime, d.probSize) for d in self.dataPoints if d.machineCount == 1]
            
         '''
         If we don't have a T(1), bail.
@@ -138,7 +140,7 @@ class AmdahlsCompModel(CompModel):
         ''' ps is a mapping from problem size N to a list of (x, runTime) tuples '''
         ps = {}        
         for t1,N in t1s:
-            ps[N] = [(d.time, d.machineCount) for d in self.dataPoints if d.probSize == N and 
+            ps[N] = [(d.normalizedTime, d.machineCount) for d in self.dataPoints if d.probSize == N and 
                     d.machineCount != 1]
             
         '''
@@ -166,13 +168,14 @@ class AmdahlsCompModel(CompModel):
         elif scaleFunction == 'nlog':
             sfs = self.__generateNLogScaleFunction()
         
-        functions = [lambda probSize, cpu, count: sf(probSize, (t1s[0][1],runTime(t1, p, count)))
+        functions = [lambda probSize, count: sf(probSize, (t1s[0][1],runTime(t1, p, count)))
                      for sf in sfs]
         
-        bestSf = reduce(lambda f1, f2 : f1 if sumOfSquares(f1, self.dataPoints) < sumOfSquares(f2, self.dataPoints) else f2, 
+        bestSf = reduce(lambda f1, f2 : f1 if sumOfSquares(f1, self.dataPoints) < sumOfSquares(f2, self.dataPoints) 
+                                            else f2, 
                         functions)
         
-        self.modelFunc = bestSf
+        self.modelFunc = lambda probSize, cpu, count: bestSf(probSize, count) / cpu
     
     def __generateLogScaleFunction(self):
         
@@ -187,7 +190,7 @@ class AmdahlsCompModel(CompModel):
             if len(points) < 1:
                 continue
             
-            points = [(dp.probSize, dp.time) for dp in points]
+            points = [(dp.probSize, dp.normalizedTime) for dp in points]
             
             def runTime(v, probSize):
                 return v[0] * numpy.log(probSize)
@@ -217,7 +220,7 @@ class AmdahlsCompModel(CompModel):
             if len(points) < 2:
                 continue
             
-            points = [(dp.probSize, dp.time) for dp in points]
+            points = [(dp.probSize, dp.normalizedTime) for dp in points]
             
             def runTime(v, probSize):
                 return v[0] + v[1] * probSize * numpy.log(probSize)
@@ -238,7 +241,11 @@ class AmdahlsCompModel(CompModel):
         
         
         def runTime(v, probSize):
-            return v[0] + v[1]*probSize
+            '''
+            v function coefficients
+            probSize size of the problem
+            '''
+            return v[0] + v[1] * probSize
         
         ef = lambda v, probSize, t: (runTime(v, probSize)-t)
         
@@ -248,12 +255,13 @@ class AmdahlsCompModel(CompModel):
             
             points = [dp2 for dp2 in self.dataPoints 
                            if dp2 is not dp1 and dp2.machineCount == dp1.machineCount]
+            
             points.append(dp1)
         
             if len(points) < 2:
                 continue
             
-            points = [(dp.probSize, dp.time) for dp in points]
+            points = [(dp.probSize, dp.normalizedTime) for dp in points]
             
             v0 = [1,1]
             v, success = leastsq(ef, v0, 
@@ -274,7 +282,8 @@ class AmdahlsCompModel(CompModel):
         #slopeIntersectPairs = []
         slopes = []
         for dp1 in self.dataPoints:
-            slopes.extend([true_divide((dp1.time - dp2.time), (dp1.probSize - dp2.probSize)) 
+            slopes.extend([true_divide((dp1.normalizedTime - dp2.normalizedTime), 
+                                       (dp1.probSize - dp2.probSize)) 
                            for dp2 in self.dataPoints 
                            if dp2 is not dp1 and dp2.machineCount == dp1.machineCount])
 
@@ -312,7 +321,7 @@ class PolyCompModel(CompModel):
         realProbSize = array([d.probSize for d in self.dataPoints])
         cpu = array([d.cpu for d in self.dataPoints])
         counts = array([d.machineCount for d in self.dataPoints])
-        times = array([d.time for d in self.dataPoints])
+        times = array([d.normalizedTime for d in self.dataPoints])
         
         v0 = [1,1,1]
         testVal = ((v0[:4],)+(realProbSize, cpu, counts, times))

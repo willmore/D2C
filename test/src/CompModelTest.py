@@ -37,6 +37,11 @@ class CompModelTest(unittest.TestCase):
         t = runTime(t1, p, n)
         self.assertEquals(round(t, 2), 61.8)
         
+        #Assert that the runtime never goes < 0 as num procs approaches inf
+        self.assertGreater(runTime(t1, p, 200), 0)
+        self.assertGreater(runTime(t1, p, 1000), 0)
+        
+        
     def testAmdahlModelLinear(self):
         points = [DataPoint(cpuCount=1, cpu=1, time=1000, probSize=35), 
                   DataPoint(cpuCount=2, cpu=1, time=600, probSize=35), 
@@ -49,8 +54,8 @@ class CompModelTest(unittest.TestCase):
         self.assertAlmostEquals(400, model.modelFunc(probSize=35, cpu=1, count=4))
         self.assertAlmostEquals(300, model.modelFunc(probSize=35, cpu=1, count=8))
         
-        self.assertEquals(1200, model.modelFunc(probSize=70, cpu=1, count=2))
-        self.assertEquals(2400, model.modelFunc(probSize=140, cpu=1, count=2))
+        self.assertAlmostEquals(1200, model.modelFunc(probSize=70, cpu=1, count=2))
+        self.assertAlmostEquals(2400, model.modelFunc(probSize=140, cpu=1, count=2))
         return 
         plots= []
         plots.append(plot([35, 35, 70],[1000, 600, 1200],'ro')) 
@@ -66,6 +71,37 @@ class CompModelTest(unittest.TestCase):
 
         show()
         
+        
+    def testAmdahlModelLinearVariousCpu(self):
+        points = [DataPoint(cpuCount=1, cpu=1, time=1000, probSize=35), 
+                  DataPoint(cpuCount=2, cpu=2, time=300, probSize=35), 
+                  DataPoint(cpuCount=2, cpu=1, time=1200, probSize=70)]
+        
+        model = AmdahlsCompModel(dataPoints=points, scaleFunction='linear')
+        
+        self.assertEquals(1000, model.modelFunc(probSize=35, cpu=1, count=1))
+        self.assertEquals(600, model.modelFunc(probSize=35, cpu=1, count=2))
+        self.assertAlmostEquals(400, model.modelFunc(probSize=35, cpu=1, count=4))
+        self.assertAlmostEquals(300, model.modelFunc(probSize=35, cpu=1, count=8))
+        
+        self.assertAlmostEquals(1200, model.modelFunc(probSize=70, cpu=1, count=2))
+        self.assertAlmostEquals(2400, model.modelFunc(probSize=140, cpu=1, count=2))
+        
+    def testAmdahlModelLinearVariousCpu2(self):
+        points = [DataPoint(cpuCount=1, cpu=1, time=1000, probSize=35), 
+                  DataPoint(cpuCount=2, cpu=2, time=300, probSize=35), 
+                  DataPoint(cpuCount=2, cpu=1, time=1200, probSize=70)]
+        
+        model = AmdahlsCompModel(dataPoints=points, scaleFunction='linear')
+        
+        self.assertEquals(1000, model.modelFunc(probSize=35, cpu=1, count=1))
+        self.assertEquals(600, model.modelFunc(probSize=35, cpu=1, count=2))
+        self.assertAlmostEquals(400, model.modelFunc(probSize=35, cpu=1, count=4))
+        self.assertAlmostEquals(300, model.modelFunc(probSize=35, cpu=1, count=8))
+        
+        self.assertAlmostEquals(1200, model.modelFunc(probSize=70, cpu=1, count=2))
+        self.assertAlmostEquals(1200, model.modelFunc(probSize=140, cpu=2, count=2))
+        
     def testAmdahlModelLog(self):
         points = [DataPoint(cpuCount=1, cpu=1, time=1000, probSize=35), 
                   DataPoint(cpuCount=2, cpu=1, time=600, probSize=35), 
@@ -77,19 +113,6 @@ class CompModelTest(unittest.TestCase):
         #self.assertEquals(600, model.modelFunc(probSize=35, cpu=1, count=2))
         #self.assertEquals(1200, model.modelFunc(probSize=70, cpu=1, count=2))
         
-        plots= []
-        plots.append(plot([35, 35, 70],[1000, 600, 1200],'ro')) 
-        labels = ['real']
-    
-        probSize = linspace(0,200,5)
-    
-        for count in range(1,5):
-            plots.append(plot(probSize, model.modelFunc(probSize, None, count)))
-            labels.append("%d" % count)
-    
-            legend([p[0] for p in plots], labels)
-
-        show()
          
 
 def run():
