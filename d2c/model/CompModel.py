@@ -4,6 +4,130 @@ import numpy
 
 import math
 import sys
+from abc import ABCMeta, abstractmethod
+
+
+class ProbSizeScaleFunctionGenerator:
+    
+    __metaclass__ = ABCMeta
+    
+    def __init__(self):
+        pass
+    
+    @abstractmethod
+    def generate(self, dataPoints):
+        pass
+   
+class LogProbSizeScaleFunctionGenerator(ProbSizeScaleFunctionGenerator):
+    
+    def __init__(self):
+        ProbSizeScaleFunctionGenerator.__init__(self)
+        
+    def generate(self, dataPoints):
+    
+        funcs = []
+        
+        for dp1 in dataPoints:
+            
+            points = [dp2 for dp2 in dataPoints 
+                           if dp2 is not dp1 and dp2.machineCount == dp1.machineCount]
+            points.append(dp1)
+            
+            if len(points) < 1:
+                continue
+            
+            points = [(dp.probSize, dp.normalizedTime) for dp in points]
+            
+            def runTime(v, probSize):
+                return v[0] * numpy.log(probSize)
+            
+            ef = lambda v, probSize, t: (runTime(v, probSize)-t)
+            
+            v0 = [1]
+            v, success = leastsq(ef, v0, 
+                                 args=(array([x for x,y in points]),
+                                       array([y for x,y in points])), 
+                                 maxfev=10000)
+            
+            funcs.append(lambda ps, dp: runTime(v, ps) + (dp[1] - runTime(v, dp[0])))
+        
+        return funcs   
+        
+class NLogProbSizeScaleFunctionGenerator(ProbSizeScaleFunctionGenerator):
+    
+    def __init__(self):
+        ProbSizeScaleFunctionGenerator.__init__(self)
+        
+    def generate(self, dataPoints): 
+                
+        funcs = []
+        
+        for dp1 in dataPoints:
+            
+            points = [dp2 for dp2 in dataPoints 
+                           if dp2 is not dp1 and dp2.machineCount == dp1.machineCount]
+            points.append(dp1)
+            
+            if len(points) < 2:
+                continue
+            
+            points = [(dp.probSize, dp.normalizedTime) for dp in points]
+            
+            def runTime(v, probSize):
+                return v[0] + v[1] * probSize * numpy.log(probSize)
+            
+            ef = lambda v, probSize, t: (runTime(v, probSize)-t)
+            
+            v0 = [1,1]
+            v, success = leastsq(ef, v0, 
+                                 args=(array([x for x,y in points]),
+                                       array([y for x,y in points])), 
+                                 maxfev=10000)
+            
+            funcs.append(lambda ps, dp: runTime(v, ps) + (dp[1] - runTime(v, dp[0])))
+        
+        return funcs
+
+
+class LinearProbSizeScaleFunctionGenerator(ProbSizeScaleFunctionGenerator):
+    
+    def __init__(self):
+        ProbSizeScaleFunctionGenerator.__init__(self)
+        
+    def generate(self, dataPoints):
+        
+        def runTime(v, probSize):
+            '''
+            v function coefficients
+            probSize size of the problem
+            '''
+            return v[0] + v[1] * probSize
+        
+        ef = lambda v, probSize, t: (runTime(v, probSize)-t)
+        
+        funcs = []
+        
+        for dp1 in dataPoints:
+            
+            points = [dp2 for dp2 in dataPoints 
+                           if dp2 is not dp1 and dp2.machineCount == dp1.machineCount]
+            
+            points.append(dp1)
+        
+            if len(points) < 2:
+                continue
+            
+            points = [(dp.probSize, dp.normalizedTime) for dp in points]
+            
+            v0 = [1,1]
+            v, success = leastsq(ef, v0, 
+                                 args=(array([x for x,y in points]),
+                                       array([y for x,y in points])), 
+                                 maxfev=10000)
+            
+            funcs.append(lambda ps, dp: runTime(v, ps) + (dp[1] - runTime(v, dp[0])))
+        
+        return funcs
 
 class DataPoint(object):
     
@@ -42,7 +166,7 @@ class CompModel(object):
             raise Exception("Only one of deploymentTemplate and dataPoints may be set (not None)")
         
         self.dataPoints = toDataPoints(deploymentTemplate) if deploymentTemplate is not None else dataPoints
-        
+        self.modeFunc = None
         
     def costModel(self, cloud):
         '''
@@ -71,6 +195,25 @@ class CompModel(object):
             return (bestCost, bestTime, bestType, bestCount)
         
         return model
+    
+    def modelSumOfSquares(self, dataPoints):
+        '''
+        Given a set of real data points, return the sum of squares of using 
+        difference of observed time and expected time.
+        '''
+        def sumOfSquares(dps):
+            return reduce(sum, [(self.modelFunc(dp.probSize, dp.cpu, dp.machineCount) - dp.time)**2 for dp in dps])
+        
+        return sumOfSquares(dataPoints)
+    
+    probSizeScalGens = {
+                        'linear' : LinearProbSizeScaleFunctionGenerator(),
+                        'log' : LogProbSizeScaleFunctionGenerator(),
+                        'nlog' : NLogProbSizeScaleFunctionGenerator()
+                        }
+    
+    def generateProbSizeScaleFunction(self, scaleFunction):
+        return self.probSizeScalGens[scaleFunction].generate(self.dataPoints)
 
 # http://en.wikipedia.org/wiki/Amdahl's_law#Parallelization
 def pEstimated(speedUp, numberProcessors):
@@ -161,12 +304,9 @@ class AmdahlsCompModel(CompModel):
         Now to calculate scaling of problem size.
         Find all pairs where cpu count is same but prob size increases
         '''
-        if scaleFunction == 'linear':
-            sfs = self.__generateLinearScaleFunction()
-        elif scaleFunction == 'log':
-            sfs = self.__generateLogScaleFunction()
-        elif scaleFunction == 'nlog':
-            sfs = self.__generateNLogScaleFunction()
+        
+            
+        sfs = self.generateProbSizeScaleFunction(scaleFunction)    
         
         functions = [lambda probSize, count: sf(probSize, (t1s[0][1],runTime(t1, p, count)))
                      for sf in sfs]
@@ -179,46 +319,10 @@ class AmdahlsCompModel(CompModel):
         ''' The real function corrects for cpu speed '''
         self.modelFunc = lambda probSize, cpu, count: bestSf(probSize, count) / cpu
     
-    def modelSumOfSquares(self, dataPoints):
-        '''
-        Given a set of real data points, return the sum of squares of using 
-        difference of observed time and expected time.
-        '''
-        def sumOfSquares(dps):
-            return reduce(sum, [(self.modelFunc(dp.probSize, dp.cpu, dp.machineCount) - dp.time)**2 for dp in dps])
-        
-        return sumOfSquares(dataPoints)
+    
         
     
-    def __generateLogScaleFunction(self):
-        
-        funcs = []
-        
-        for dp1 in self.dataPoints:
-            
-            points = [dp2 for dp2 in self.dataPoints 
-                           if dp2 is not dp1 and dp2.machineCount == dp1.machineCount]
-            points.append(dp1)
-            
-            if len(points) < 1:
-                continue
-            
-            points = [(dp.probSize, dp.normalizedTime) for dp in points]
-            
-            def runTime(v, probSize):
-                return v[0] * numpy.log(probSize)
-            
-            ef = lambda v, probSize, t: (runTime(v, probSize)-t)
-            
-            v0 = [1]
-            v, success = leastsq(ef, v0, 
-                                 args=(array([x for x,y in points]),
-                                       array([y for x,y in points])), 
-                                 maxfev=10000)
-            
-            funcs.append(lambda ps, dp: runTime(v, ps) + (dp[1] - runTime(v, dp[0])))
-        
-        return funcs
+    
 
     def __generateNLogScaleFunction(self):
         
@@ -250,59 +354,9 @@ class AmdahlsCompModel(CompModel):
         
         return funcs
         
-    def __generateLinearScaleFunction(self):
-        
-        
-        def runTime(v, probSize):
-            '''
-            v function coefficients
-            probSize size of the problem
-            '''
-            return v[0] + v[1] * probSize
-        
-        ef = lambda v, probSize, t: (runTime(v, probSize)-t)
-        
-        funcs = []
-        
-        for dp1 in self.dataPoints:
-            
-            points = [dp2 for dp2 in self.dataPoints 
-                           if dp2 is not dp1 and dp2.machineCount == dp1.machineCount]
-            
-            points.append(dp1)
-        
-            if len(points) < 2:
-                continue
-            
-            points = [(dp.probSize, dp.normalizedTime) for dp in points]
-            
-            v0 = [1,1]
-            v, success = leastsq(ef, v0, 
-                                 args=(array([x for x,y in points]),
-                                       array([y for x,y in points])), 
-                                 maxfev=10000)
-            
-            funcs.append(lambda ps, dp: runTime(v, ps) + (dp[1] - runTime(v, dp[0])))
-        
-        return funcs
-        
-    def __generateLinearScaleFunctionOld(self):
-        
-        
-        #def runtime(v, probSize):
-        #    return v[0]
-        
-        #slopeIntersectPairs = []
-        slopes = []
-        for dp1 in self.dataPoints:
-            slopes.extend([true_divide((dp1.normalizedTime - dp2.normalizedTime), 
-                                       (dp1.probSize - dp2.probSize)) 
-                           for dp2 in self.dataPoints 
-                           if dp2 is not dp1 and dp2.machineCount == dp1.machineCount])
 
-        #dp = (x,y)
-        return [lambda probSize, dp: probSize * slope + (dp[1] - slope * dp[0])
-                for slope in slopes]
+        
+
         
     
 class PolyCompModel(CompModel):

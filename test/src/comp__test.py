@@ -6,7 +6,7 @@ from mpl_toolkits.mplot3d import Axes3D
 
 
 
-from d2c.model.CompModel import AmdahlsCompModel, DataPoint
+from d2c.model.CompModel import AmdahlsCompModel, DataPoint, PolyCompModel
 
 
 
@@ -95,7 +95,8 @@ def run():
     for c in range(0, len(points)):
         modelPoints = points[:c]
         try:
-            m = AmdahlsCompModel(dataPoints=modelPoints, scaleFunction='linear')
+            #m = AmdahlsCompModel(dataPoints=modelPoints, scaleFunction='linear')
+            m = PolyCompModel(dataPoints=modelPoints, scaleFunction='linear')
         except:
             continue
         rating = m.modelSumOfSquares(points)
