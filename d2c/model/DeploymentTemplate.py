@@ -19,14 +19,14 @@ class DeploymentTemplate(object):
         self.roleTemplates = roleTemplates
         self.deployments = list(deployments)
         
-    def createDeployment(self, cloud, roleCounts, awsCred=None):
+    def createDeployment(self, cloud, roleCounts, awsCred=None, problemSize=None):
         
         assert isinstance(cloud, Cloud)
-        assert len(roleCounts) == len(self.roleTemplates)
+        assert len(roleCounts) <= len(self.roleTemplates)
         
         id = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(6))
         dataDir = os.path.join(self.dataDir, id)
-        deployment = Deployment(id, dataDir, cloud=cloud, deploymentTemplate=self, awsCred=awsCred)
+        deployment = Deployment(id, dataDir, cloud=cloud, deploymentTemplate=self, awsCred=awsCred, problemSize=problemSize)
         
         roles = []
         

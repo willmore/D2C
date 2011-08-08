@@ -119,18 +119,104 @@ def init_db(dao, confFile):
     roleReq = {}
     for roleTemp in dTemplate.roleTemplates:
         roleReq[roleTemp] = (ami, m1large, 2)
-    deployment = dTemplate.createDeployment(sciCloud, roleReq, conf.awsCred)
-    deployment.problemSize = 35
+    deployment = dTemplate.createDeployment(sciCloud, roleReq, conf.awsCred, 35)
   
     dao.add(deployment)
   
     roleReq = {}
     for roleTemp in dTemplate.roleTemplates:
         roleReq[roleTemp] = (deskImg, vbCloud.instanceTypes[0], 2)
-    deployment = dTemplate.createDeployment(vbCloud, roleReq)
-    deployment.problemSize = 60
+    
+    
+    deployment = dTemplate.createDeployment(vbCloud, roleReq, None, 60)
+    #deployment.problemSize = 60
     
     dao.add(deployment)
+
+    '''
+    Populate some real resuls from HPCC tests
+    '''
+    
+    hpccTemplate = DeploymentTemplate(None, 
+                                   "HPPC", 
+                                   dataDir="/home/willmore/.d2c_test/deployments/hppc",
+                                   roleTemplates=[RoleTemplate(
+                                                        None,
+                                                        name="Master",
+                                                        image = myWorkerImg, 
+                                                        dataCollectors=[DataCollector("/tmp/pingtest.out")],
+                                                        finishedChecks=[FileExistsFinishedCheck("/tmp/pingtest.out")],
+                                                        startActions=[StartAction("for ip in `cat /tmp/d2c.context`; do ping $ip; done > /tmp/pingtest.out", None)]
+                                                    
+                                                  ),
+                                                  RoleTemplate(
+                                                        None,
+                                                        name="Slave",
+                                                        image = myWorkerImg, 
+                                                        dataCollectors=[DataCollector("/tmp/pingtest.out")],
+                                                        finishedChecks=[FileExistsFinishedCheck("/tmp/pingtest.out")],
+                                                        startActions=[StartAction("for ip in `cat /tmp/d2c.context`; do ping $ip; done > /tmp/pingtest.out", None)]
+                                                    
+                                        )])
+    master = hpccTemplate.roleTemplates[0]
+    slave = hpccTemplate.roleTemplates[1]
+    '''
+    N probSize cpuCount   time 
+    9268 85895824 1 1 2 0.07 613541600
+
+9268 85895824 2 1 2 0.04 536848900
+
+10000 100000000 1 2 2 0.08 625000000
+
+10000 100000000 2 2 2 0.05 500000000
+
+14142 199996164 1 2 2 0.27 370363267
+
+14142 199996164 2 2 2 0.17 294112006
+
+19364 374964496 1 3 2 0.76 246687168
+
+19364 374964496 2 3 2 0.51 183806125
+    '''
+    
+    '''HPCC virtual box results'''
+    roleReq = {master : (deskImg, vbCloud.instanceTypes[0], 1)}
+    d = hpccTemplate.createDeployment(vbCloud, roleReq, conf.awsCred, 9268)
+    dao.add(d)
+    
+    roleReq = {master : (deskImg, vbCloud.instanceTypes[0], 1),
+               slave : (deskImg, vbCloud.instanceTypes[0], 1)}
+    d = hpccTemplate.createDeployment(vbCloud, roleReq, conf.awsCred, 9268)
+    dao.add(d)
+    
+    roleReq = {master : (deskImg, vbCloud.instanceTypes[0], 1)}
+    d = hpccTemplate.createDeployment(vbCloud, roleReq, conf.awsCred, 10000)
+    dao.add(d)
+    
+    roleReq = {master : (deskImg, vbCloud.instanceTypes[0], 1),
+               slave : (deskImg, vbCloud.instanceTypes[0], 1)}
+    d = hpccTemplate.createDeployment(vbCloud, roleReq, conf.awsCred, 10000)
+    dao.add(d)
+    
+    roleReq = {master : (deskImg, vbCloud.instanceTypes[0], 1)}
+    d = hpccTemplate.createDeployment(vbCloud, roleReq, conf.awsCred, 14142)
+    dao.add(d)
+    
+    roleReq = {master : (deskImg, vbCloud.instanceTypes[0], 1),
+               slave : (deskImg, vbCloud.instanceTypes[0], 1)}
+    d = hpccTemplate.createDeployment(vbCloud, roleReq, conf.awsCred, 14142)
+    dao.add(d)
+    
+    roleReq = {master : (deskImg, vbCloud.instanceTypes[0], 1)}
+    d = hpccTemplate.createDeployment(vbCloud, roleReq, conf.awsCred, 19364)
+    dao.add(d)
+    
+    roleReq = {master : (deskImg, vbCloud.instanceTypes[0], 1),
+               slave : (deskImg, vbCloud.instanceTypes[0], 1)}
+    d = hpccTemplate.createDeployment(vbCloud, roleReq, conf.awsCred, 19364)
+    dao.add(d)
+    
+    '''HPCC EC2 results'''
     
 def get_instance_types(dao):
         
@@ -143,3 +229,4 @@ def get_instance_types(dao):
             InstanceType('m1.small', 2, 1, 1700, 160, (X86,), 0.095),
             InstanceType('m1.large', 2, 2, 7500, 850, (X86_64,), 0.038),
             InstanceType('m1.xlarge', 2, 4, 15000, 850, (X86_64,), 0.76)]
+    
