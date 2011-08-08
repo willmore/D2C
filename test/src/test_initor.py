@@ -9,6 +9,7 @@ from d2c.model.SourceImage import Image, DesktopImage, AMI
 from TestConfig import TestConfig
 from d2c.model.DeploymentTemplate import DeploymentTemplate, RoleTemplate
 from d2c.model.FileExistsFinishedCheck import FileExistsFinishedCheck
+from d2c.model.Action import StartAction
 
 import tempfile
 
@@ -99,10 +100,9 @@ def init_db(dao, confFile):
                                                         None,
                                                         name="Worker",
                                                         image = myWorkerImg, 
-                                                        dataCollectors=[DataCollector("/tmp/d2c.context")],
-                                                        finishedChecks=[FileExistsFinishedCheck("/tmp/d2c.context")],
-                                                        #contextCred=sshCred,
-                                                        #launchCred=sshCred
+                                                        dataCollectors=[DataCollector("/tmp/pingtest.out")],
+                                                        finishedChecks=[FileExistsFinishedCheck("/tmp/pingtest.out")],
+                                                        startActions=[StartAction("for ip in `cat /tmp/d2c.context`; do ping $ip; done > /tmp/pingtest.out", None)]
                                                     
                                         )])
     

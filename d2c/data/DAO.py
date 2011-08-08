@@ -199,10 +199,12 @@ class DAO:
                             Column('command', String),
                             Column('role_template_id', ForeignKey('role_template.id')),
                             Column('role_id', ForeignKey('role.id')),
-                            Column('deploy_id', ForeignKey('deploy.id'))
+                            Column('deploy_id', ForeignKey('deploy.id')),
+                            Column('ssh_cred_id', ForeignKey('ssh_cred.id'))
                             )
         
-        mapper(StartAction, startActionTable, extension=actionExtension)
+        mapper(StartAction, startActionTable, properties={
+                'sshCred': relationship(SSHCred)}, extension=actionExtension)
         
         uploadActionTable = Table('upload_action', metadata,
                             Column('id', Integer, primary_key=True),

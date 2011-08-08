@@ -1,0 +1,13 @@
+PING 192.168.152.100 (192.168.152.100) 56(84) bytes of data.
+From 192.168.152.150 icmp_seq=1 Destination Host Unreachable
+From 192.168.152.150 icmp_seq=2 Destination Host Unreachable
+From 192.168.152.150 icmp_seq=3 Destination Host Unreachable
+
+--- 192.168.152.100 ping statistics ---
+4 packets transmitted, 0 received, +3 errors, 100% packet loss, time 3007ms
+pipe 3
+PING 192.168.152.101 (192.168.152.101) 56(84) bytes of data.
+
+--- 192.168.152.101 ping statistics ---
+1 packets transmitted, 0 received, 100% packet loss, time 0ms
+

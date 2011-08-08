@@ -28,7 +28,7 @@ class StartAction(Action):
 
     def __init__(self, 
                  command, 
-                 sshCred,
+                 sshCred=None,
                  logger=StdOutLogger()):
         
         Action.__init__(self, command, 
@@ -36,4 +36,4 @@ class StartAction(Action):
                  logger)
         
     def copy(self):
-        return StartAction(self.command, self.sshCred)
+        return StartAction(self.command)
