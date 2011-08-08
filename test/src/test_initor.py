@@ -2,7 +2,6 @@ from d2c.model.InstanceType import InstanceType, Architecture
 from d2c.model.Cloud import EC2Cloud, DesktopCloud
 from d2c.model.Kernel import Kernel
 from d2c.data.CredStore import CredStore
-from d2c.model.UploadAction import UploadAction
 from d2c.model.Ramdisk import Ramdisk
 from d2c.model.SSHCred import SSHCred
 from d2c.model.DataCollector import DataCollector
@@ -11,10 +10,13 @@ from TestConfig import TestConfig
 from d2c.model.DeploymentTemplate import DeploymentTemplate, RoleTemplate
 from d2c.model.FileExistsFinishedCheck import FileExistsFinishedCheck
 
-from mockito import *
 import tempfile
 
 def init_db(dao, confFile):
+    '''
+    Pre-fill DB with usefull entities for manual testing.
+    '''
+    
     conf = TestConfig(confFile)   
     dao.saveConfiguration(conf)
     
@@ -124,7 +126,7 @@ def init_db(dao, confFile):
   
     roleReq = {}
     for roleTemp in dTemplate.roleTemplates:
-        roleReq[roleTemp] = (deskImg, vbCloud.instanceTypes[0], 1)
+        roleReq[roleTemp] = (deskImg, vbCloud.instanceTypes[0], 2)
     deployment = dTemplate.createDeployment(vbCloud, roleReq)
     deployment.problemSize = 60
     

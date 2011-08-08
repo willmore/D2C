@@ -18,8 +18,11 @@ from d2c.RemoteShellExecutor import RemoteShellExecutor
 import time
 import guestfs
 
+from abc import ABCMeta, abstractmethod
 
 class Cloud(object):
+    
+    __metaclass__ = ABCMeta
     
     def __init__(self, id, name, instanceTypes=()):
         
@@ -31,6 +34,8 @@ class Cloud(object):
         
         
 class CloudConnection(object):
+    
+    __metaclass__ = ABCMeta
     
     def __init__(self):
         pass
@@ -63,8 +68,18 @@ class CloudConnection(object):
         
         return states
     
-    def getAllInstances(self):
+    @abstractmethod
+    def runInstances(self, image, instanceType, count, keyName):
         pass
+    
+    @abstractmethod
+    def getAllInstances(self, reservationId=None):
+        pass
+    
+    @abstractmethod
+    def generateKeyPair(self, dataDir, keyPairName):
+        pass
+
 
 class LibVirtInstance(object):
     
@@ -137,71 +152,36 @@ class LibVirtInstance(object):
         gf.write("/etc/network/interfaces", static_ip)
         
         del gf #sync and shutdown   
-        
-    def start(self):
-        
+    
+    def _provisionCopy(self, ipAddress):
+        '''Make a copy of the image to use for this execution.'''
         self.image.path = self.image.path.replace(' ', '\\ ')
         ShellExecutor().run("dd if=%s of=%s" % (self.image.path, self.dataFile))
         os.chmod(self.dataFile,  0755)
         
-        #Change the HD UUID, otherwise VirtualBox will refuse to use it if same UUID is already registered
+        '''Change the HD UUID, otherwise VirtualBox will refuse to use it if same UUID is already registered'''
         ShellExecutor().run("VBoxManage internalcommands sethduuid %s" % self.dataFile)
         
         self.__insertKey(self.dataFile, self.pubKeyFile)
+        self.__setStaticIp(self.dataFile, ipAddress)
         
-        #TODO : lastoctet will increment for multiple instance cases
-        lastoctet = 100
-        IP = '192.168.152.%s' %(lastoctet)
+        self.public_dns_name  = ipAddress        
+        self.private_ip_address = ipAddress
+        self.private_dns_name = ipAddress
         
-        self.__setStaticIp(self.dataFile,IP)
+    def start(self, conn):
         
         domain_xml_file  = GenerateXML.generateXML(self.dataFile,1,524288)
-        network_xml_file = pkg_resources.resource_filename(__package__, "virtualbox_xml/mynetwork.xml")
         
-        def return_xml(xml_location):
-            lines = open(xml_location)
-            xml = ''
-            for line in lines:
-                xml = xml+line
-            return xml
-
         def ping(ip):
             return subprocess.call("ping -c 1 %s" % ip, shell=True, stdout=open('/dev/null', 'w'), stderr=subprocess.STDOUT)
-        
-        conn = libvirt.open("vbox:///session")
 
-        #create vboxnet0 network
-        try:
-            network = conn.networkLookupByName("vboxnet0")
-            print "vboxnet0 found, will destroy vboxnet0"
-            network.destroy()
-            time.sleep(5)
-            network.undefine()
-            print "vboxnet0 undefined"
-        except:
-            print "vboxnet0 not found, will create it now"
-            
-        network = libvirt.virConnect.networkDefineXML(conn, return_xml(network_xml_file))
-        if(network.create()):
-            print 'An error occured while creating the network,terminating program.'
-            quit(1)
-        print "Network Created with Name:"+network.name()
-   
-        #create domain
         self.dom = libvirt.virConnect.defineXML(conn, domain_xml_file)
-    
         self.dom.create()
 
-        print "pinging now..."
-
-        while ping(IP):
+        ''' Wait until host is responding to ping'''
+        while ping(self.public_dns_name):
             pass
-
-        print "Host up"
-        
-        self.public_dns_name  = IP        
-        self.private_ip_address = IP
-        self.private_dns_name = IP
         
         self.state = 'running'      
         
@@ -234,12 +214,50 @@ class LibVirtReservation(object):
         self.pubKeyFile = pubKeyFile 
         self.instances = [LibVirtInstance(image, instanceType, self.dataDir, self.pubKeyFile) for _ in range(count)]        
        
-        
         os.makedirs(self.dataDir)
         
+    def __createVirtualNetwork(self, conn):
+        #create vboxnet0 network
+        try:
+            network = conn.networkLookupByName("vboxnet0")
+            print "vboxnet0 found, will destroy vboxnet0"
+            network.destroy()
+            time.sleep(5)
+            network.undefine()
+            print "vboxnet0 undefined"
+        except:
+            print "vboxnet0 not found, will create it now"
+            
+            
+        def return_xml(xml_location):
+            lines = open(xml_location)
+            xml = ''
+            for line in lines:
+                xml = xml+line
+            return xml    
+            
+        network_xml_file = pkg_resources.resource_filename(__package__, "virtualbox_xml/mynetwork.xml")
+        network = libvirt.virConnect.networkDefineXML(conn, return_xml(network_xml_file))
+        if(network.create()):
+            print 'An error occured while creating the network,terminating program.'
+            quit(1)
+        print "Network Created with Name:"+network.name()
+
     def reserve(self):
+        
+        lastoctet = 100
+        ipAddress = '192.168.152.%s' 
+  
+        ''' Ensure we can get a libvirt connection before making large image copies. '''
+        conn = libvirt.open("vbox:///session")
+        self.__createVirtualNetwork(conn)
+        
         for inst in self.instances:
-            inst.start()     
+            inst._provisionCopy(ipAddress % lastoctet)
+            lastoctet += 1 
+        
+        for inst in self.instances:
+            inst.start(conn)       
         
 
 class LibVirtConn(CloudConnection):
@@ -346,6 +364,7 @@ class EC2CloudConn(CloudConnection):
         privKey = os.path.join(dataDir, "%s/%s.pem" % (dataDir, keyPairName))
         os.chmod(privKey, 0600)
         return privKey
+    
 
 class EC2Cloud(Cloud):
     '''

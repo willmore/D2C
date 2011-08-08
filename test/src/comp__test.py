@@ -1,6 +1,7 @@
 from pylab import *
 from numpy import *
 import numpy
+import traceback
 
 from mpl_toolkits.mplot3d import Axes3D
 
@@ -98,6 +99,8 @@ def run():
             #m = AmdahlsCompModel(dataPoints=modelPoints, scaleFunction='linear')
             m = PolyCompModel(dataPoints=modelPoints, scaleFunction='linear')
         except:
+            print "Exception ", sys.exc_info()[0]
+            traceback.print_exc()
             continue
         rating = m.modelSumOfSquares(points)
         print "basis = %d; diff = %f" %  (c, rating)

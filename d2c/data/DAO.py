@@ -6,7 +6,6 @@ from d2c.model.Configuration import Configuration
 from d2c.model.Deployment import Deployment, StateEvent
 from d2c.model.Role import Role
 from d2c.model.InstanceType import InstanceType, Architecture
-from d2c.model.Region import Region
 from d2c.model.Cloud import EC2Cloud, DesktopCloud, Cloud
 from d2c.model.Kernel import Kernel
 from d2c.model.Action import StartAction
@@ -36,7 +35,11 @@ class ConfValue(object):
 
 class DAO:
     
-    def __init__(self, fileName="~/.d2c/db.sqlite", botoModule=boto, 
+    PRINT_STATEMENTS = False
+    
+    def __init__(self, 
+                 fileName="~/.d2c/db.sqlite", 
+                 botoModule=boto, 
                  remoteExecutorFactory=RemoteShellExecutorFactory(),
                  executorFactory=ShellExecutorFactory()):
     
@@ -53,7 +56,7 @@ class DAO:
         
         self.engine = create_engine('sqlite:///' + self.fileName, 
                                     connect_args={'check_same_thread':False},
-                                    echo=True)
+                                    echo=DAO.PRINT_STATEMENTS)
         self.session = sessionmaker(bind=self.engine)()
         self.metadata = MetaData()
         

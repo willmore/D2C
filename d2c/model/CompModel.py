@@ -158,7 +158,9 @@ def toDataPoints(deploymentTemplate):
     '''
     return [DataPoint(d) for d in deploymentTemplate.deployments]
     
-class CompModel(object):
+class CompModel:
+
+    __metaclass__ = ABCMeta
 
     def __init__(self, deploymentTemplate=None, dataPoints=None):
         if deploymentTemplate is not None and \
@@ -304,8 +306,6 @@ class AmdahlsCompModel(CompModel):
         Now to calculate scaling of problem size.
         Find all pairs where cpu count is same but prob size increases
         '''
-        
-            
         sfs = self.generateProbSizeScaleFunction(scaleFunction)    
         
         functions = [lambda probSize, count: sf(probSize, (t1s[0][1],runTime(t1, p, count)))
@@ -315,75 +315,27 @@ class AmdahlsCompModel(CompModel):
                                             else f2, 
                         functions)
         
-        
         ''' The real function corrects for cpu speed '''
         self.modelFunc = lambda probSize, cpu, count: bestSf(probSize, count) / cpu
-    
-    
-        
-    
-    
-
-    def __generateNLogScaleFunction(self):
-        
-        funcs = []
-        
-        for dp1 in self.dataPoints:
-            
-            points = [dp2 for dp2 in self.dataPoints 
-                           if dp2 is not dp1 and dp2.machineCount == dp1.machineCount]
-            points.append(dp1)
-            
-            if len(points) < 2:
-                continue
-            
-            points = [(dp.probSize, dp.normalizedTime) for dp in points]
-            
-            def runTime(v, probSize):
-                return v[0] + v[1] * probSize * numpy.log(probSize)
-            
-            ef = lambda v, probSize, t: (runTime(v, probSize)-t)
-            
-            v0 = [1,1]
-            v, success = leastsq(ef, v0, 
-                                 args=(array([x for x,y in points]),
-                                       array([y for x,y in points])), 
-                                 maxfev=10000)
-            
-            funcs.append(lambda ps, dp: runTime(v, ps) + (dp[1] - runTime(v, dp[0])))
-        
-        return funcs
-        
-
-        
-
-        
+      
     
 class PolyCompModel(CompModel):
     
-    def __init__(self, deploymentTemplate):
+    def __init__(self, deploymentTemplate=None, dataPoints=None, scaleFunction='linear'):
         
-        CompModel.__init__(self)
+        CompModel.__init__(self, deploymentTemplate, dataPoints)
         
-        self.deploymentTemplate = deploymentTemplate
-        self.dataPoints = []
-        self.__collectDataPoints()
+        #self.__generateModel(scaleFunction)
+        self.__generateModel()
         
-        self.__bestFit()
+    def __generateModel(self):
         
-    def __collectDataPoints(self):
-        
-        for dep in self.deploymentTemplate.deployments:
-            self.dataPoints.append(DataPoint(dep))
-    
-    def __bestFit(self):
-        
-        def runTime(v, probSize, machineCpu, count):
-            x = true_divide(probSize , machineCpu * count)
-            return v[0] + v[1] * x #+ v[2] * (x**2) #+ v[3] * (x**3)
+        def runTime(v, probSize, count):
+            x = true_divide(probSize , count)
+            return v[0] + v[1] * x  #+ v[3] * (x**3)
         
         # Error Function
-        ef = lambda v, probSize, cpu, cnt, t: (runTime(v, probSize, cpu, cnt)-t)
+        ef = lambda v, probSize, cpu, cnt, t: (runTime(v, probSize, cnt)-t)
         
         realProbSize = array([d.probSize for d in self.dataPoints])
         cpu = array([d.cpu for d in self.dataPoints])
@@ -391,7 +343,35 @@ class PolyCompModel(CompModel):
         times = array([d.normalizedTime for d in self.dataPoints])
         
         v0 = [1,1,1]
-        testVal = ((v0[:4],)+(realProbSize, cpu, counts, times))
         v, success = leastsq(ef, v0, args=(realProbSize, cpu, counts, times), maxfev=10000)
         
-        self.modelFunc = lambda ps, cpu, count: runTime(v, ps, cpu, count)
+        self.modelFunc = lambda ps, cpu, count: runTime(v, ps, count) / cpu
+        
+        
+class PolyCompModel2(CompModel):
+    
+    def __init__(self, deploymentTemplate=None, dataPoints=None, scaleFunction='linear'):
+        
+        CompModel.__init__(self, deploymentTemplate, dataPoints)
+        
+        #self.__generateModel(scaleFunction)
+        self.__generateModel()
+        
+    def __generateModel(self):
+        
+        def runTime(v, probSize, count):
+            x = true_divide(probSize , count)
+            return v[0] + v[1] * x  #+ v[3] * (x**3)
+        
+        # Error Function
+        ef = lambda v, probSize, cpu, cnt, t: (runTime(v, probSize, cnt)-t)
+        
+        realProbSize = array([d.probSize for d in self.dataPoints])
+        cpu = array([d.cpu for d in self.dataPoints])
+        counts = array([d.machineCount for d in self.dataPoints])
+        times = array([d.normalizedTime for d in self.dataPoints])
+        
+        v0 = [1,1,1]
+        v, success = leastsq(ef, v0, args=(realProbSize, cpu, counts, times), maxfev=10000)
+        
+        self.modelFunc = lambda ps, cpu, count: runTime(v, ps, count) / cpu

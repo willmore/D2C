@@ -42,7 +42,6 @@ class ItemList(wx.ListCtrl):
         
         for i,m in enumerate(self.mappers):
             self.SetColumnWidth(i, m.defaultWidth) 
-            print "adjust " + str(item) + str(m.defaultWidth) 
         
         self.items[idx] = item
         self.Layout()
