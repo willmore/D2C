@@ -10,7 +10,7 @@ from TestConfig import TestConfig
 from d2c.model.DeploymentTemplate import DeploymentTemplate, RoleTemplate
 from d2c.model.FileExistsFinishedCheck import FileExistsFinishedCheck
 from d2c.model.Action import StartAction
-
+from d2c.model.Deployment import StateEvent, DeploymentState
 import tempfile
 
 def init_db(dao, confFile):
@@ -179,41 +179,60 @@ def init_db(dao, confFile):
 19364 374964496 2 3 2 0.51 183806125
     '''
     
+    def sec(hrFrac):
+        return 3600 * hrFrac
+    
     '''HPCC virtual box results'''
     roleReq = {master : (deskImg, vbCloud.instanceTypes[0], 1)}
     d = hpccTemplate.createDeployment(vbCloud, roleReq, conf.awsCred, 9268)
+    d.stateEvents = [StateEvent(DeploymentState.ROLES_STARTED, 0),
+                    StateEvent(DeploymentState.JOB_COMPLETED, sec(0.07))]
     dao.add(d)
     
     roleReq = {master : (deskImg, vbCloud.instanceTypes[0], 1),
                slave : (deskImg, vbCloud.instanceTypes[0], 1)}
     d = hpccTemplate.createDeployment(vbCloud, roleReq, conf.awsCred, 9268)
+    d.stateEvents = [StateEvent(DeploymentState.ROLES_STARTED, 0),
+                    StateEvent(DeploymentState.JOB_COMPLETED, sec(0.04))]
     dao.add(d)
     
     roleReq = {master : (deskImg, vbCloud.instanceTypes[0], 1)}
     d = hpccTemplate.createDeployment(vbCloud, roleReq, conf.awsCred, 10000)
+    d.stateEvents = [StateEvent(DeploymentState.ROLES_STARTED, 0),
+                    StateEvent(DeploymentState.JOB_COMPLETED, sec(0.08))]
     dao.add(d)
     
     roleReq = {master : (deskImg, vbCloud.instanceTypes[0], 1),
                slave : (deskImg, vbCloud.instanceTypes[0], 1)}
     d = hpccTemplate.createDeployment(vbCloud, roleReq, conf.awsCred, 10000)
+    d.stateEvents = [StateEvent(DeploymentState.ROLES_STARTED, 0),
+                    StateEvent(DeploymentState.JOB_COMPLETED, sec(0.05))]
     dao.add(d)
     
     roleReq = {master : (deskImg, vbCloud.instanceTypes[0], 1)}
     d = hpccTemplate.createDeployment(vbCloud, roleReq, conf.awsCred, 14142)
+    d.stateEvents = [StateEvent(DeploymentState.ROLES_STARTED, 0),
+                    StateEvent(DeploymentState.JOB_COMPLETED, sec(0.27))]
     dao.add(d)
     
     roleReq = {master : (deskImg, vbCloud.instanceTypes[0], 1),
                slave : (deskImg, vbCloud.instanceTypes[0], 1)}
     d = hpccTemplate.createDeployment(vbCloud, roleReq, conf.awsCred, 14142)
+    d.stateEvents = [StateEvent(DeploymentState.ROLES_STARTED, 0),
+                    StateEvent(DeploymentState.JOB_COMPLETED, sec(0.17))]
     dao.add(d)
     
     roleReq = {master : (deskImg, vbCloud.instanceTypes[0], 1)}
     d = hpccTemplate.createDeployment(vbCloud, roleReq, conf.awsCred, 19364)
+    d.stateEvents = [StateEvent(DeploymentState.ROLES_STARTED, 0),
+                    StateEvent(DeploymentState.JOB_COMPLETED, sec(0.76))]
     dao.add(d)
     
     roleReq = {master : (deskImg, vbCloud.instanceTypes[0], 1),
                slave : (deskImg, vbCloud.instanceTypes[0], 1)}
     d = hpccTemplate.createDeployment(vbCloud, roleReq, conf.awsCred, 19364)
+    d.stateEvents = [StateEvent(DeploymentState.ROLES_STARTED, 0),
+                     StateEvent(DeploymentState.JOB_COMPLETED, sec(0.51))]
     dao.add(d)
     
     '''HPCC EC2 results'''
