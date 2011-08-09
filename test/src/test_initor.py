@@ -146,7 +146,7 @@ def init_db(dao, confFile):
                                                         image = myWorkerImg, 
                                                         dataCollectors=[DataCollector("/tmp/pingtest.out")],
                                                         finishedChecks=[FileExistsFinishedCheck("/tmp/pingtest.out")],
-                                                        startActions=[StartAction("for ip in `cat /tmp/d2c.context`; do ping $ip; done > /tmp/pingtest.out", None)]
+                                                        startActions=[StartAction("for ip in `cat /tmp/d2c.context`; do ping $ip -c 10; done > /tmp/pingtest.out", None)]
                                                     
                                                   ),
                                                   RoleTemplate(
@@ -155,7 +155,7 @@ def init_db(dao, confFile):
                                                         image = myWorkerImg, 
                                                         dataCollectors=[DataCollector("/tmp/pingtest.out")],
                                                         finishedChecks=[FileExistsFinishedCheck("/tmp/pingtest.out")],
-                                                        startActions=[StartAction("for ip in `cat /tmp/d2c.context`; do ping $ip; done > /tmp/pingtest.out", None)]
+                                                        startActions=[StartAction("for ip in `cat /tmp/d2c.context`; do ping $ip -c 10; done > /tmp/pingtest.out", None)]
                                                     
                                         )])
     master = hpccTemplate.roleTemplates[0]
@@ -182,9 +182,14 @@ def init_db(dao, confFile):
     def sec(hrFrac):
         return 3600 * hrFrac
     
+    roleReq = {master : (deskImg, vbCloud.instanceTypes[0], 1),
+               slave : (deskImg, vbCloud.instanceTypes[0], 1)}
+    d = hpccTemplate.createDeployment(vbCloud, roleReq, conf.awsCred, 9268)
+    
     '''HPCC virtual box results'''
     roleReq = {master : (deskImg, vbCloud.instanceTypes[0], 1)}
     d = hpccTemplate.createDeployment(vbCloud, roleReq, conf.awsCred, 9268)
+    d.state = DeploymentState.COMPLETED
     d.stateEvents = [StateEvent(DeploymentState.ROLES_STARTED, 0),
                     StateEvent(DeploymentState.JOB_COMPLETED, sec(0.07))]
     dao.add(d)
@@ -192,12 +197,14 @@ def init_db(dao, confFile):
     roleReq = {master : (deskImg, vbCloud.instanceTypes[0], 1),
                slave : (deskImg, vbCloud.instanceTypes[0], 1)}
     d = hpccTemplate.createDeployment(vbCloud, roleReq, conf.awsCred, 9268)
+    d.state = DeploymentState.COMPLETED
     d.stateEvents = [StateEvent(DeploymentState.ROLES_STARTED, 0),
                     StateEvent(DeploymentState.JOB_COMPLETED, sec(0.04))]
     dao.add(d)
     
     roleReq = {master : (deskImg, vbCloud.instanceTypes[0], 1)}
     d = hpccTemplate.createDeployment(vbCloud, roleReq, conf.awsCred, 10000)
+    d.state = DeploymentState.COMPLETED
     d.stateEvents = [StateEvent(DeploymentState.ROLES_STARTED, 0),
                     StateEvent(DeploymentState.JOB_COMPLETED, sec(0.08))]
     dao.add(d)
@@ -205,12 +212,14 @@ def init_db(dao, confFile):
     roleReq = {master : (deskImg, vbCloud.instanceTypes[0], 1),
                slave : (deskImg, vbCloud.instanceTypes[0], 1)}
     d = hpccTemplate.createDeployment(vbCloud, roleReq, conf.awsCred, 10000)
+    d.state = DeploymentState.COMPLETED
     d.stateEvents = [StateEvent(DeploymentState.ROLES_STARTED, 0),
                     StateEvent(DeploymentState.JOB_COMPLETED, sec(0.05))]
     dao.add(d)
     
     roleReq = {master : (deskImg, vbCloud.instanceTypes[0], 1)}
     d = hpccTemplate.createDeployment(vbCloud, roleReq, conf.awsCred, 14142)
+    d.state = DeploymentState.COMPLETED
     d.stateEvents = [StateEvent(DeploymentState.ROLES_STARTED, 0),
                     StateEvent(DeploymentState.JOB_COMPLETED, sec(0.27))]
     dao.add(d)
@@ -218,12 +227,14 @@ def init_db(dao, confFile):
     roleReq = {master : (deskImg, vbCloud.instanceTypes[0], 1),
                slave : (deskImg, vbCloud.instanceTypes[0], 1)}
     d = hpccTemplate.createDeployment(vbCloud, roleReq, conf.awsCred, 14142)
+    d.state = DeploymentState.COMPLETED
     d.stateEvents = [StateEvent(DeploymentState.ROLES_STARTED, 0),
                     StateEvent(DeploymentState.JOB_COMPLETED, sec(0.17))]
     dao.add(d)
     
     roleReq = {master : (deskImg, vbCloud.instanceTypes[0], 1)}
     d = hpccTemplate.createDeployment(vbCloud, roleReq, conf.awsCred, 19364)
+    d.state = DeploymentState.COMPLETED
     d.stateEvents = [StateEvent(DeploymentState.ROLES_STARTED, 0),
                     StateEvent(DeploymentState.JOB_COMPLETED, sec(0.76))]
     dao.add(d)
@@ -231,6 +242,7 @@ def init_db(dao, confFile):
     roleReq = {master : (deskImg, vbCloud.instanceTypes[0], 1),
                slave : (deskImg, vbCloud.instanceTypes[0], 1)}
     d = hpccTemplate.createDeployment(vbCloud, roleReq, conf.awsCred, 19364)
+    d.state = DeploymentState.COMPLETED
     d.stateEvents = [StateEvent(DeploymentState.ROLES_STARTED, 0),
                      StateEvent(DeploymentState.JOB_COMPLETED, sec(0.51))]
     dao.add(d)

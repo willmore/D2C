@@ -38,6 +38,8 @@ class RemoteShellExecutor(ShellExecutor):
         pKeyStr = "-i %s" % self.privateKey if self.privateKey else ""
         cmd = string.replace(cmd, "\\", "\\\\")
         cmd = string.replace(cmd, "\"", "\\\"")
+        cmd = string.replace(cmd, "`", "\`")
+        cmd = string.replace(cmd, "$", "\$")
         cmd = "ssh %s -o StrictHostKeyChecking=no %s@%s \"%s\"" % (pKeyStr, 
                                                                  self.user,
                                                                  self.host,

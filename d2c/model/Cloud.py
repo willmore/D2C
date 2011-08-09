@@ -17,6 +17,10 @@ import subprocess
 from d2c.RemoteShellExecutor import RemoteShellExecutor
 import time
 import guestfs
+from threading import RLock
+import types
+from d2c.util import ReadWriteLock
+from d2c.util import synchronous
 
 from abc import ABCMeta, abstractmethod
 
@@ -153,6 +157,8 @@ class LibVirtInstance(object):
         
         del gf #sync and shutdown   
     
+    gfLock = RLock()
+    
     def _provisionCopy(self, ipAddress):
         '''Make a copy of the image to use for this execution.'''
         self.image.path = self.image.path.replace(' ', '\\ ')
@@ -162,8 +168,10 @@ class LibVirtInstance(object):
         '''Change the HD UUID, otherwise VirtualBox will refuse to use it if same UUID is already registered'''
         ShellExecutor().run("VBoxManage internalcommands sethduuid %s" % self.dataFile)
         
+        self.gfLock.acquire()
         self.__insertKey(self.dataFile, self.pubKeyFile)
         self.__setStaticIp(self.dataFile, ipAddress)
+        self.gfLock.release()
         
         self.public_dns_name  = ipAddress        
         self.private_ip_address = ipAddress
@@ -176,7 +184,7 @@ class LibVirtInstance(object):
         def ping(ip):
             return subprocess.call("ping -c 1 %s" % ip, shell=True, stdout=open('/dev/null', 'w'), stderr=subprocess.STDOUT)
 
-        self.dom = libvirt.virConnect.defineXML(conn, domain_xml_file)
+        self.dom = conn.defineXML(domain_xml_file)
         self.dom.create()
 
         ''' Wait until host is responding to ping'''
@@ -190,9 +198,41 @@ class LibVirtInstance(object):
             self.dom.destroy()
             time.sleep(5)
             self.dom.undefine()
+            self.state = 'terminated'
     
     def update(self):
         pass
+        
+class SynchronizedProxy(object):
+    '''
+    Synchrnonizes access to object methods through use of RLock
+    '''
+    
+    def __init__(self, proxy):
+        self.proxy = proxy
+        self.lock = threading.RLock()
+    
+    def __getattribute__(self, attrName):
+        if attrName is "proxy" or attrName is "lock":
+            return object.__getattribute__(self, attrName)
+            
+        #print "Type = %s" % type(self.proxy.__getattribute__(attrName))
+        attr = getattr(self.proxy, attrName)
+        if isinstance(attr, types.MethodType):
+            def lockedFunc(*args, **kwargs):
+                self.lock.acquire()
+                v = attr(*args, **kwargs)
+                self.lock.release()
+                return v
+            return lockedFunc
+        return attr
+    
+    def __setattr__(self, name, value):
+        if name is "proxy" or name is "lock":
+            object.__setattr__(self, name, value)
+        else:
+            self.proxy.__dict__[name] = value
+    
 
 class LibVirtReservationThread(Thread):
     
@@ -204,6 +244,8 @@ class LibVirtReservationThread(Thread):
         self.reservation.reserve()
 
 class LibVirtReservation(object):
+    
+    __libVirtConn = None
     
     def __init__(self, image, instanceType, count, pubKeyFile):
         from .SourceImage import DesktopImage
@@ -220,11 +262,13 @@ class LibVirtReservation(object):
         #create vboxnet0 network
         try:
             network = conn.networkLookupByName("vboxnet0")
-            print "vboxnet0 found, will destroy vboxnet0"
-            network.destroy()
-            time.sleep(5)
-            network.undefine()
-            print "vboxnet0 undefined"
+            #print "vboxnet0 found, will destroy vboxnet0"
+            print "existing vboxnet0 found"
+            return
+            #network.destroy()
+            #time.sleep(5)
+            #network.undefine()
+            #print "vboxnet0 undefined"
         except:
             print "vboxnet0 not found, will create it now"
             
@@ -237,27 +281,62 @@ class LibVirtReservation(object):
             return xml    
             
         network_xml_file = pkg_resources.resource_filename(__package__, "virtualbox_xml/mynetwork.xml")
-        network = libvirt.virConnect.networkDefineXML(conn, return_xml(network_xml_file))
+        #network = libvirt.virConnect.networkDefineXML(conn, return_xml(network_xml_file))
+        conn.networkDefineXML(return_xml(network_xml_file))
         if(network.create()):
             print 'An error occured while creating the network,terminating program.'
             quit(1)
         print "Network Created with Name:"+network.name()
 
+    lastoctet = 100
+    __iplock = RLock()
+    @classmethod
+    def getIPAddress(cls):
+        
+        cls.__iplock.acquire()
+        ipAddress = '192.168.152.%s' % cls.lastoctet
+        cls.lastoctet += 1
+        cls.__iplock.release()
+        return ipAddress
+    
+    __reserveLock = threading.RLock()
+
+    rwLock = ReadWriteLock()
+
     def reserve(self):
+        ''' Virtualbox creation is serialized through use of class level lock'''
+        #LibVirtReservation.__reserveLock.acquire()
         
-        lastoctet = 100
-        ipAddress = '192.168.152.%s' 
-  
         ''' Ensure we can get a libvirt connection before making large image copies. '''
-        conn = libvirt.open("vbox:///session")
+        conn = LibVirtReservation.getLibVirtConn()
         self.__createVirtualNetwork(conn)
-        
+        self.rwLock.acquireRead()
         for inst in self.instances:
-            inst._provisionCopy(ipAddress % lastoctet)
-            lastoctet += 1 
+            inst._provisionCopy(LibVirtReservation.getIPAddress())
+        self.rwLock.release()
         
+        self.rwLock.acquireWrite()
         for inst in self.instances:
-            inst.start(conn)       
+            inst.start(conn) 
+        self.rwLock.release()
+            
+        #LibVirtReservation.__reserveLock.release()   
+    
+    __lock = threading.RLock()
+    
+    @classmethod  
+    def getLibVirtConn(cls):
+        '''
+        Control access to libvirt singleton
+        '''
+        cls.__lock.acquire()
+        print "Accessing libvirt conn"
+        if cls.__libVirtConn is None:
+            print "Opening conn"
+            cls.__libVirtConn = SynchronizedProxy(libvirt.open("vbox:///session"))
+        cls.__lock.release()
+        
+        return cls.__libVirtConn
         
 
 class LibVirtConn(CloudConnection):

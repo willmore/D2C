@@ -2,6 +2,7 @@
 from d2c.logger import StdOutLogger
 import time
 from .SSHCred import SSHCred
+from .Cloud import DesktopCloud
 
 class Instance(object):
     '''
@@ -259,6 +260,62 @@ class Deployment(object):
             
             transition()
     
+    def __launchInstancesParallel(self):
+        
+        for role in self.roles:
+            role.launch(self.awsCred)    
+        
+        reservationIds = [r.getReservationId() for r in self.roles]
+    
+        allRunning = False
+        
+        conn = self.cloud.getConnection(self.awsCred)
+        
+        while self.runLifecycle and not allRunning:
+            time.sleep(Deployment.POLL_RATE)
+            
+            if not self.runLifecycle:
+                return
+           
+            instStates = conn.getInstanceStates(reservationIds)
+            
+            allRunning = True
+            
+            for state in instStates:
+                if state != 'running':
+                    #self.logger.write('All instances not running; continue polling.')
+                    allRunning = False
+                    break
+        
+    def __launchInstancesSerial(self):
+        
+        conn = self.cloud.getConnection(self.awsCred)
+        
+        for role in self.roles:
+            role.launch(self.awsCred)    
+            
+        allRunning = False
+        for role in self.roles:
+            role.launch(self.awsCred)
+            reservationId = role.getReservationId()
+            
+            while self.runLifecycle and not allRunning:
+                time.sleep(Deployment.POLL_RATE)
+                
+                if not self.runLifecycle:
+                    return
+               
+                instStates = conn.getInstanceStates([reservationId])
+                
+                allRunning = True
+                
+                for state in instStates:
+                    if state != 'running':
+                        #self.logger.write('All instances not running; continue polling.')
+                        allRunning = False
+                        break
+        
+    
     def __launchInstances(self):
         if self.state != DeploymentState.NOT_RUN:
             raise Exception("Can not start deployment in state: " + self.state)
@@ -279,29 +336,13 @@ class Deployment(object):
             role.setSSHCred(sshCred)
         
         self.logger.write("Launching instances")
-                        
-        for role in self.roles:
-            role.launch(self.awsCred)    
         
-        reservationIds = [r.getReservationId() for r in self.roles]
-    
-        allRunning = False
+        #TODO move into Cloud class/subclasses              
+        #if isinstance(self.cloud, DesktopCloud):
+        #self.__launchInstancesSerial()
+        #else:
+        self.__launchInstancesParallel()
         
-        while self.runLifecycle and not allRunning:
-            time.sleep(Deployment.POLL_RATE)
-            
-            if not self.runLifecycle:
-                return
-           
-            instStates = conn.getInstanceStates(reservationIds)
-            
-            allRunning = True
-            
-            for state in instStates:
-                if state != 'running':
-                    #self.logger.write('All instances not running; continue polling.')
-                    allRunning = False
-                    break
                 
         self.logger.write("The deployment's instance have booted.")
         '''
