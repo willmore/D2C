@@ -39,9 +39,9 @@ ftp://libvirt.org/libvirt/ and libxml2-dev,libgnutls-dev,libdevmapper-dev,python
 In the project root directory run:
 	make builddeb
 
-This will create ../d2c_0.0.1_all.deb.
+This will create ../d2c_<version>_all.deb.
 To install run:
-dpkg -i ../d2c_0.0.1_all.deb
+dpkg -i ../d2c_<version>_all.deb
 
 Note that installing with dpkg explicitly will not resolve dependencies. 
 If there are broken dependencies, resolve using aptitude.

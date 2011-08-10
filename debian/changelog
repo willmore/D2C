@@ -1,3 +1,11 @@
+d2c (0.0.2) UNRELEASED; urgency=low
+
+  * Added support for VirtualBox "local cloud"
+
+ -- Chris Willmore <willmore@ut.ee>  Wed, 10 Aug 2011 09:33:00 +0300
+	
+
+
 d2c (0.0.1) UNRELEASED; urgency=low
 
   * Initial release. (Closes: #XXXXXX)
