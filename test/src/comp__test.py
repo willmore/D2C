@@ -164,7 +164,7 @@ def run():
     ax.w_zaxis.set_major_formatter(FormatStrFormatter('%.03f'))
     ax.w_yaxis.set_major_formatter(FormatStrFormatter('%d'))
     ax.w_xaxis.set_major_formatter(FormatStrFormatter('%d'))
-    
+    savefig("test.png")
     plt.show()
     
 if __name__ == "__main__":

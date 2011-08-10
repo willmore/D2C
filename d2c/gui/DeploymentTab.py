@@ -8,7 +8,26 @@ from d2c.controller.DeploymentCreatorController import DeploymentCreatorControll
 
 from .DeploymentCreator import DeploymentCreator
 
+from d2c.model.CompModel import PolyCompModel
+
+from pylab import *
+from numpy import *
+import numpy
+from mpl_toolkits.mplot3d import Axes3D
+
+from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg as FigureCanvas
+
+from matplotlib.backends.backend_wx import NavigationToolbar2Wx
+
+#from matplotlib.figure import Figure
+
 class DeploymentTab(wx.Panel):
+
+    '''
+    Allows navigation of all DeploymentTemplates and Deployments.
+    The main panel is split between and left panel with tree-navigation 
+    and the right panel displaying the selected DeploymentTemplate or DeploymentPanel.
+    '''
     
     def __init__(self, dao, *args, **kwargs):
 
@@ -81,19 +100,139 @@ class DeploymentTemplatePanel(wx.Panel):
         label.SetFont(wx.Font(20, wx.DEFAULT, wx.DEFAULT, wx.BOLD))
         self.GetSizer().Add(label, 0, wx.BOTTOM, 10)
           
-        label = wx.StaticText(self, -1, 'Roles')
-        label.SetFont(wx.Font(wx.DEFAULT, wx.DEFAULT, wx.DEFAULT, wx.BOLD))
-        self.GetSizer().Add(label, 0, wx.BOTTOM, 5)
-        self.roles = RoleTemplateList(self, -1, items=deployment.roleTemplates)
-        self.GetSizer().Add(self.roles, 0, wx.BOTTOM | wx.EXPAND, 5)
+          
+        #self.GetSizer().Add(self.roles, 0, wx.BOTTOM | wx.EXPAND, 5)
         
         self.deployButton = wx.Button(self, wx.ID_ANY, 'Create Deployment')
         
         self.deployButton.Bind(wx.EVT_BUTTON, self.showDeploymentCreation)
         self.GetSizer().Add(self.deployButton, 0, wx.ALL, 2)
         
+        self.tabContainer = wx.Notebook(self, -1, style=wx.NB_TOP)
+        hbox = wx.BoxSizer(wx.HORIZONTAL)
+        hbox.Add(self.tabContainer, 1, wx.ALL | wx.EXPAND, 2)
+        self.GetSizer().Add(hbox, 1, wx.ALL | wx.EXPAND, 2)
+        
+        self.overviewTab = wx.Panel(self.tabContainer, -1)
+        self.overviewTab.SetSizer(wx.BoxSizer(wx.VERTICAL))
+        label = wx.StaticText(self.overviewTab, -1, 'Roles')
+        label.SetFont(wx.Font(wx.DEFAULT, wx.DEFAULT, wx.DEFAULT, wx.BOLD))
+        self.overviewTab.GetSizer().Add(label, 0, wx.BOTTOM, 5)
+        self.overviewTab.roles = RoleTemplateList(self.overviewTab, -1, items=deployment.roleTemplates)        
+        self.overviewTab.GetSizer().Add(self.overviewTab.roles, 1, wx.BOTTOM | wx.EXPAND, 5)
+        
+        self.tabContainer.AddPage(self.overviewTab, "Overview")
+        
+        self.experimentTab = CanvasPanel(deployment, self.tabContainer)
+        self.tabContainer.AddPage(self.experimentTab, "Experiments")
+        
+        self.experimentTab = CanvasPanel(deployment, self.tabContainer)
+        self.tabContainer.AddPage(self.experimentTab, "Cost Prediction")
+        
+        #self.overviewTab.Bind(wx.EVT_NOTEBOOK_PAGE_CHANGED)
+        
     def showDeploymentCreation(self, _):
         c = DeploymentCreator(self, self.deployment)
         DeploymentCreatorController(c, self.dao)
         c.ShowModal()
+        
+class CanvasPanel(wx.Panel):
+
+    
+
+    def __init__(self, deploymentTemplate, parent):
+        
+        self.deploymentTemplate = deploymentTemplate
+        
+        wx.Panel.__init__(self,parent,-1,
+                         size=(550,350))
+        self.sizer = wx.BoxSizer(wx.VERTICAL)
+        self.chartButton = wx.Button(self, -1, 'Chart Experiments')
+        self.sizer.Add(self.chartButton, 0)
+        self.SetSizer(self.sizer)
+        
+        self.chartButton.Bind(wx.EVT_BUTTON, self.handleShow)
+        
+    def handleShow(self, evt):
+           
+        #self.Bind(wx.EVT_, self.handleShow)
+        
+        model = PolyCompModel(self.deploymentTemplate, scaleFunction='linear')
+        self.SetBackgroundColour(wx.NamedColor("WHITE"))
+
+        probSize = arange(min([d.problemSize for d in self.deploymentTemplate.deployments]), 
+                          max([d.problemSize for d in self.deploymentTemplate.deployments])*1.2, 5)
+        numProcs = arange(1, 16, 1)
+    
+        probSize, numProcs = np.meshgrid(probSize, numProcs)
+        time = model.modelFunc(probSize, 2, numProcs)
+        self.figure = Figure()
+        ax = Axes3D(self.figure)
+        colortuple = ('y', 'b')
+        colors = np.empty(probSize.shape, dtype=str)
+        #for y in range(len(numProcs)):
+        #    for x in range(len(probSize)):
+        #        colors[x, y] = colortuple[(x + y) % len(colortuple)]
+        
+        
+        #surf = ax.plot_surface(probSize, numProcs, time, rstride=1, cstride=1, #facecolors=colors,
+        #        linewidth=0, antialiased=False)
+        
+        rstride = 1#(max([dp.machineCount for dp in points]) - min([dp.machineCount for dp in points])) / 20
+        cstride = int(math.ceil(true_divide(max([d.problemSize for d in self.deploymentTemplate.deployments]) - 
+                          min([d.problemSize for d in self.deploymentTemplate.deployments]), 45)))
+        
+        surf = ax.plot_wireframe(probSize, numProcs, time, rstride=rstride, cstride=cstride,
+                 antialiased=False)
+        
+        #for p in points:
+        #    ax.scatter(array([p.probSize]), array([p.machineCount]), array([p.time]), c='r', marker='o')
+                
+        #ax.set_zlim3d(0, max([p.time for p in points]))
+        #ax.set_xlim3d(min([p.probSize for p in points]), maxProbSize)
+        ax.w_zaxis.set_major_locator(LinearLocator(6))
+        ax.w_zaxis.set_major_formatter(FormatStrFormatter('%.03f'))
+        ax.w_yaxis.set_major_formatter(FormatStrFormatter('%d'))
+        ax.w_xaxis.set_major_formatter(FormatStrFormatter('%d'))
+        #self.figure = Figure()
+        #self.axes = self.figure.add_subplot(111)
+        #t = arange(0.0,3.0,0.01)
+        #s = sin(2*pi*t)
+
+        
+        #########################
+        self.canvas = FigureCanvas(self, -1, self.figure)
+
+        
+        self.sizer.Add(self.canvas, 1, wx.LEFT | wx.TOP | wx.GROW)
+        
+        self.Fit()
+
+        self.add_toolbar()  # comment this out for no toolbar
+
+
+    def add_toolbar(self):
+        self.toolbar = NavigationToolbar2Wx(self.canvas)
+        self.toolbar.Realize()
+        if wx.Platform == '__WXMAC__':
+            # Mac platform (OSX 10.3, MacPython) does not seem to cope with
+            # having a toolbar in a sizer. This work-around gets the buttons
+            # back, but at the expense of having the toolbar at the top
+            self.SetToolBar(self.toolbar)
+        else:
+            # On Windows platform, default window size is incorrect, so set
+            # toolbar width to figure width.
+            tw, th = self.toolbar.GetSizeTuple()
+            fw, fh = self.canvas.GetSizeTuple()
+            # By adding toolbar in sizer, we are able to put it at the bottom
+            # of the frame - so appearance is closer to GTK version.
+            # As noted above, doesn't work for Mac.
+            self.toolbar.SetSize(wx.Size(fw, th))
+            self.sizer.Add(self.toolbar, 0, wx.LEFT | wx.EXPAND)
+        # update the axes menu on the toolbar
+        self.toolbar.update()
+
+
+    def OnPaint(self, event):
+        self.canvas.draw()
         

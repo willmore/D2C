@@ -1,46 +1,23 @@
-import threading
-import types
-import libvirt
+from numpy import *
+import pylab as p
+#import matplotlib.axes3d as p3
+import mpl_toolkits.mplot3d.axes3d as p3
 
-class Bob(object):
-    
-    def __init__(self):
-        self.baz = "Baz value"
-    
-    def hah(self, v1, v2):
-        print "self = %s" % type(self) 
-        print "Har har %s %s" % (v1, v2) 
+# u and v are parametric variables.
+# u is an array from 0 to 2*pi, with 100 elements
+u=r_[0:2*pi:100j]
+# v is an array from 0 to 2*pi, with 100 elements
+v=r_[0:pi:100j]
+# x, y, and z are the coordinates of the points for plotting
+# each is arranged in a 100x100 array
+x=10*outer(cos(u),sin(v))
+y=10*outer(sin(u),sin(v))
+z=10*outer(ones(size(u)),cos(v))
 
-class Foo(object):
-    
-    def __init__(self, proxy):
-        self.proxy = proxy
-        self.lock = threading.RLock()
-    
-    def __getattribute__(self, attrName):
-        if attrName is "proxy" or attrName is "lock":
-            return object.__getattribute__(self, attrName)
-            
-        #print "Type = %s" % type(self.proxy.__getattribute__(attrName))
-        attr = getattr(self.proxy, attrName)
-        if isinstance(attr, types.MethodType):
-            def lockedFunc(*args, **kwargs):
-                self.lock.acquire()
-                v = attr(*args, **kwargs)
-                self.lock.release()
-                return v
-            return lockedFunc
-        return attr
-    
-    def __setattr__(self, name, value):
-        if name is "proxy" or name is "lock":
-            object.__setattr__(self, name, value)
-        else:
-            self.proxy.__dict__[name] = value
-        
-        
-conn = libvirt.open("vbox:///session")
-f = Foo(conn)
-f.baz
-f.hah('a', v2='b')
-    
+fig=p.figure()
+ax = p3.Axes3D(fig)
+ax.plot_wireframe(x,y,z)
+ax.set_xlabel('X')
+ax.set_ylabel('Y')
+ax.set_zlabel('Z')
+p.show()

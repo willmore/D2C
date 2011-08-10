@@ -11,6 +11,10 @@ def formatTime(t):
 
 class DeploymentPanel(wx.Panel):    
     
+    '''
+    Renders Deployment information
+    '''
+    
     def __init__(self, deployment, *args, **kwargs):
         wx.Panel.__init__(self, *args, **kwargs)
         
