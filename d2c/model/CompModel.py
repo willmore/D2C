@@ -1,8 +1,10 @@
-from numpy import true_divide, array
+from numpy import true_divide, array, ceil, minimum, clip, mean, subtract
 from scipy.optimize import leastsq
 import numpy
 
-import math
+from .Deployment import DeploymentState
+
+#import math
 import sys
 from abc import ABCMeta, abstractmethod
 
@@ -156,7 +158,7 @@ def toDataPoints(deploymentTemplate):
     '''
     Map a DeploymentTemplate to a list of DataPoints
     '''
-    return [DataPoint(d) for d in deploymentTemplate.deployments]
+    return [DataPoint(d) for d in deploymentTemplate.deployments if d.state == DeploymentState.COMPLETED]
     
 class CompModel:
 
@@ -176,26 +178,34 @@ class CompModel:
         The cost model assumes a homogeneous cluster. 
         The cost model returns a BestDeployment object for a given problem size.
         '''
+        
+        print "Creating cost func for cloud ", cloud.name
+        
         def model(problemSize):
             
-            bestCost = sys.maxint
-            bestType = None
-            bestTime = None
-            bestCount = None
+            bestCost = array([sys.maxint for _ in problemSize])
+            #bestType = None
+            #bestTime = None
+            #bestCount = None
             
             for instanceType in cloud.instanceTypes:
-                for c in range(1, 100):
+                for c in range(1, 16):
                     t = self.modelFunc(problemSize, instanceType.cpu, c*instanceType.cpuCount)
-                    hours = math.ceil(true_divide(t, 60))
+                    #TODO prevent modelFunc from ever returning negative numbers...
+                    t = clip(t, 0, sys.maxint)
+                    hours = ceil(true_divide(t, 3600))
                     cost = instanceType.costPerHour * c * hours
-                    if cost < bestCost:
-                        bestTime = t
-                        bestType = instanceType
-                        bestCount = c
-                        bestCost = cost
+                    bestCost = minimum(bestCost, cost)
+                    #if cost < bestCost:
+                        #bestTime = t
+                        #bestType = instanceType
+                        #bestCount = c
+                        #bestCost = cost
                         
-            return (bestCost, bestTime, bestType, bestCount)
-        
+            #return (bestCost, bestTime, bestType, bestCount)
+            print "Best cost", bestCost
+            return bestCost
+            
         return model
     
     def modelSumOfSquares(self, dataPoints):
@@ -354,24 +364,65 @@ class PolyCompModel2(CompModel):
         
         CompModel.__init__(self, deploymentTemplate, dataPoints)
         
-        #self.__generateModel(scaleFunction)
-        self.__generateModel()
+        self.__generateModel(scaleFunction)
+        #self.__generateModel()
         
-    def __generateModel(self):
+    def __generateModel(self, scaleFunction):
         
-        def runTime(v, probSize, count):
-            x = true_divide(probSize , count)
-            return v[0] + v[1] * x  #+ v[3] * (x**3)
+        '''
+        Generate a function that calculates runtime based on 
+        problem size and number of processors
+        '''
         
-        # Error Function
-        ef = lambda v, probSize, cpu, cnt, t: (runTime(v, probSize, cnt)-t)
+        ''' s is percentage of program that is serialized 
+        speedup(n) = n + (1-n)s
+        s = (speedup(n) - n) / (1 - n)
+        Find all known speedup(n) where problem size is constant
+        speedup(n) also equals T(1) / T(n). We should have T(1) and T(n)
+        '''
+        t1s = [(d.normalizedTime, d.probSize) for d in self.dataPoints if d.machineCount == 1]
         
-        realProbSize = array([d.probSize for d in self.dataPoints])
-        cpu = array([d.cpu for d in self.dataPoints])
-        counts = array([d.machineCount for d in self.dataPoints])
-        times = array([d.normalizedTime for d in self.dataPoints])
+        '''
+        If we don't have a T(1), bail.
+        '''   
+        if len(t1s) == 0:
+            raise Exception("Unable to create model. \
+                             Require at least one data point where the CPU count is 1.")        
+                
+        '''
+        Next we find values of T(x) where the number of processors is x > 1 and the problem
+        size is N (same size as T(1)).
+        '''
         
-        v0 = [1,1,1]
-        v, success = leastsq(ef, v0, args=(realProbSize, cpu, counts, times), maxfev=10000)
+        ''' ss are possible values of s '''
+        speed_ups = []        
+        for t1,ps in t1s:
+            for d in [d for d in self.dataPoints if d.probSize == ps and d.machineCount != 1]:
+                speed_ups.append((d.machineCount, true_divide(t1, d.normalizedTime)))
+                #s = true_divide(speedup_n - n, 1 - n)
+                #ss.append(s)
         
-        self.modelFunc = lambda ps, cpu, count: runTime(v, ps, count) / cpu
+        def speed_up_v(v, n): 
+            return n + subtract(1, n) * v[0]
+        
+        ef = lambda v, n, real_su: (speed_up_v(v, n)- real_su)
+        v0 = [1]
+        v_su, success = leastsq(ef, v0, args=(array([n for n,su in speed_ups]), array([su for n,su in speed_ups])), maxfev=10000)
+        
+        def speedup(n):
+            return speed_up_v(v_su, n)
+        
+        def time_1_v(v, probSize):
+            '''Time for running probSize on one cpu'''
+            return v[0] + v[1]*probSize
+        
+        ef = lambda v, probSize, t: (time_1_v(v, probSize)-t)
+        v0 = [100,1]
+        v_t1, success = leastsq(ef, v0, args=(array([ps for t,ps in t1s]), array([t for t,ps in t1s])), maxfev=10000)
+        
+        def time_1(probSize):
+            return time_1_v(v_t1, probSize)
+        
+        self.modelFunc = lambda ps, cpu, count: true_divide(time_1(ps), speedup(n)) / cpu
+        
+        

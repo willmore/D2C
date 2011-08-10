@@ -8,7 +8,7 @@ from d2c.controller.DeploymentCreatorController import DeploymentCreatorControll
 
 from .DeploymentCreator import DeploymentCreator
 
-from d2c.model.CompModel import PolyCompModel
+from d2c.model.CompModel import PolyCompModel2
 
 from pylab import *
 from numpy import *
@@ -126,7 +126,7 @@ class DeploymentTemplatePanel(wx.Panel):
         self.experimentTab = CanvasPanel(deployment, self.tabContainer)
         self.tabContainer.AddPage(self.experimentTab, "Experiments")
         
-        self.experimentTab = CanvasPanel(deployment, self.tabContainer)
+        self.experimentTab = CostGraphPanel(deployment, self.dao.getClouds(), self.tabContainer)
         self.tabContainer.AddPage(self.experimentTab, "Cost Prediction")
         
         #self.overviewTab.Bind(wx.EVT_NOTEBOOK_PAGE_CHANGED)
@@ -137,8 +137,6 @@ class DeploymentTemplatePanel(wx.Panel):
         c.ShowModal()
         
 class CanvasPanel(wx.Panel):
-
-    
 
     def __init__(self, deploymentTemplate, parent):
         
@@ -155,13 +153,12 @@ class CanvasPanel(wx.Panel):
         
     def handleShow(self, evt):
            
-        #self.Bind(wx.EVT_, self.handleShow)
-        
-        model = PolyCompModel(self.deploymentTemplate, scaleFunction='linear')
+        #self.Bind(wx.EVT_, self.handleShow)        
+        model = PolyCompModel2(self.deploymentTemplate, scaleFunction='linear')
         self.SetBackgroundColour(wx.NamedColor("WHITE"))
 
         probSize = arange(min([d.problemSize for d in self.deploymentTemplate.deployments]), 
-                          max([d.problemSize for d in self.deploymentTemplate.deployments])*1.2, 5)
+                          max([d.problemSize for d in self.deploymentTemplate.deployments])*4, 20)
         numProcs = arange(1, 16, 1)
     
         probSize, numProcs = np.meshgrid(probSize, numProcs)
@@ -204,6 +201,71 @@ class CanvasPanel(wx.Panel):
         self.canvas = FigureCanvas(self, -1, self.figure)
 
         
+        self.sizer.Add(self.canvas, 1, wx.LEFT | wx.TOP | wx.GROW)
+        
+        self.Fit()
+
+        self.add_toolbar()  # comment this out for no toolbar
+
+
+    def add_toolbar(self):
+        self.toolbar = NavigationToolbar2Wx(self.canvas)
+        self.toolbar.Realize()
+        if wx.Platform == '__WXMAC__':
+            # Mac platform (OSX 10.3, MacPython) does not seem to cope with
+            # having a toolbar in a sizer. This work-around gets the buttons
+            # back, but at the expense of having the toolbar at the top
+            self.SetToolBar(self.toolbar)
+        else:
+            # On Windows platform, default window size is incorrect, so set
+            # toolbar width to figure width.
+            tw, th = self.toolbar.GetSizeTuple()
+            fw, fh = self.canvas.GetSizeTuple()
+            # By adding toolbar in sizer, we are able to put it at the bottom
+            # of the frame - so appearance is closer to GTK version.
+            # As noted above, doesn't work for Mac.
+            self.toolbar.SetSize(wx.Size(fw, th))
+            self.sizer.Add(self.toolbar, 0, wx.LEFT | wx.EXPAND)
+        # update the axes menu on the toolbar
+        self.toolbar.update()
+
+
+    def OnPaint(self, event):
+        self.canvas.draw()
+        
+class CostGraphPanel(wx.Panel):
+
+
+    def __init__(self, deploymentTemplate, clouds, parent):
+        
+        self.clouds = clouds
+        
+        self.deploymentTemplate = deploymentTemplate
+        
+        wx.Panel.__init__(self,parent,-1,
+                         size=(550,350))
+        self.sizer = wx.BoxSizer(wx.VERTICAL)
+        self.chartButton = wx.Button(self, -1, 'Chart Experiments')
+        self.sizer.Add(self.chartButton, 0)
+        self.SetSizer(self.sizer)
+        
+        self.chartButton.Bind(wx.EVT_BUTTON, self.handleShow)
+        
+    def handleShow(self, evt):
+           
+        #self.Bind(wx.EVT_, self.handleShow)
+        
+        model = PolyCompModel2(self.deploymentTemplate, scaleFunction='linear')
+        self.SetBackgroundColour(wx.NamedColor("WHITE"))
+        
+        self.figure = Figure()
+        self.canvas = FigureCanvas(self, -1, self.figure)
+        self.axes = self.figure.add_subplot(111)
+        t = arange(10000,44000,1000)
+        
+        for cloud in self.clouds:
+            s = model.costModel(cloud)(t)
+            self.axes.plot(t,s)
         self.sizer.Add(self.canvas, 1, wx.LEFT | wx.TOP | wx.GROW)
         
         self.Fit()
