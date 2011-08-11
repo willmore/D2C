@@ -410,7 +410,10 @@ class PolyCompModel2(CompModel):
         v_su, success = leastsq(ef, v0, args=(array([n for n,su in speed_ups]), array([su for n,su in speed_ups])), maxfev=10000)
         
         def speedup(n):
-            return speed_up_v(v_su, n)
+            su = speed_up_v(v_su, n)
+            return su
+        
+        self.speedUpFunc = speedup
         
         def time_1_v(v, probSize):
             '''Time for running probSize on one cpu'''
@@ -421,8 +424,16 @@ class PolyCompModel2(CompModel):
         v_t1, success = leastsq(ef, v0, args=(array([ps for t,ps in t1s]), array([t for t,ps in t1s])), maxfev=10000)
         
         def time_1(probSize):
+            '''Time for running probSize on one cpu'''
             return time_1_v(v_t1, probSize)
         
-        self.modelFunc = lambda ps, cpu, count: true_divide(time_1(ps), speedup(n)) / cpu
+        self.time_1_func = time_1
         
+        def modelFunc(probSize, cpu, count):
+            t1 = time_1(probSize)
+            su = speedup(count)
+            return (t1 / su) / cpu
+        
+        #self.modelFunc = lambda probSize, cpu, count: true_divide(time_1(probSize), speedup(n)) / cpu
+        self.modelFunc = modelFunc
         

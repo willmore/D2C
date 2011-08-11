@@ -62,19 +62,38 @@ def run():
               ]
     '''
     
-    points = [
+    vboxCpu = 2
+    vboxPoints = [
+                  
               #Local Data
-              DataPoint(cpuCount=1, cpu=2, time=sec(0.07), probSize=85.895824),
-              DataPoint(cpuCount=2, cpu=2, time=sec(0.04), probSize=85.895824),
+              DataPoint(cpuCount=1, cpu=vboxCpu, time=sec(0.07), probSize=85.895824),
+              DataPoint(cpuCount=2, cpu=vboxCpu, time=sec(0.04), probSize=85.895824),
               
-              DataPoint(cpuCount=1, cpu=2, time=sec(0.08), probSize=100.000000),
-              DataPoint(cpuCount=2, cpu=2, time=sec(0.05), probSize=100.000000),
+              DataPoint(cpuCount=1, cpu=vboxCpu, time=sec(0.08), probSize=100.000000),
+              DataPoint(cpuCount=2, cpu=vboxCpu, time=sec(0.05), probSize=100.000000),
               
-              DataPoint(cpuCount=1, cpu=2, time=sec(0.27), probSize=199.996164),
-              DataPoint(cpuCount=2, cpu=2, time=sec(0.17), probSize=199.996164),
+              DataPoint(cpuCount=1, cpu=vboxCpu, time=sec(0.27), probSize=199.996164),
+              DataPoint(cpuCount=2, cpu=vboxCpu, time=sec(0.17), probSize=199.996164),
               
-              DataPoint(cpuCount=1, cpu=2, time=sec(0.76), probSize=374.964496),
-              DataPoint(cpuCount=2, cpu=2, time=sec(0.51), probSize=374.964496),
+              DataPoint(cpuCount=1, cpu=vboxCpu, time=sec(0.76), probSize=374.964496),
+              DataPoint(cpuCount=2, cpu=vboxCpu, time=sec(0.51), probSize=374.964496)
+                  
+                  ]
+    
+   
+    ec2Points = [
+              #Local Data
+              DataPoint(cpuCount=1, cpu=vboxCpu, time=sec(0.07), probSize=85.895824),
+              DataPoint(cpuCount=2, cpu=vboxCpu, time=sec(0.04), probSize=85.895824),
+              
+              DataPoint(cpuCount=1, cpu=vboxCpu, time=sec(0.08), probSize=100.000000),
+              DataPoint(cpuCount=2, cpu=vboxCpu, time=sec(0.05), probSize=100.000000),
+              
+              DataPoint(cpuCount=1, cpu=vboxCpu, time=sec(0.27), probSize=199.996164),
+              DataPoint(cpuCount=2, cpu=vboxCpu, time=sec(0.17), probSize=199.996164),
+              
+              DataPoint(cpuCount=1, cpu=vboxCpu, time=sec(0.76), probSize=374.964496),
+              DataPoint(cpuCount=2, cpu=vboxCpu, time=sec(0.51), probSize=374.964496),
               
               #EC2 Data
               DataPoint(cpuCount=2, cpu=3.25, time=sec(0.196), probSize=374.964496),
@@ -86,13 +105,14 @@ def run():
               DataPoint(cpuCount=16, cpu=2, time=sec(1.84), probSize=4799.995524),
               ]
     
-    modelPoints = points[:15]
+    #modelPoints = points[:15]
     
     
     minRating = sys.maxint
     model = None
     bestBasis = None
     
+    '''
     for c in range(0, len(points)):
         modelPoints = points[:c]
         try:
@@ -108,6 +128,33 @@ def run():
             model = m
             minRating = rating
             bestBasis = c
+    '''
+            
+    for c in range(1, 5):
+        
+        adjustedVboxPoints = []
+        for p in vboxPoints:
+            p.cpu = c
+            adjustedVboxPoints.append(p)
+        
+        modelPoints = []
+        modelPoints.extend(ec2Points)
+        modelPoints.extend(adjustedVboxPoints)
+        
+        try:
+            #m = AmdahlsCompModel(dataPoints=modelPoints, scaleFunction='linear')
+            m = PolyCompModel2(dataPoints=modelPoints, scaleFunction='linear')
+        except:
+            print "Exception ", sys.exc_info()[0]
+            traceback.print_exc()
+            continue
+        rating = m.modelSumOfSquares(modelPoints)
+        print "basis = %d; diff = %f" %  (c, rating)
+        if rating < minRating:
+            model = m
+            minRating = rating
+            bestBasis = c       
+    
     
     print "\nBest basis = %d; diff = %f" %  (bestBasis, minRating)
     
@@ -130,9 +177,9 @@ def run():
     '''
     fig = plt.figure()
     ax = Axes3D(fig) #fig.gca(projection='3d')
-    maxProbSize = max([dp.probSize for dp in points]) * 1.2
+    maxProbSize = max([dp.probSize for dp in modelPoints]) * 1.2
     
-    probSize = arange(min([dp.probSize for dp in points]), maxProbSize, 5)
+    probSize = arange(min([dp.probSize for dp in modelPoints]), maxProbSize, 5)
     numProcs = arange(1, 16, 1)
     
     probSize, numProcs = np.meshgrid(probSize, numProcs)
@@ -150,21 +197,21 @@ def run():
     #        linewidth=0, antialiased=False)
     
     rstride = 1#(max([dp.machineCount for dp in points]) - min([dp.machineCount for dp in points])) / 20
-    cstride = int(math.ceil(true_divide((max([dp.probSize for dp in points]) - min([dp.probSize for dp in points])), 45)))
+    cstride = int(math.ceil(true_divide((max([dp.probSize for dp in modelPoints]) - min([dp.probSize for dp in modelPoints])), 45)))
     
     surf = ax.plot_wireframe(probSize, numProcs, time, rstride=rstride, cstride=cstride,
              antialiased=False)
     
-    for p in points:
+    for p in modelPoints:
         ax.scatter(array([p.probSize]), array([p.machineCount]), array([p.time]), c='r', marker='o')
             
-    ax.set_zlim3d(0, max([p.time for p in points]))
-    ax.set_xlim3d(min([p.probSize for p in points]), maxProbSize)
+    ax.set_zlim3d(0, max([p.time for p in modelPoints]))
+    ax.set_xlim3d(min([p.probSize for p in modelPoints]), maxProbSize)
     ax.w_zaxis.set_major_locator(LinearLocator(6))
     ax.w_zaxis.set_major_formatter(FormatStrFormatter('%.03f'))
     ax.w_yaxis.set_major_formatter(FormatStrFormatter('%d'))
     ax.w_xaxis.set_major_formatter(FormatStrFormatter('%d'))
-    savefig("test.png")
+    #savefig("test.png")
     plt.show()
     
 if __name__ == "__main__":
