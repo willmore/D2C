@@ -1,4 +1,4 @@
-from numpy import true_divide, array, ceil, minimum, clip, mean, subtract
+from numpy import true_divide, array, ceil, minimum, clip, mean, subtract, add
 from scipy.optimize import leastsq
 import numpy
 import types
@@ -428,4 +428,34 @@ class PolyCompModel2(CompModel):
         
         #self.modelFunc = lambda probSize, cpu, count: true_divide(time_1(probSize), speedup(n)) / cpu
         self.modelFunc = modelFunc
+        
+        
+class PolyCompModel3(CompModel):
+    
+    def __init__(self, deploymentTemplate=None, dataPoints=None, scaleFunction='linear'):
+        
+        CompModel.__init__(self, deploymentTemplate, dataPoints)
+        
+        self.__generateModel(scaleFunction)
+        #self.__generateModel()
+        
+    def __generateModel(self, scaleFunction):
+        
+        def model_v(v, probSize, cpu, count):
+            return ( (v[0] + probSize * v[1]) / (cpu + (1 - cpu) * v[2]) ) / cpu
+        
+        ef = lambda v, probSize, cpu, count, time: (model_v(v, probSize, cpu, count)- time)
+        v0 = [1.,1.,1.]
+        
+        probSizes = array([p.probSize for p in self.dataPoints])
+        cpus = array([p.cpu for p in self.dataPoints])
+        counts = array([p.machineCount for p in self.dataPoints])
+        times = array([p.normalizedTime for p in self.dataPoints])
+        
+        v, success = leastsq(ef, v0, args=(probSizes, cpus, counts, times), maxfev=10000)
+        print "Vs = ", v
+        def model(probSize, cpu, count):
+            return model_v(v, probSize, cpu, count)
+        
+        self.modelFunc = model
         

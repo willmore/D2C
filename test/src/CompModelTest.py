@@ -171,10 +171,10 @@ class CompModelTest(unittest.TestCase):
                         ec2Cert="",
                         instanceTypes=[
                                        InstanceType('m1.small', 2, 1, 256, 2, None, 1.0),
-                                       #InstanceType('m1.large', 2, 2, 1792, 15, None, 2.0),
-                                       #InstanceType('m1.xlarge', 2, 1, 1792, 20, None, 3.0),
-                                       #InstanceType('c1.medium', 2, 2, 512, 5, None, 2.0),
-                                       #InstanceType('c1.xlarge', 2, 4, 1792, 20, None, 3.0)
+                                       InstanceType('m1.large', 2, 2, 1792, 15, None, 2.0),
+                                       InstanceType('m1.xlarge', 2, 1, 1792, 20, None, 3.0),
+                                       InstanceType('c1.medium', 2, 2, 512, 5, None, 2.0),
+                                       InstanceType('c1.xlarge', 2, 4, 1792, 20, None, 3.0)
                                        ]
                                        )
         

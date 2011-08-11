@@ -7,7 +7,7 @@ from mpl_toolkits.mplot3d import Axes3D
 
 
 
-from d2c.model.CompModel import AmdahlsCompModel, DataPoint, PolyCompModel2
+from d2c.model.CompModel import AmdahlsCompModel, DataPoint, PolyCompModel2, PolyCompModel3
 
 
 
@@ -130,7 +130,7 @@ def run():
             bestBasis = c
     '''
             
-    for c in range(1, 5):
+    for c in (float(x)*.2 for x in range(1, 10)):
         
         adjustedVboxPoints = []
         for p in vboxPoints:
@@ -143,20 +143,20 @@ def run():
         
         try:
             #m = AmdahlsCompModel(dataPoints=modelPoints, scaleFunction='linear')
-            m = PolyCompModel2(dataPoints=modelPoints, scaleFunction='linear')
+            m = PolyCompModel3(dataPoints=modelPoints, scaleFunction='linear')
         except:
             print "Exception ", sys.exc_info()[0]
             traceback.print_exc()
             continue
         rating = m.modelSumOfSquares(modelPoints)
-        print "basis = %d; diff = %f" %  (c, rating)
+        print "basis = %f; diff = %f" %  (c, rating)
         if rating < minRating:
             model = m
             minRating = rating
             bestBasis = c       
     
     
-    print "\nBest basis = %d; diff = %f" %  (bestBasis, minRating)
+    print "\nBest basis = %f; diff = %f" %  (bestBasis, minRating)
     
     
     
@@ -184,7 +184,7 @@ def run():
     
     probSize, numProcs = np.meshgrid(probSize, numProcs)
     
-    time = model.modelFunc(probSize, 2, numProcs)
+    time = model.modelFunc(probSize, 1, numProcs)
     
     colortuple = ('y', 'b')
     colors = np.empty(probSize.shape, dtype=str)
@@ -203,9 +203,10 @@ def run():
              antialiased=False)
     
     for p in modelPoints:
-        ax.scatter(array([p.probSize]), array([p.machineCount]), array([p.time]), c='r', marker='o')
+        ''' Note the normalization of time by cpu speed '''
+        ax.scatter(array([p.probSize]), array([p.machineCount]), array([p.time * p.cpu]), c='r', marker='o')
             
-    ax.set_zlim3d(0, max([p.time for p in modelPoints]))
+    ax.set_zlim3d(0, max([p.time * p.cpu for p in modelPoints]))
     ax.set_xlim3d(min([p.probSize for p in modelPoints]), maxProbSize)
     ax.w_zaxis.set_major_locator(LinearLocator(6))
     ax.w_zaxis.set_major_formatter(FormatStrFormatter('%.03f'))
