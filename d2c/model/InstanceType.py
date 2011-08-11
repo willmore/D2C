@@ -22,7 +22,7 @@ class InstanceType(object):
         self.cpuCount = cpuCount
         self.memory = memory
         self.disk = disk
-        self.architectures = [a for a in architectures]
+        self.architectures = list(architectures) if architectures is not None else list()
         self.costPerHour = costPerHour
     
 '''        

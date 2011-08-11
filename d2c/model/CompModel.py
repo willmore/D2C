@@ -1,6 +1,7 @@
 from numpy import true_divide, array, ceil, minimum, clip, mean, subtract
 from scipy.optimize import leastsq
 import numpy
+import types
 
 from .Deployment import DeploymentState
 
@@ -182,27 +183,18 @@ class CompModel:
         print "Creating cost func for cloud ", cloud.name
         
         def model(problemSize):
-            
-            bestCost = array([sys.maxint for _ in problemSize])
-            #bestType = None
-            #bestTime = None
-            #bestCount = None
-            
+            try:
+                bestCost = array([sys.maxint for _ in problemSize])
+            except:
+                bestCost = sys.maxint
+                
             for instanceType in cloud.instanceTypes:
-                for c in range(1, 16):
+                for c in range(1, 64):
                     t = self.modelFunc(problemSize, instanceType.cpu, c*instanceType.cpuCount)
-                    #TODO prevent modelFunc from ever returning negative numbers...
-                    t = clip(t, 0, sys.maxint)
-                    hours = ceil(true_divide(t, 3600))
+                    hours = ceil(true_divide(t, 3600.0))
                     cost = instanceType.costPerHour * c * hours
                     bestCost = minimum(bestCost, cost)
-                    #if cost < bestCost:
-                        #bestTime = t
-                        #bestType = instanceType
-                        #bestCount = c
-                        #bestCost = cost
-                        
-            #return (bestCost, bestTime, bestType, bestCount)
+
             print "Best cost", bestCost
             return bestCost
             
