@@ -8,7 +8,7 @@ from d2c.controller.DeploymentCreatorController import DeploymentCreatorControll
 
 from .DeploymentCreator import DeploymentCreator
 
-from d2c.model.CompModel import PolyCompModel2
+from d2c.model.CompModel import GustafsonCompModel
 
 from pylab import *
 from numpy import *
@@ -154,7 +154,7 @@ class CanvasPanel(wx.Panel):
     def handleShow(self, evt):
            
         #self.Bind(wx.EVT_, self.handleShow)        
-        model = PolyCompModel2(self.deploymentTemplate, scaleFunction='linear')
+        model = GustafsonCompModel(self.deploymentTemplate, scaleFunction='linear')
         self.SetBackgroundColour(wx.NamedColor("WHITE"))
 
         probSize = arange(min([d.problemSize for d in self.deploymentTemplate.deployments]), 
@@ -255,7 +255,7 @@ class CostGraphPanel(wx.Panel):
            
         #self.Bind(wx.EVT_, self.handleShow)
         
-        model = PolyCompModel2(self.deploymentTemplate, scaleFunction='linear')
+        model = GustafsonCompModel(self.deploymentTemplate, scaleFunction='linear')
         self.SetBackgroundColour(wx.NamedColor("WHITE"))
         
         self.figure = Figure()

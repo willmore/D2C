@@ -7,7 +7,7 @@ from mpl_toolkits.mplot3d import Axes3D
 
 
 
-from d2c.model.CompModel import AmdahlsCompModel, DataPoint, PolyCompModel2, PolyCompModel3
+from d2c.model.CompModel import AmdahlsCompModel, DataPoint, GustafsonCompModel, PolyCompModel3
 
 
 
@@ -117,7 +117,7 @@ def run():
         modelPoints = points[:c]
         try:
             #m = AmdahlsCompModel(dataPoints=modelPoints, scaleFunction='linear')
-            m = PolyCompModel2(dataPoints=modelPoints, scaleFunction='linear')
+            m = GustafsonCompModel(dataPoints=modelPoints, scaleFunction='linear')
         except:
             print "Exception ", sys.exc_info()[0]
             traceback.print_exc()

@@ -152,6 +152,7 @@ class SimpleDataPoint(DataPoint):
         self.time = time
         self.probSize = probSize
         self.normalizedTime = self.cpu * self.time
+        self.totalMemory = totalMemory
 
 class DeploymentDataPoint(DataPoint):
     
@@ -165,6 +166,7 @@ class DeploymentDataPoint(DataPoint):
         self.probSize = deployment.problemSize
         self.totalMemory = deployment.totalMemory
         self.normalizedTime = self.cpu * self.time
+        self.totalMemory = self.totalMemory
 
 def toDataPoints(deploymentTemplate):
     '''
@@ -182,7 +184,28 @@ class CompModel:
             raise Exception("Only one of deploymentTemplate and dataPoints may be set (not None)")
         
         self.dataPoints = toDataPoints(deploymentTemplate) if deploymentTemplate is not None else dataPoints
-        self.modeFunc = None
+        self.modelFunc = None
+        self.memoryModel = None
+        self.__generateMemoryModel()
+        
+    def __generateMemoryModel(self):
+        '''
+        Create self.memoryFunc which has as input N problem size and output M max memory required to solve
+        '''    
+        def memory_v(v, N):
+            return v[0] + v[1]*N
+        
+        ef = lambda v, N, M: (memory_v(v, N)-M)
+        v0 = [1.,1.]
+        Ns = array([d.probSize for d in self.dataPoints])
+        Ms = array([d.totalMemory for d in self.dataPoints])
+        Vs, success = leastsq(ef, v0, args=(Ns, Ms), maxfev=10000)
+        
+        def memoryModel(N):
+            return memory_v(Vs, N)
+        
+        self.memoryModel = memoryModel
+        
         
     def costModel(self, cloud):
         '''
@@ -361,7 +384,7 @@ class PolyCompModel(CompModel):
         self.modelFunc = lambda ps, cpu, count: runTime(v, ps, count) / cpu
         
         
-class PolyCompModel2(CompModel):
+class GustafsonCompModel(CompModel):
     
     def __init__(self, deploymentTemplate=None, dataPoints=None, scaleFunction='linear'):
         

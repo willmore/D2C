@@ -4,7 +4,7 @@ import numpy
 #from scipy.optimize import leastsq
 from d2c.model.InstanceType import InstanceType
 from d2c.model.Cloud import EC2Cloud
-from d2c.model.CompModel import PolyCompModel, AmdahlsCompModel, PolyCompModel2
+from d2c.model.CompModel import PolyCompModel, AmdahlsCompModel, GustafsonCompModel
 import boto
 
 import unittest
@@ -35,9 +35,9 @@ class CompModelTest(unittest.TestCase):
         self.assertGreater(runTime(t1, p, 1000), 0)
             
     def testAmdahlModelLinear(self):
-        points = [SimpleDataPoint(cpuCount=1, cpu=1, time=1000, probSize=35), 
-                  SimpleDataPoint(cpuCount=2, cpu=1, time=600, probSize=35), 
-                  SimpleDataPoint(cpuCount=2, cpu=1, time=1200, probSize=70)]
+        points = [SimpleDataPoint(cpuCount=1, cpu=1, time=1000, probSize=35, totalMemory=100), 
+                  SimpleDataPoint(cpuCount=2, cpu=1, time=600, probSize=35, totalMemory=100), 
+                  SimpleDataPoint(cpuCount=2, cpu=1, time=1200, probSize=70, totalMemory=100)]
         
         model = AmdahlsCompModel(dataPoints=points, scaleFunction='linear')
         
@@ -65,9 +65,9 @@ class CompModelTest(unittest.TestCase):
         
         
     def testAmdahlModelLinearVariousCpu(self):
-        points = [SimpleDataPoint(cpuCount=1, cpu=1, time=1000, probSize=35), 
-                  SimpleDataPoint(cpuCount=2, cpu=2, time=300, probSize=35), 
-                  SimpleDataPoint(cpuCount=2, cpu=1, time=1200, probSize=70)]
+        points = [SimpleDataPoint(cpuCount=1, cpu=1, time=1000, probSize=35, totalMemory=100), 
+                  SimpleDataPoint(cpuCount=2, cpu=2, time=300, probSize=35, totalMemory=100), 
+                  SimpleDataPoint(cpuCount=2, cpu=1, time=1200, probSize=70, totalMemory=100)]
         
         model = AmdahlsCompModel(dataPoints=points, scaleFunction='linear')
         
@@ -80,9 +80,9 @@ class CompModelTest(unittest.TestCase):
         self.assertAlmostEquals(2400, model.modelFunc(probSize=140, cpu=1, count=2))
         
     def testAmdahlModelLinearVariousCpu2(self):
-        points = [SimpleDataPoint(cpuCount=1, cpu=1, time=1000, probSize=35), 
-                  SimpleDataPoint(cpuCount=2, cpu=2, time=300, probSize=35), 
-                  SimpleDataPoint(cpuCount=2, cpu=1, time=1200, probSize=70)]
+        points = [SimpleDataPoint(cpuCount=1, cpu=1, time=1000, probSize=35, totalMemory=100), 
+                  SimpleDataPoint(cpuCount=2, cpu=2, time=300, probSize=35, totalMemory=100), 
+                  SimpleDataPoint(cpuCount=2, cpu=1, time=1200, probSize=70, totalMemory=100)]
         
         model = AmdahlsCompModel(dataPoints=points, scaleFunction='linear')
         
@@ -95,9 +95,9 @@ class CompModelTest(unittest.TestCase):
         self.assertAlmostEquals(1200, model.modelFunc(probSize=140, cpu=2, count=2))
         
     def testAmdahlModelLog(self):
-        points = [SimpleDataPoint(cpuCount=1, cpu=1, time=1000, probSize=35), 
-                  SimpleDataPoint(cpuCount=2, cpu=1, time=600, probSize=35), 
-                  SimpleDataPoint(cpuCount=2, cpu=1, time=1200, probSize=70)]
+        points = [SimpleDataPoint(cpuCount=1, cpu=1, time=1000, probSize=35, totalMemory=100), 
+                  SimpleDataPoint(cpuCount=2, cpu=1, time=600, probSize=35, totalMemory=100), 
+                  SimpleDataPoint(cpuCount=2, cpu=1, time=1200, probSize=70, totalMemory=100)]
         
         model = AmdahlsCompModel(dataPoints=points, scaleFunction='log')
         
@@ -106,11 +106,11 @@ class CompModelTest(unittest.TestCase):
         #self.assertEquals(1200, model.modelFunc(probSize=70, cpu=1, count=2))
         
     def testPolyCompModel2Simple(self):
-        points = [SimpleDataPoint(cpuCount=1, cpu=1, time=1000, probSize=35), 
-                  SimpleDataPoint(cpuCount=2, cpu=2, time=300, probSize=35), 
-                  SimpleDataPoint(cpuCount=1, cpu=1, time=2000, probSize=70)]
+        points = [SimpleDataPoint(cpuCount=1, cpu=1, time=1000, probSize=35, totalMemory=100), 
+                  SimpleDataPoint(cpuCount=2, cpu=2, time=300, probSize=35, totalMemory=100), 
+                  SimpleDataPoint(cpuCount=1, cpu=1, time=2000, probSize=70, totalMemory=100)]
         
-        model = PolyCompModel2(dataPoints=points, scaleFunction='linear')
+        model = GustafsonCompModel(dataPoints=points, scaleFunction='linear')
         
         self.assertAlmostEquals(1.66666666, model.speedUpFunc(2))
         
@@ -126,12 +126,12 @@ class CompModelTest(unittest.TestCase):
         #self.assertAlmostEquals(1200, model.modelFunc(probSize=140, cpu=2, count=2))
         
     def testPolyCompModel2Simple2(self):
-        points = [SimpleDataPoint(cpuCount=1, cpu=1, time=1100, probSize=35), 
-                  SimpleDataPoint(cpuCount=2, cpu=2, time=300, probSize=35), 
-                  SimpleDataPoint(cpuCount=1, cpu=1, time=2000, probSize=70),
-                  SimpleDataPoint(cpuCount=1, cpu=1, time=3100, probSize=105)]
+        points = [SimpleDataPoint(cpuCount=1, cpu=1, time=1100, probSize=35, totalMemory=100), 
+                  SimpleDataPoint(cpuCount=2, cpu=2, time=300, probSize=35, totalMemory=100), 
+                  SimpleDataPoint(cpuCount=1, cpu=1, time=2000, probSize=70, totalMemory=100),
+                  SimpleDataPoint(cpuCount=1, cpu=1, time=3100, probSize=105, totalMemory=100)]
         
-        model = PolyCompModel2(dataPoints=points, scaleFunction='linear')
+        model = GustafsonCompModel(dataPoints=points, scaleFunction='linear')
         
         ''' Assert speed up func matches observation '''
         self.assertAlmostEquals(1.83333333, model.speedUpFunc(2))
@@ -149,11 +149,11 @@ class CompModelTest(unittest.TestCase):
         self.assertAlmostEquals(400.0000, model.modelFunc(probSize=35, cpu=1, count=3))
         
     def testPolyCompModel2Cost(self):
-        points = [SimpleDataPoint(cpuCount=1, cpu=1, time=100, probSize=35), 
-                  SimpleDataPoint(cpuCount=2, cpu=2, time=30, probSize=35), 
-                  SimpleDataPoint(cpuCount=1, cpu=1, time=200, probSize=70)]
+        points = [SimpleDataPoint(cpuCount=1, cpu=1, time=100, probSize=35, totalMemory=100), 
+                  SimpleDataPoint(cpuCount=2, cpu=2, time=30, probSize=35, totalMemory=100), 
+                  SimpleDataPoint(cpuCount=1, cpu=1, time=200, probSize=70, totalMemory=100)]
         
-        model = PolyCompModel2(dataPoints=points, scaleFunction='linear')
+        model = GustafsonCompModel(dataPoints=points, scaleFunction='linear')
         
         cloud = EC2Cloud(None, 
                         name="Ec2", 
@@ -182,6 +182,20 @@ class CompModelTest(unittest.TestCase):
         ''' Should run on single m1.small for  1hr< time <2hr'''
         self.assertEquals(2.0, costModel(35 * 37 * 2))
         self.assertEquals(2.0, costModel(35 * 38 * 2))
+        
+    def testMemoryModel(self):
+        points = [SimpleDataPoint(cpuCount=1, cpu=1, time=100, probSize=35, totalMemory=100), 
+                  SimpleDataPoint(cpuCount=2, cpu=2, time=30, probSize=35, totalMemory=100), 
+                  SimpleDataPoint(cpuCount=1, cpu=1, time=200, probSize=70, totalMemory=200)]
+        
+        model = GustafsonCompModel(dataPoints=points, scaleFunction='linear')
+          
+        memoryModel = model.memoryModel
+        self.assertNotEquals(None, memoryModel)
+        
+        self.assertAlmostEquals(100, memoryModel(35))
+        self.assertAlmostEquals(200, memoryModel(70))
+        self.assertAlmostEquals(400, memoryModel(140))
         
 
 if __name__ == "__main__":
