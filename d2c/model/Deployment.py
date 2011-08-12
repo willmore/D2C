@@ -95,7 +95,6 @@ class StateEvent(object):
     def __init__(self, state, time):
         self.state = state
         self.time = time
-           
 
 class Deployment(object):
     '''
@@ -139,6 +138,9 @@ class Deployment(object):
         self.stateEvents = list(stateEvents)
     
         self.problemSize = problemSize
+        
+    def getMaxMemory(self):
+        return self.maxMemory
     
     def setLogger(self, logger, cascade=True):
         self.logger = logger

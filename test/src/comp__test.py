@@ -7,7 +7,7 @@ from mpl_toolkits.mplot3d import Axes3D
 
 
 
-from d2c.model.CompModel import AmdahlsCompModel, DataPoint, GustafsonCompModel, PolyCompModel3
+from d2c.model.CompModel import AmdahlsCompModel, SimpleDataPoint, GustafsonCompModel, PolyCompModel3
 
 
 
@@ -66,43 +66,43 @@ def run():
     vboxPoints = [
                   
               #Local Data
-              DataPoint(cpuCount=1, cpu=vboxCpu, time=sec(0.07), probSize=85.895824),
-              DataPoint(cpuCount=2, cpu=vboxCpu, time=sec(0.04), probSize=85.895824),
+              SimpleDataPoint(cpuCount=1, cpu=vboxCpu, time=sec(0.07), probSize=85.895824, totalMemory=12),
+              SimpleDataPoint(cpuCount=2, cpu=vboxCpu, time=sec(0.04), probSize=85.895824, totalMemory=12),
               
-              DataPoint(cpuCount=1, cpu=vboxCpu, time=sec(0.08), probSize=100.000000),
-              DataPoint(cpuCount=2, cpu=vboxCpu, time=sec(0.05), probSize=100.000000),
+              SimpleDataPoint(cpuCount=1, cpu=vboxCpu, time=sec(0.08), probSize=100.000000, totalMemory=12),
+              SimpleDataPoint(cpuCount=2, cpu=vboxCpu, time=sec(0.05), probSize=100.000000, totalMemory=12),
               
-              DataPoint(cpuCount=1, cpu=vboxCpu, time=sec(0.27), probSize=199.996164),
-              DataPoint(cpuCount=2, cpu=vboxCpu, time=sec(0.17), probSize=199.996164),
+              SimpleDataPoint(cpuCount=1, cpu=vboxCpu, time=sec(0.27), probSize=199.996164, totalMemory=12),
+              SimpleDataPoint(cpuCount=2, cpu=vboxCpu, time=sec(0.17), probSize=199.996164, totalMemory=12),
               
-              DataPoint(cpuCount=1, cpu=vboxCpu, time=sec(0.76), probSize=374.964496),
-              DataPoint(cpuCount=2, cpu=vboxCpu, time=sec(0.51), probSize=374.964496)
+              SimpleDataPoint(cpuCount=1, cpu=vboxCpu, time=sec(0.76), probSize=374.964496, totalMemory=12),
+              SimpleDataPoint(cpuCount=2, cpu=vboxCpu, time=sec(0.51), probSize=374.964496, totalMemory=12)
                   
                   ]
     
    
     ec2Points = [
               #Local Data
-              DataPoint(cpuCount=1, cpu=vboxCpu, time=sec(0.07), probSize=85.895824),
-              DataPoint(cpuCount=2, cpu=vboxCpu, time=sec(0.04), probSize=85.895824),
+              SimpleDataPoint(cpuCount=1, cpu=vboxCpu, time=sec(0.07), probSize=85.895824, totalMemory=12),
+              SimpleDataPoint(cpuCount=2, cpu=vboxCpu, time=sec(0.04), probSize=85.895824, totalMemory=12),
               
-              DataPoint(cpuCount=1, cpu=vboxCpu, time=sec(0.08), probSize=100.000000),
-              DataPoint(cpuCount=2, cpu=vboxCpu, time=sec(0.05), probSize=100.000000),
+              SimpleDataPoint(cpuCount=1, cpu=vboxCpu, time=sec(0.08), probSize=100.000000, totalMemory=12),
+              SimpleDataPoint(cpuCount=2, cpu=vboxCpu, time=sec(0.05), probSize=100.000000, totalMemory=12),
               
-              DataPoint(cpuCount=1, cpu=vboxCpu, time=sec(0.27), probSize=199.996164),
-              DataPoint(cpuCount=2, cpu=vboxCpu, time=sec(0.17), probSize=199.996164),
+              SimpleDataPoint(cpuCount=1, cpu=vboxCpu, time=sec(0.27), probSize=199.996164, totalMemory=12),
+              SimpleDataPoint(cpuCount=2, cpu=vboxCpu, time=sec(0.17), probSize=199.996164, totalMemory=12),
               
-              DataPoint(cpuCount=1, cpu=vboxCpu, time=sec(0.76), probSize=374.964496),
-              DataPoint(cpuCount=2, cpu=vboxCpu, time=sec(0.51), probSize=374.964496),
+              SimpleDataPoint(cpuCount=1, cpu=vboxCpu, time=sec(0.76), probSize=374.964496, totalMemory=12),
+              SimpleDataPoint(cpuCount=2, cpu=vboxCpu, time=sec(0.51), probSize=374.964496, totalMemory=12),
               
               #EC2 Data
-              DataPoint(cpuCount=2, cpu=3.25, time=sec(0.196), probSize=374.964496),
-              DataPoint(cpuCount=2, cpu=3.25, time=sec(1.86), probSize=1699.995361),
-              DataPoint(cpuCount=4, cpu=3.25, time=sec(2.28), probSize=2999.971984),
-              DataPoint(cpuCount=8, cpu=2, time=sec(1.77), probSize=2999.971984),
-              DataPoint(cpuCount=16, cpu=2, time=sec(0.93), probSize=2999.971984),
-              DataPoint(cpuCount=4, cpu=3.25, time=sec(2.72), probSize=3419.910400),
-              DataPoint(cpuCount=16, cpu=2, time=sec(1.84), probSize=4799.995524),
+              SimpleDataPoint(cpuCount=2, cpu=3.25, time=sec(0.196), probSize=374.964496, totalMemory=12),
+              SimpleDataPoint(cpuCount=2, cpu=3.25, time=sec(1.86), probSize=1699.995361, totalMemory=12),
+              SimpleDataPoint(cpuCount=4, cpu=3.25, time=sec(2.28), probSize=2999.971984, totalMemory=12),
+              SimpleDataPoint(cpuCount=8, cpu=2, time=sec(1.77), probSize=2999.971984, totalMemory=12),
+              SimpleDataPoint(cpuCount=16, cpu=2, time=sec(0.93), probSize=2999.971984, totalMemory=12),
+              SimpleDataPoint(cpuCount=4, cpu=3.25, time=sec(2.72), probSize=3419.910400, totalMemory=12),
+              SimpleDataPoint(cpuCount=16, cpu=2, time=sec(1.84), probSize=4799.995524, totalMemory=12),
               ]
     
     #modelPoints = points[:15]
@@ -143,7 +143,7 @@ def run():
         
         try:
             #m = AmdahlsCompModel(dataPoints=modelPoints, scaleFunction='linear')
-            m = PolyCompModel3(dataPoints=modelPoints, scaleFunction='linear')
+            m = GustafsonCompModel(dataPoints=modelPoints, scaleFunction='linear')
         except:
             print "Exception ", sys.exc_info()[0]
             traceback.print_exc()

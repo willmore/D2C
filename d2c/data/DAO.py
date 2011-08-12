@@ -127,6 +127,7 @@ class DAO:
                             Column('state', String, nullable=False),
                             Column('dataDir', String),
                             Column('pollRate', Integer),
+                            Column('maxMemory', Integer),
                             Column('problemSize', Integer, nullable=False)
                             )  
         

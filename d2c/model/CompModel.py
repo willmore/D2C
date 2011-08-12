@@ -1,4 +1,4 @@
-from numpy import true_divide, array, ceil, minimum, clip, mean, subtract, add
+from numpy import true_divide, array, ceil, minimum, clip, mean, subtract, add, where
 from scipy.optimize import leastsq
 import numpy
 import types
@@ -164,15 +164,14 @@ class DeploymentDataPoint(DataPoint):
         self.cpu = deployment.roles[0].instanceType.cpu
         self.time = deployment.roleRunTime()
         self.probSize = deployment.problemSize
-        self.totalMemory = deployment.totalMemory
+        self.totalMemory = deployment.getMaxMemory()
         self.normalizedTime = self.cpu * self.time
-        self.totalMemory = self.totalMemory
 
 def toDataPoints(deploymentTemplate):
     '''
     Map a DeploymentTemplate to a list of DataPoints
     '''
-    return [DataPoint(d) for d in deploymentTemplate.deployments if d.state == DeploymentState.COMPLETED]
+    return [DeploymentDataPoint(d) for d in deploymentTemplate.deployments if d.state == DeploymentState.COMPLETED]
     
 class CompModel:
 
@@ -223,17 +222,22 @@ class CompModel:
                 bestCost = sys.maxint
                 
             for instanceType in cloud.instanceTypes:
-                for c in range(1, 64):
+                for c in xrange(1, 64):
+                    ''' Filter for memory requirements '''
+                    fits = self.memoryModel(problemSize) > (c * instanceType.memory)
+                    
                     t = self.modelFunc(problemSize, instanceType.cpu, c*instanceType.cpuCount)
                     hours = ceil(true_divide(t, 3600.0))
                     cost = instanceType.costPerHour * c * hours
-                    bestCost = minimum(bestCost, cost)
+                    
+                    bestCost = where(fits, minimum(bestCost, cost), bestCost)
+                    #bestCost = minimum(bestCost, cost)
 
             print "Best cost", bestCost
             return bestCost
             
         return model
-    
+        
     def modelSumOfSquares(self, dataPoints):
         '''
         Given a set of real data points, return the sum of squares of using 

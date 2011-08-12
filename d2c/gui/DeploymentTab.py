@@ -261,7 +261,7 @@ class CostGraphPanel(wx.Panel):
         self.figure = Figure()
         self.canvas = FigureCanvas(self, -1, self.figure)
         self.axes = self.figure.add_subplot(111)
-        t = arange(10000,44000,1000)
+        t = arange(1000,44000,100)
         
         for cloud in self.clouds:
             s = model.costModel(cloud)(t)

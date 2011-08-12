@@ -197,6 +197,7 @@ def init_db(dao, confFile):
     d.state = DeploymentState.COMPLETED
     d.stateEvents = [StateEvent(DeploymentState.ROLES_STARTED, 0),
                     StateEvent(DeploymentState.JOB_COMPLETED, sec(0.07))]
+    d.maxMemory = 124
     dao.add(d)
     
     roleReq = {master : (deskImg, vbCloud.instanceTypes[0], 1),
@@ -205,6 +206,7 @@ def init_db(dao, confFile):
     d.state = DeploymentState.COMPLETED
     d.stateEvents = [StateEvent(DeploymentState.ROLES_STARTED, 0),
                     StateEvent(DeploymentState.JOB_COMPLETED, sec(0.04))]
+    d.maxMemory = 124
     dao.add(d)
     
     roleReq = {master : (deskImg, vbCloud.instanceTypes[0], 1)}
@@ -212,6 +214,7 @@ def init_db(dao, confFile):
     d.state = DeploymentState.COMPLETED
     d.stateEvents = [StateEvent(DeploymentState.ROLES_STARTED, 0),
                     StateEvent(DeploymentState.JOB_COMPLETED, sec(0.08))]
+    d.maxMemory = 126
     dao.add(d)
     
     roleReq = {master : (deskImg, vbCloud.instanceTypes[0], 1),
@@ -220,6 +223,7 @@ def init_db(dao, confFile):
     d.state = DeploymentState.COMPLETED
     d.stateEvents = [StateEvent(DeploymentState.ROLES_STARTED, 0),
                     StateEvent(DeploymentState.JOB_COMPLETED, sec(0.05))]
+    d.maxMemory = 127
     dao.add(d)
     
     roleReq = {master : (deskImg, vbCloud.instanceTypes[0], 1)}
@@ -227,6 +231,7 @@ def init_db(dao, confFile):
     d.state = DeploymentState.COMPLETED
     d.stateEvents = [StateEvent(DeploymentState.ROLES_STARTED, 0),
                     StateEvent(DeploymentState.JOB_COMPLETED, sec(0.27))]
+    d.maxMemory = 258
     dao.add(d)
     
     roleReq = {master : (deskImg, vbCloud.instanceTypes[0], 1),
@@ -235,6 +240,7 @@ def init_db(dao, confFile):
     d.state = DeploymentState.COMPLETED
     d.stateEvents = [StateEvent(DeploymentState.ROLES_STARTED, 0),
                     StateEvent(DeploymentState.JOB_COMPLETED, sec(0.17))]
+    d.maxMemory = 243
     dao.add(d)
     
     roleReq = {master : (deskImg, vbCloud.instanceTypes[0], 1)}
@@ -242,6 +248,7 @@ def init_db(dao, confFile):
     d.state = DeploymentState.COMPLETED
     d.stateEvents = [StateEvent(DeploymentState.ROLES_STARTED, 0),
                     StateEvent(DeploymentState.JOB_COMPLETED, sec(0.76))]
+    d.maxMemory = 340
     dao.add(d)
     
     roleReq = {master : (deskImg, vbCloud.instanceTypes[0], 1),
@@ -250,6 +257,7 @@ def init_db(dao, confFile):
     d.state = DeploymentState.COMPLETED
     d.stateEvents = [StateEvent(DeploymentState.ROLES_STARTED, 0),
                      StateEvent(DeploymentState.JOB_COMPLETED, sec(0.51))]
+    d.maxMemory = 345
     dao.add(d)
     
     '''HPCC EC2 results'''
@@ -259,10 +267,10 @@ def get_instance_types(dao):
     X86 = dao.getArchitecture('x86')
     X86_64 = dao.getArchitecture('x86_64')
     
-    return [InstanceType('t1.micro', 2, 2, 613, 0, (X86, X86_64), 0.025),
-            InstanceType('c1.medium', 2, 1, 1700, 160, (X86,), 0.095),
-            InstanceType('c1.xlarge', 2, 1, 1700, 160, (X86,), 0.095),
+    return [#InstanceType('t1.micro', 2, 2, 613, 0, (X86, X86_64), 0.025),
+            InstanceType('c1.medium', 2, 1, 1700, 160, (X86,), 0.19),
+            InstanceType('c1.xlarge', 2, 1, 1700, 160, (X86,), 0.76),
             InstanceType('m1.small', 2, 1, 1700, 160, (X86,), 0.095),
-            InstanceType('m1.large', 2, 2, 7500, 850, (X86_64,), 0.038),
+            InstanceType('m1.large', 2, 2, 7500, 850, (X86_64,), 0.38),
             InstanceType('m1.xlarge', 2, 4, 15000, 850, (X86_64,), 0.76)]
     
