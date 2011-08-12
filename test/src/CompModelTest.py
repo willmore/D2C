@@ -2,21 +2,14 @@ from pylab import *
 from numpy import *
 import numpy
 #from scipy.optimize import leastsq
-from d2c.model.InstanceType import InstanceType, Architecture
-from d2c.model.Cloud import EC2Cloud, DesktopCloud
-from d2c.model.Kernel import Kernel
-from d2c.model.DataCollector import DataCollector
-from d2c.model.SourceImage import Image, DesktopImage, AMI
-from d2c.model.DeploymentTemplate import DeploymentTemplate, RoleTemplate
-from d2c.model.FileExistsFinishedCheck import FileExistsFinishedCheck
-from d2c.model.AWSCred import AWSCred
-from d2c.model.Deployment import DeploymentState, StateEvent
+from d2c.model.InstanceType import InstanceType
+from d2c.model.Cloud import EC2Cloud
 from d2c.model.CompModel import PolyCompModel, AmdahlsCompModel, PolyCompModel2
 import boto
 
 import unittest
 
-from d2c.model.CompModel import CompModel, pEstimated, speedUp, runTime, DataPoint
+from d2c.model.CompModel import CompModel, pEstimated, speedUp, runTime, SimpleDataPoint
 
 class CompModelTest(unittest.TestCase):
 
@@ -40,12 +33,11 @@ class CompModelTest(unittest.TestCase):
         #Assert that the runtime never goes < 0 as num procs approaches inf
         self.assertGreater(runTime(t1, p, 200), 0)
         self.assertGreater(runTime(t1, p, 1000), 0)
-        
-        
+            
     def testAmdahlModelLinear(self):
-        points = [DataPoint(cpuCount=1, cpu=1, time=1000, probSize=35), 
-                  DataPoint(cpuCount=2, cpu=1, time=600, probSize=35), 
-                  DataPoint(cpuCount=2, cpu=1, time=1200, probSize=70)]
+        points = [SimpleDataPoint(cpuCount=1, cpu=1, time=1000, probSize=35), 
+                  SimpleDataPoint(cpuCount=2, cpu=1, time=600, probSize=35), 
+                  SimpleDataPoint(cpuCount=2, cpu=1, time=1200, probSize=70)]
         
         model = AmdahlsCompModel(dataPoints=points, scaleFunction='linear')
         
@@ -73,9 +65,9 @@ class CompModelTest(unittest.TestCase):
         
         
     def testAmdahlModelLinearVariousCpu(self):
-        points = [DataPoint(cpuCount=1, cpu=1, time=1000, probSize=35), 
-                  DataPoint(cpuCount=2, cpu=2, time=300, probSize=35), 
-                  DataPoint(cpuCount=2, cpu=1, time=1200, probSize=70)]
+        points = [SimpleDataPoint(cpuCount=1, cpu=1, time=1000, probSize=35), 
+                  SimpleDataPoint(cpuCount=2, cpu=2, time=300, probSize=35), 
+                  SimpleDataPoint(cpuCount=2, cpu=1, time=1200, probSize=70)]
         
         model = AmdahlsCompModel(dataPoints=points, scaleFunction='linear')
         
@@ -88,9 +80,9 @@ class CompModelTest(unittest.TestCase):
         self.assertAlmostEquals(2400, model.modelFunc(probSize=140, cpu=1, count=2))
         
     def testAmdahlModelLinearVariousCpu2(self):
-        points = [DataPoint(cpuCount=1, cpu=1, time=1000, probSize=35), 
-                  DataPoint(cpuCount=2, cpu=2, time=300, probSize=35), 
-                  DataPoint(cpuCount=2, cpu=1, time=1200, probSize=70)]
+        points = [SimpleDataPoint(cpuCount=1, cpu=1, time=1000, probSize=35), 
+                  SimpleDataPoint(cpuCount=2, cpu=2, time=300, probSize=35), 
+                  SimpleDataPoint(cpuCount=2, cpu=1, time=1200, probSize=70)]
         
         model = AmdahlsCompModel(dataPoints=points, scaleFunction='linear')
         
@@ -103,9 +95,9 @@ class CompModelTest(unittest.TestCase):
         self.assertAlmostEquals(1200, model.modelFunc(probSize=140, cpu=2, count=2))
         
     def testAmdahlModelLog(self):
-        points = [DataPoint(cpuCount=1, cpu=1, time=1000, probSize=35), 
-                  DataPoint(cpuCount=2, cpu=1, time=600, probSize=35), 
-                  DataPoint(cpuCount=2, cpu=1, time=1200, probSize=70)]
+        points = [SimpleDataPoint(cpuCount=1, cpu=1, time=1000, probSize=35), 
+                  SimpleDataPoint(cpuCount=2, cpu=1, time=600, probSize=35), 
+                  SimpleDataPoint(cpuCount=2, cpu=1, time=1200, probSize=70)]
         
         model = AmdahlsCompModel(dataPoints=points, scaleFunction='log')
         
@@ -114,9 +106,9 @@ class CompModelTest(unittest.TestCase):
         #self.assertEquals(1200, model.modelFunc(probSize=70, cpu=1, count=2))
         
     def testPolyCompModel2Simple(self):
-        points = [DataPoint(cpuCount=1, cpu=1, time=1000, probSize=35), 
-                  DataPoint(cpuCount=2, cpu=2, time=300, probSize=35), 
-                  DataPoint(cpuCount=1, cpu=1, time=2000, probSize=70)]
+        points = [SimpleDataPoint(cpuCount=1, cpu=1, time=1000, probSize=35), 
+                  SimpleDataPoint(cpuCount=2, cpu=2, time=300, probSize=35), 
+                  SimpleDataPoint(cpuCount=1, cpu=1, time=2000, probSize=70)]
         
         model = PolyCompModel2(dataPoints=points, scaleFunction='linear')
         
@@ -134,10 +126,10 @@ class CompModelTest(unittest.TestCase):
         #self.assertAlmostEquals(1200, model.modelFunc(probSize=140, cpu=2, count=2))
         
     def testPolyCompModel2Simple2(self):
-        points = [DataPoint(cpuCount=1, cpu=1, time=1100, probSize=35), 
-                  DataPoint(cpuCount=2, cpu=2, time=300, probSize=35), 
-                  DataPoint(cpuCount=1, cpu=1, time=2000, probSize=70),
-                  DataPoint(cpuCount=1, cpu=1, time=3100, probSize=105)]
+        points = [SimpleDataPoint(cpuCount=1, cpu=1, time=1100, probSize=35), 
+                  SimpleDataPoint(cpuCount=2, cpu=2, time=300, probSize=35), 
+                  SimpleDataPoint(cpuCount=1, cpu=1, time=2000, probSize=70),
+                  SimpleDataPoint(cpuCount=1, cpu=1, time=3100, probSize=105)]
         
         model = PolyCompModel2(dataPoints=points, scaleFunction='linear')
         
@@ -157,9 +149,9 @@ class CompModelTest(unittest.TestCase):
         self.assertAlmostEquals(400.0000, model.modelFunc(probSize=35, cpu=1, count=3))
         
     def testPolyCompModel2Cost(self):
-        points = [DataPoint(cpuCount=1, cpu=1, time=100, probSize=35), 
-                  DataPoint(cpuCount=2, cpu=2, time=30, probSize=35), 
-                  DataPoint(cpuCount=1, cpu=1, time=200, probSize=70)]
+        points = [SimpleDataPoint(cpuCount=1, cpu=1, time=100, probSize=35), 
+                  SimpleDataPoint(cpuCount=2, cpu=2, time=30, probSize=35), 
+                  SimpleDataPoint(cpuCount=1, cpu=1, time=200, probSize=70)]
         
         model = PolyCompModel2(dataPoints=points, scaleFunction='linear')
         

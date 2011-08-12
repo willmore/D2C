@@ -134,26 +134,37 @@ class LinearProbSizeScaleFunctionGenerator(ProbSizeScaleFunctionGenerator):
 
 class DataPoint(object):
     
+    __metaclass__ = ABCMeta
+    
+
+class SimpleDataPoint(DataPoint):
+
     def __init__(self, deployment=None, cpuCount=None, 
-                 cpu=None, time=None, probSize=None):
+                 cpu=None, time=None, probSize=None, totalMemory=None):
+        '''
+        totalMemory = peak memory used by the application across the cluster
+        '''
         
-        if deployment is not None and \
-            (cpuCount is not None or cpu is not None or time is not None or probSize is not None):
-            raise Exception("Illegal arguments")
+        DataPoint.__init__(self)  
         
-        if deployment is not None:
-            self.machineCount = reduce(lambda x,y: x+y, [r.count * r.instanceType.cpuCount for r in deployment.roles])
-            self.cpu = deployment.roles[0].instanceType.cpu
-            self.time = deployment.roleRunTime()
-            self.probSize = deployment.problemSize
-        else:
-            self.machineCount = cpuCount
-            self.cpu = cpu
-            self.time = time
-            self.probSize = probSize
-            
+        self.machineCount = cpuCount
+        self.cpu = cpu
+        self.time = time
+        self.probSize = probSize
         self.normalizedTime = self.cpu * self.time
+
+class DeploymentDataPoint(DataPoint):
+    
+    def __init__(self, deployment):
         
+        DataPoint.__init__(self)
+        
+        self.machineCount = reduce(lambda x,y: x+y, [r.count * r.instanceType.cpuCount for r in deployment.roles])
+        self.cpu = deployment.roles[0].instanceType.cpu
+        self.time = deployment.roleRunTime()
+        self.probSize = deployment.problemSize
+        self.totalMemory = deployment.totalMemory
+        self.normalizedTime = self.cpu * self.time
 
 def toDataPoints(deploymentTemplate):
     '''
