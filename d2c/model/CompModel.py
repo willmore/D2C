@@ -433,11 +433,14 @@ class GustafsonCompModel(CompModel):
                 #ss.append(s)
         
         def speed_up_v(v, n): 
-            return n + subtract(1, n) * v[0]
+            return n + (1 - n) * v[0]
         
         ef = lambda v, n, real_su: (speed_up_v(v, n)- real_su)
         v0 = [1]
         v_su, success = leastsq(ef, v0, args=(array([n for n,su in speed_ups]), array([su for n,su in speed_ups])), maxfev=10000)
+        
+        if not (success in (1,2,3,4)):
+            raise Exception("leastsq error code %d" % success)
         
         def speedup(n):
             su = speed_up_v(v_su, n)
@@ -478,9 +481,9 @@ class PolyCompModel3(CompModel):
         #self.__generateModel()
         
     def __generateModel(self, scaleFunction):
-        
+          
         def model_v(v, probSize, cpu, count):
-            return ( (v[0] + probSize * v[1]) / (cpu + (1 - cpu) * v[2]) ) / cpu
+            return ( (v[0] + probSize * v[1]) / (count - (1 - count) * (v[2] / probSize)) ) / cpu
         
         ef = lambda v, probSize, cpu, count, time: (model_v(v, probSize, cpu, count)- time)
         v0 = [1.,1.,1.]
@@ -491,9 +494,38 @@ class PolyCompModel3(CompModel):
         times = array([p.normalizedTime for p in self.dataPoints])
         
         v, success = leastsq(ef, v0, args=(probSizes, cpus, counts, times), maxfev=10000)
+        if not success in (1,2,3,4):
+            raise Exception("No solution found")
+        #print "Message = ", mesg
         print "Vs = ", v
         def model(probSize, cpu, count):
             return model_v(v, probSize, cpu, count)
         
         self.modelFunc = model
+
+def serial_time(dp1, dp2):
+    '''
+    Based on Gustafon's, find the serial time spent based on two data points
+    with equal problem size, but different number of processors.
+    '''
+    assert dp1.machineCount == 1
+    assert dp1.probSize == dp2.probSize, "ProbSize's must be equal"
+    assert dp1.normalizedTime != dp2.normalizedTime, "Times must not be equal"
+    
+    '''
+    serial time s
+    parallel time p
+    total time t
+    number of cpus n
+    
+    t1 = s' + n*p'
+    t2 = s' + p'
+    p' = (t1 - t2) / (n - 1)
+    let t_diff = (t1 - t2)
+    '''
+    t_diff = dp1.normalizedTime - dp2.normalizedTime
+    p = t_diff / (dp2.machineCount - 1.)
+    s = dp2.normalizedTime - p
+    
+    return s   
         

@@ -197,6 +197,9 @@ class CompModelTest(unittest.TestCase):
         self.assertAlmostEquals(200, memoryModel(70))
         self.assertAlmostEquals(400, memoryModel(140))
         
+    def testSerialTime(self):
+        dp1 = SimpleDataPoint(cpuCount=1, cpu=1, time=10., probSize=35, totalMemory=100)
+        dp2 = SimpleDataPoint(cpuCount=2, cpu=1, time=6., probSize=35, totalMemory=100)
 
 if __name__ == "__main__":
     #import sys;sys.argv = ['', 'Test.testName']

@@ -5,62 +5,13 @@ import traceback
 
 from mpl_toolkits.mplot3d import Axes3D
 
-
-
 from d2c.model.CompModel import AmdahlsCompModel, SimpleDataPoint, GustafsonCompModel, PolyCompModel3
-
-
 
 def run():
      
-    '''
-    points = [DataPoint(cpuCount=1, cpu=2, time=1000, probSize=35), 
-              DataPoint(cpuCount=2, cpu=2, time=600, probSize=35),
-              DataPoint(cpuCount=2, cpu=2, time=500, probSize=35), 
-              DataPoint(cpuCount=2, cpu=2, time=575, probSize=35), 
-
-              
-              DataPoint(cpuCount=2, cpu=2, time=1100, probSize=70),
-              DataPoint(cpuCount=2, cpu=2, time=1300, probSize=70)]
-    '''
-    '''
-    points = [DataPoint(cpuCount=1, cpu=2, time=1000, probSize=350), 
-              DataPoint(cpuCount=2, cpu=2, time=600, probSize=350),
-              DataPoint(cpuCount=2, cpu=2, time=500, probSize=350), 
-              DataPoint(cpuCount=2, cpu=2, time=575, probSize=350), 
-
-              
-              DataPoint(cpuCount=2, cpu=2, time=1100, probSize=700),
-              DataPoint(cpuCount=2, cpu=2, time=1300, probSize=700)]
-    '''
-    
     def sec(hrFrac):
         return hrFrac * 60 * 60
-    '''
-    points = [
-              #Local Data
-              DataPoint(cpuCount=1, cpu=2, time=sec(0.07), probSize=85895824),
-              DataPoint(cpuCount=2, cpu=2, time=sec(0.04), probSize=85895824),
-              
-              DataPoint(cpuCount=1, cpu=2, time=sec(0.08), probSize=100000000),
-              #DataPoint(cpuCount=2, cpu=2, time=sec(0.05), probSize=100000000),
-              
-              #DataPoint(cpuCount=1, cpu=2, time=sec(0.27), probSize=199996164),
-              #DataPoint(cpuCount=2, cpu=2, time=sec(0.17), probSize=199996164),
-              
-              #DataPoint(cpuCount=1, cpu=2, time=sec(0.76), probSize=374964496),
-              #DataPoint(cpuCount=2, cpu=2, time=sec(0.51), probSize=374964496),
-              
-              #EC2 Data
-              #DataPoint(cpuCount=2, cpu=3.25, time=sec(0.196), probSize=374964496),
-              #DataPoint(cpuCount=2, cpu=3.25, time=sec(1.86), probSize=1699995361),
-              #DataPoint(cpuCount=4, cpu=3.25, time=sec(2.28), probSize=2999971984),
-              #DataPoint(cpuCount=8, cpu=2, time=sec(1.77), probSize=2999971984),
-              #DataPoint(cpuCount=16, cpu=2, time=sec(0.93), probSize=2999971984),
-              #DataPoint(cpuCount=4, cpu=3.25, time=sec(2.72), probSize=3419910400),
-              #DataPoint(cpuCount=16, cpu=2, time=sec(1.84), probSize=4799995524),
-              ]
-    '''
+   
     
     vboxCpu = 2
     vboxPoints = [
@@ -82,18 +33,6 @@ def run():
     
    
     ec2Points = [
-              #Local Data
-              SimpleDataPoint(cpuCount=1, cpu=vboxCpu, time=sec(0.07), probSize=85.895824, totalMemory=12),
-              SimpleDataPoint(cpuCount=2, cpu=vboxCpu, time=sec(0.04), probSize=85.895824, totalMemory=12),
-              
-              SimpleDataPoint(cpuCount=1, cpu=vboxCpu, time=sec(0.08), probSize=100.000000, totalMemory=12),
-              SimpleDataPoint(cpuCount=2, cpu=vboxCpu, time=sec(0.05), probSize=100.000000, totalMemory=12),
-              
-              SimpleDataPoint(cpuCount=1, cpu=vboxCpu, time=sec(0.27), probSize=199.996164, totalMemory=12),
-              SimpleDataPoint(cpuCount=2, cpu=vboxCpu, time=sec(0.17), probSize=199.996164, totalMemory=12),
-              
-              SimpleDataPoint(cpuCount=1, cpu=vboxCpu, time=sec(0.76), probSize=374.964496, totalMemory=12),
-              SimpleDataPoint(cpuCount=2, cpu=vboxCpu, time=sec(0.51), probSize=374.964496, totalMemory=12),
               
               #EC2 Data
               SimpleDataPoint(cpuCount=2, cpu=3.25, time=sec(0.196), probSize=374.964496, totalMemory=12),
@@ -112,25 +51,9 @@ def run():
     model = None
     bestBasis = None
     
-    '''
-    for c in range(0, len(points)):
-        modelPoints = points[:c]
-        try:
-            #m = AmdahlsCompModel(dataPoints=modelPoints, scaleFunction='linear')
-            m = GustafsonCompModel(dataPoints=modelPoints, scaleFunction='linear')
-        except:
-            print "Exception ", sys.exc_info()[0]
-            traceback.print_exc()
-            continue
-        rating = m.modelSumOfSquares(points)
-        print "basis = %d; diff = %f" %  (c, rating)
-        if rating < minRating:
-            model = m
-            minRating = rating
-            bestBasis = c
-    '''
+    
             
-    for c in (float(x)*.2 for x in range(1, 10)):
+    for c in (float(x)*.2 for x in range(6, 15)):
         
         adjustedVboxPoints = []
         for p in vboxPoints:
@@ -144,6 +67,7 @@ def run():
         try:
             #m = AmdahlsCompModel(dataPoints=modelPoints, scaleFunction='linear')
             m = GustafsonCompModel(dataPoints=modelPoints, scaleFunction='linear')
+            #m = PolyCompModel3(dataPoints=modelPoints, scaleFunction='linear')
         except:
             print "Exception ", sys.exc_info()[0]
             traceback.print_exc()
@@ -157,8 +81,14 @@ def run():
     
     
     print "\nBest basis = %f; diff = %f" %  (bestBasis, minRating)
+    adjustedVboxPoints = []
+    for p in vboxPoints:
+        p.cpu = bestBasis
+        adjustedVboxPoints.append(p)
     
-    
+    modelPoints = []
+    modelPoints.extend(ec2Points)
+    modelPoints.extend(adjustedVboxPoints)
     
     '''
     plots= []
@@ -180,7 +110,7 @@ def run():
     maxProbSize = max([dp.probSize for dp in modelPoints]) * 1.2
     
     probSize = arange(min([dp.probSize for dp in modelPoints]), maxProbSize, 5)
-    numProcs = arange(1, 16, 1)
+    numProcs = arange(1, 19, 1)
     
     probSize, numProcs = np.meshgrid(probSize, numProcs)
     
@@ -202,9 +132,13 @@ def run():
     surf = ax.plot_wireframe(probSize, numProcs, time, rstride=rstride, cstride=cstride,
              antialiased=False)
     
-    for p in modelPoints:
+    for p in modelPoints[:7]:
         ''' Note the normalization of time by cpu speed '''
         ax.scatter(array([p.probSize]), array([p.machineCount]), array([p.time * p.cpu]), c='r', marker='o')
+    
+    for p in modelPoints[7:]:
+        ''' Note the normalization of time by cpu speed '''
+        ax.scatter(array([p.probSize]), array([p.machineCount]), array([p.time * p.cpu]), c='y', marker='o')
             
     ax.set_zlim3d(0, max([p.time * p.cpu for p in modelPoints]))
     ax.set_xlim3d(min([p.probSize for p in modelPoints]), maxProbSize)
@@ -212,6 +146,12 @@ def run():
     ax.w_zaxis.set_major_formatter(FormatStrFormatter('%.03f'))
     ax.w_yaxis.set_major_formatter(FormatStrFormatter('%d'))
     ax.w_xaxis.set_major_formatter(FormatStrFormatter('%d'))
+    
+    ax.set_xlabel('Problem Size')
+    ax.set_ylabel('CPU Count')
+    ax.set_zlabel('Time')
+
+    
     #savefig("test.png")
     plt.show()
     
