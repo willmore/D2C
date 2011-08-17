@@ -2,6 +2,9 @@ from pylab import *
 from numpy import *
 import numpy
 import traceback
+from pybrain.tools.shortcuts import buildNetwork
+from pybrain.datasets import SupervisedDataSet
+from pybrain.supervised.trainers import BackpropTrainer
 
 from mpl_toolkits.mplot3d import Axes3D
 
@@ -47,27 +50,27 @@ def run():
     #modelPoints = points[:15]
     
     
-    c = 2.
-    for p in vboxPoints:
-        p.cpu = c
+    minRating = sys.maxint
+    model = None
+    bestBasis = None
     
-    trainingPoints = []
-    #trainingPoints.extend(ec2Points)
-    trainingPoints.extend(vboxPoints)
     
-    try:
-        model = GustafsonCompModel2(dataPoints=trainingPoints, scaleFunction='linear')
-    except:
-        print "Exception ", sys.exc_info()[0]
-        traceback.print_exc()
-        
-    rating = model.modelSumOfSquares(trainingPoints)
-    print "rating = %f" %  rating  
-        
     modelPoints = []
     modelPoints.extend(ec2Points)
     modelPoints.extend(vboxPoints)
+    net = buildNetwork(2, 3, 1)
+    ds = SupervisedDataSet(2, 1)
+    for dp in vboxPoints:
+        ds.addSample((dp.machineCount, dp.probSize), (dp.normalizedTime,))
     
+    trainer = BackpropTrainer(net, ds)
+    trainer.trainUntilConvergence()
+    
+    print (net.activate((16, 4799)) / 60) /60
+    return 
+
+
+
 
     fig = plt.figure()
     ax = Axes3D(fig) #fig.gca(projection='3d')
@@ -78,9 +81,12 @@ def run():
     
     probSize, numProcs = np.meshgrid(probSize, numProcs)
     
-    time = model.modelFunc(probSize, 1, numProcs)
+    #time = model.modelFunc(probSize, 1, numProcs)
+    time = net.activate((numProcs, probSize))
     
- 
+    colortuple = ('y', 'b')
+    colors = np.empty(probSize.shape, dtype=str)
+  
     rstride = 1#(max([dp.machineCount for dp in points]) - min([dp.machineCount for dp in points])) / 20
     cstride = int(math.ceil(true_divide((max([dp.probSize for dp in modelPoints]) - min([dp.probSize for dp in modelPoints])), 45)))
     

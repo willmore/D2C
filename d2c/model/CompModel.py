@@ -437,7 +437,7 @@ class GustafsonCompModel(CompModel):
         
         ef = lambda v, n, real_su: (speed_up_v(v, n)- real_su)
         v0 = [1]
-        v_su, success = leastsq(ef, v0, args=(array([n for n,su in speed_ups]), array([su for n,su in speed_ups])), maxfev=10000)
+        v_su, success = leastsq(ef, v0, args=(array([n for n,su in speed_ups]), array([su for n,su in speed_ups])), maxfev=100000)
         
         if not (success in (1,2,3,4)):
             raise Exception("leastsq error code %d" % success)
@@ -471,6 +471,63 @@ class GustafsonCompModel(CompModel):
         self.modelFunc = modelFunc
         
         
+class GustafsonCompModel2(CompModel):
+    
+    def __init__(self, deploymentTemplate=None, dataPoints=None, scaleFunction='linear'):
+        
+        CompModel.__init__(self, deploymentTemplate, dataPoints)
+        
+        self.__generateModel(scaleFunction)
+        #self.__generateModel()
+        
+    def __generateModel(self, scaleFunction):
+        
+        '''
+        Generate a function that calculates runtime based on 
+        problem size and number of processors
+        '''
+        
+        ''' 
+        s is percentage of program that is serialized 
+        speedup(n) = n + (1-n)s
+        s = (speedup(n) - n) / (1 - n)
+        Find all known speedup(n) where problem size is constant
+        speedup(n) also equals T(1) / T(n). We should have T(1) and T(n)
+        '''
+        t1s = [(d.normalizedTime, d.probSize) for d in self.dataPoints if d.machineCount == 1]
+        
+        '''
+        If we don't have a T(1), bail.
+        '''   
+        if len(t1s) == 0:
+            raise Exception("Unable to create model. \
+                             Require at least one data point where the CPU count is 1.")        
+        serialFracFunc = estimate_serial_frac(self.dataPoints)
+        self.speedUpFunc = lambda cpuCount, probSize: scaled_speedup(cpuCount, probSize, serialFracFunc)
+        
+        def time_1_v(v, probSize):
+            '''Time for running probSize on one cpu'''
+            return v[0] + v[1]*probSize
+        
+        ef = lambda v, probSize, t: (time_1_v(v, probSize)-t)
+        v0 = [1,1]
+        v_t1, success = leastsq(ef, v0, args=(array([ps for t,ps in t1s]), array([t for t,ps in t1s])), maxfev=10000)
+        
+        def time_1(probSize):
+            '''Time for running probSize on one cpu'''
+            return time_1_v(v_t1, probSize)
+        
+        self.time_1_func = time_1
+        
+        def modelFunc(probSize, cpu, count):
+            t1 = time_1(probSize)
+            su = self.speedUpFunc(count, probSize)
+            return (t1 / su) / cpu
+        
+        #self.modelFunc = lambda probSize, cpu, count: true_divide(time_1(probSize), speedup(n)) / cpu
+        self.modelFunc = modelFunc
+        
+        
 class PolyCompModel3(CompModel):
     
     def __init__(self, deploymentTemplate=None, dataPoints=None, scaleFunction='linear'):
@@ -483,10 +540,10 @@ class PolyCompModel3(CompModel):
     def __generateModel(self, scaleFunction):
           
         def model_v(v, probSize, cpu, count):
-            return ( (v[0] + probSize * v[1]) / (count - (1 - count) * (v[2] / probSize)) ) / cpu
+            return ( (v[0] + probSize * v[1]) / (count - (count - 1) * (v[2] / (v[3] + probSize))) ) / cpu
         
         ef = lambda v, probSize, cpu, count, time: (model_v(v, probSize, cpu, count)- time)
-        v0 = [1.,1.,1.]
+        v0 = [1.,1.,1.,1.]
         
         probSizes = array([p.probSize for p in self.dataPoints])
         cpus = array([p.cpu for p in self.dataPoints])
@@ -502,6 +559,87 @@ class PolyCompModel3(CompModel):
             return model_v(v, probSize, cpu, count)
         
         self.modelFunc = model
+
+def scaled_speedup(N, probSize, serial_func):
+    '''
+    http://software.intel.com/en-us/articles/amdahls-law-gustafsons-trend-and-the-performance-limits-of-parallel-applications/
+    '''
+    S = serial_func(probSize)
+    
+    def overhead(N):
+        return .6*N
+    
+    return S + N * (1 - S) - overhead(N)
+
+def estimate_serial_frac(dps):
+    '''
+    Given set of data points for same experiment, generate a function
+    which gives the serial frac vs problem size
+    '''
+    
+    ''' organize by same problem size '''
+    probSizeDPMap = {} # probSize (int) => list of dps
+    for dp in dps:
+        if not dp.probSize in probSizeDPMap:
+            probSizeDPMap[dp.probSize] = []
+        probSizeDPMap[dp.probSize].append(dp)
+    
+    probSizes = []
+    serialTimes = []
+        
+    for probSize, dps in probSizeDPMap.iteritems():
+        
+        if len(dps) < 2:
+            continue
+
+        singleCPUDataPoints = [dp for dp in dps if dp.machineCount == 1]
+        multipleCPUDataPoints = [dp for dp in dps if dp.machineCount > 1]
+        
+        if len(singleCPUDataPoints) == 0:
+            continue
+        if len(multipleCPUDataPoints) == 0:
+            continue
+        
+        serializedTimes = []
+        for dp1 in singleCPUDataPoints:
+            for dp2 in  multipleCPUDataPoints:
+                serializedTimes.append(serial_fraction(dp1, dp2))
+                
+        ''' 
+        TODO
+        Don't know yet how to treat range of serialized time for single prob size
+        Why not take mean
+        '''
+        probSize = singleCPUDataPoints[0].probSize
+        probSizes.append(probSize)
+        serialTimes.append(mean(serializedTimes))
+    
+    '''
+    now we fit a function to estimated serialized times and problem sizes
+    '''
+        
+    def serial_frac_v(v, ps):
+        return v[0] / ps
+    
+    ef = lambda v, probSize, serial: (serial_frac_v(v, probSize) - serial)
+    
+    v0 = [1.]
+    vs, success = leastsq(ef, v0, args=(array(probSizes), array(serialTimes)), maxfev=10000)
+    
+    return lambda probSize: serial_frac_v(vs, probSize)
+    
+
+def serial_fraction(dp1, dp2):
+    
+    '''
+    Based on Gustafon's, find the relative serial time spent based on two data points
+    with equal problem size, but different number of processors.
+    '''
+    assert dp1.machineCount == 1
+    assert dp1.probSize == dp2.probSize, "ProbSize's must be equal"
+    assert dp1.normalizedTime != dp2.normalizedTime, "Times must not be equal"
+    
+    return true_divide(serial_time(dp1, dp2), dp2.normalizedTime)
 
 def serial_time(dp1, dp2):
     '''

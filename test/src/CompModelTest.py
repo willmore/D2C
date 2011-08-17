@@ -6,10 +6,11 @@ from d2c.model.InstanceType import InstanceType
 from d2c.model.Cloud import EC2Cloud
 from d2c.model.CompModel import PolyCompModel, AmdahlsCompModel, GustafsonCompModel
 import boto
+import pylab
 
 import unittest
 
-from d2c.model.CompModel import CompModel, pEstimated, speedUp, runTime, SimpleDataPoint
+from d2c.model.CompModel import *
 
 class CompModelTest(unittest.TestCase):
 
@@ -200,6 +201,63 @@ class CompModelTest(unittest.TestCase):
     def testSerialTime(self):
         dp1 = SimpleDataPoint(cpuCount=1, cpu=1, time=10., probSize=35, totalMemory=100)
         dp2 = SimpleDataPoint(cpuCount=2, cpu=1, time=6., probSize=35, totalMemory=100)
+
+        self.assertAlmostEqual(2., serial_time(dp1, dp2))
+        
+    def testSerialFraction(self):
+        dp1 = SimpleDataPoint(cpuCount=1, cpu=1, time=10., probSize=35, totalMemory=100)
+        dp2 = SimpleDataPoint(cpuCount=2, cpu=1, time=6., probSize=35, totalMemory=100)
+
+        self.assertAlmostEqual(.3333333, serial_fraction(dp1, dp2))
+        
+    def testSerialFraction2(self):
+        dp1 = SimpleDataPoint(cpuCount=1, cpu=1, time=20., probSize=70, totalMemory=100)
+        dp2 = SimpleDataPoint(cpuCount=2, cpu=1, time=11., probSize=70, totalMemory=100)
+
+        self.assertAlmostEqual(.181818181818, serial_fraction(dp1, dp2))
+        
+    def testSerialFractionFunctionSimple(self):
+        dp1 = SimpleDataPoint(cpuCount=1, cpu=1, time=10., probSize=35, totalMemory=100)
+        dp2 = SimpleDataPoint(cpuCount=2, cpu=1, time=6., probSize=35, totalMemory=100)
+
+        self.assertAlmostEqual(2., serial_time(dp1, dp2))
+
+        func = estimate_serial_frac([dp1, dp2])
+        self.assertAlmostEquals(.3333333, func(35))
+        
+    def testSerialFractionFunction(self):
+        dp1 = SimpleDataPoint(cpuCount=1, cpu=1, time=10., probSize=35, totalMemory=100)
+        dp2 = SimpleDataPoint(cpuCount=2, cpu=1, time=6., probSize=35, totalMemory=100)
+
+        dp3 = SimpleDataPoint(cpuCount=1, cpu=1, time=20., probSize=70, totalMemory=100)
+        dp4 = SimpleDataPoint(cpuCount=2, cpu=1, time=11., probSize=70, totalMemory=100)
+
+        self.assertAlmostEqual(2., serial_time(dp1, dp2))
+
+        func = estimate_serial_frac([dp1, dp2, dp3, dp4])
+        self.assertAlmostEquals(.3393939393, func(35))
+        
+        self.assertAlmostEquals(.169696969, func(70))
+        
+    def testScaledSpeedup(self):
+        
+        dp1 = SimpleDataPoint(cpuCount=1, cpu=1, time=10., probSize=35, totalMemory=100)
+        dp2 = SimpleDataPoint(cpuCount=2, cpu=1, time=6., probSize=35, totalMemory=100)
+
+        dp3 = SimpleDataPoint(cpuCount=1, cpu=1, time=20., probSize=70, totalMemory=100)
+        dp4 = SimpleDataPoint(cpuCount=2, cpu=1, time=11., probSize=70, totalMemory=100)
+
+        self.assertAlmostEqual(2., serial_time(dp1, dp2))
+
+        serial_func = estimate_serial_frac([dp1, dp2])
+        probSize = 70
+        
+        Ns = numpy.arange(1, 1000000, 1)
+        
+        pylab.plot(Ns, scaled_speedup(Ns, 70, serial_func), color='r')
+        pylab.plot(Ns, scaled_speedup(Ns, 140, serial_func), color='b')
+        #pylab.plot(Ns, scaled_speedup(Ns, probSize, serial_func))
+        pylab.show()
 
 if __name__ == "__main__":
     #import sys;sys.argv = ['', 'Test.testName']

@@ -8,7 +8,7 @@ from d2c.controller.DeploymentCreatorController import DeploymentCreatorControll
 
 from .DeploymentCreator import DeploymentCreator
 
-from d2c.model.CompModel import GustafsonCompModel
+from d2c.model.CompModel import GustafsonCompModel2
 
 from pylab import *
 from numpy import *
@@ -154,11 +154,10 @@ class CanvasPanel(wx.Panel):
     def handleShow(self, evt):
            
         #self.Bind(wx.EVT_, self.handleShow)        
-        model = GustafsonCompModel(self.deploymentTemplate, scaleFunction='linear')
+        model = GustafsonCompModel2(self.deploymentTemplate, scaleFunction='linear')
         self.SetBackgroundColour(wx.NamedColor("WHITE"))
 
-        probSize = arange(min([d.problemSize for d in self.deploymentTemplate.deployments]), 
-                          max([d.problemSize for d in self.deploymentTemplate.deployments])*4, 20)
+        probSize = arange(80,6000,100)
         numProcs = arange(1, 16, 1)
     
         probSize, numProcs = np.meshgrid(probSize, numProcs)
@@ -167,13 +166,6 @@ class CanvasPanel(wx.Panel):
         ax = Axes3D(self.figure)
         colortuple = ('y', 'b')
         colors = np.empty(probSize.shape, dtype=str)
-        #for y in range(len(numProcs)):
-        #    for x in range(len(probSize)):
-        #        colors[x, y] = colortuple[(x + y) % len(colortuple)]
-        
-        
-        #surf = ax.plot_surface(probSize, numProcs, time, rstride=1, cstride=1, #facecolors=colors,
-        #        linewidth=0, antialiased=False)
         
         rstride = 1#(max([dp.machineCount for dp in points]) - min([dp.machineCount for dp in points])) / 20
         cstride = int(math.ceil(true_divide(max([d.problemSize for d in self.deploymentTemplate.deployments]) - 
@@ -255,13 +247,13 @@ class CostGraphPanel(wx.Panel):
            
         #self.Bind(wx.EVT_, self.handleShow)
         
-        model = GustafsonCompModel(self.deploymentTemplate, scaleFunction='linear')
+        model = GustafsonCompModel2(self.deploymentTemplate, scaleFunction='linear')
         self.SetBackgroundColour(wx.NamedColor("WHITE"))
         
         self.figure = Figure()
         self.canvas = FigureCanvas(self, -1, self.figure)
         self.axes = self.figure.add_subplot(111)
-        t = arange(1000,44000,100)
+        t = arange(80,6000,100)
         
         for cloud in self.clouds:
             s = model.costModel(cloud)(t)
