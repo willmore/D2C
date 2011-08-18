@@ -119,18 +119,29 @@ class DeploymentPanel(wx.Panel):
     
     def addRoleChoice(self, choice):
         
-        sizer = wx.BoxSizer(wx.HORIZONTAL)
-        sizer.Add(wx.StaticText(self, -1, choice.roleTemp.name))
-        
+        staticBox = wx.StaticBox(self, label=choice.roleTemp.name)
+        boxSizer = wx.StaticBoxSizer(staticBox, wx.VERTICAL)
+       
+       
+        hboxSizer = wx.BoxSizer(wx.HORIZONTAL)
         countCtrl = wx.SpinCtrl(self, wx.ID_ANY, '1', min=1, max=1024)
+        hboxSizer.Add(wx.StaticText(self, -1,"Instance Count"))
+        hboxSizer.Add(countCtrl, 0, wx.ALL, 2)
+        boxSizer.Add(hboxSizer, 0, wx.EXPAND)
+                
+        hboxSizer = wx.BoxSizer(wx.HORIZONTAL)
         imgTxt = wx.StaticText(self, wx.ID_ANY, size=(60, -1), label=choice.imgStr)
+        hboxSizer.Add(wx.StaticText(self, -1,"Image"))
+        hboxSizer.Add(imgTxt, 0, wx.ALL, 2)
+        boxSizer.Add(hboxSizer, 0, wx.EXPAND)
+        
+        hboxSizer = wx.BoxSizer(wx.HORIZONTAL)
         instCtrl = wx.ComboBox(self, wx.ID_ANY, size=(120, -1), choices=[c.name for c in choice.instanceTypes])
+        hboxSizer.Add(wx.StaticText(self, -1,"Instance Type"))
+        hboxSizer.Add(instCtrl, 0, wx.ALL, 2)
+        boxSizer.Add(hboxSizer, 0, wx.EXPAND)
         
-        sizer.Add(countCtrl, 0, wx.ALL, 2)
-        sizer.Add(imgTxt, 0, wx.ALL, 2)
-        sizer.Add(instCtrl, 0, wx.ALL, 2)
-        
-        self.vsizer.Insert(self.choiceIdx, sizer)
+        self.vsizer.Insert(self.choiceIdx, boxSizer, 0, wx.ALL)
         
         return (countCtrl, instCtrl)
     
