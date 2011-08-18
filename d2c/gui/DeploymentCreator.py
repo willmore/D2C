@@ -16,6 +16,9 @@ class DeploymentCreator(wx.Dialog):
         self.container = ContainerPanel(self, size=self.GetSize())
         self.vsizer.Add(self.container, 1, wx.ALL|wx.EXPAND)
         
+        self.sizePanel = SizePanel(self.container)
+        self.container.addPanel("SIZE", self.sizePanel)
+        
         self.cloudPanel = CloudPanel(self.container)
         self.container.addPanel("CLOUD", self.cloudPanel)
         
@@ -24,6 +27,45 @@ class DeploymentCreator(wx.Dialog):
         
     def showPanel(self, label):
         self.container.showPanel(label)   
+  
+  
+class SizePanel(wx.Panel):    
+    
+    def __init__(self, *args, **kwargs):
+        
+        wx.Panel.__init__(self, *args, **kwargs)
+    
+        self.chooseButton = wx.Button(self, wx.ID_FORWARD)
+        self.cancelButton = wx.Button(self, wx.ID_CANCEL)
+        
+        self.sizer = wx.BoxSizer(wx.VERTICAL) 
+        self.SetSizer(self.sizer)
+        
+        txt = wx.StaticText(self, -1, "Problem Size")
+        txt.SetFont(wx.Font(15, wx.DEFAULT, wx.DEFAULT, wx.BOLD))
+        self.sizer.Add(txt, 0, wx.ALL, 2)
+        
+        self.probSize = wx.TextCtrl(self, -1, size=(100,-1))
+        self.sizer.Add(self.probSize, 0, wx.EXPAND|wx.ALL, 5)
+       
+        txt = wx.StaticText(self, -1, 
+        """Enter an integer or floating point value which represents 
+the problem size of the deployment's computation. For example, 
+if your application's workload is determined by the size of 
+a N x N matrix, you should enter N or N^2. Whatever convention 
+used, be consistent across all deployment's within a grouping, 
+as this will result in better resource usage tracking and 
+prediction.""")
+        
+        self.sizer.Add(txt, 0, wx.ALL, 4)
+       
+        self.hsizer = wx.BoxSizer(wx.HORIZONTAL)
+       
+        self.hsizer.Add(self.cancelButton, 0, wx.ALIGN_RIGHT|wx.ALL, 2)  
+        self.hsizer.Add(self.chooseButton, 0, wx.ALIGN_RIGHT|wx.ALL, 2)
+        
+        self.sizer.Add(self.hsizer, 0, wx.ALIGN_RIGHT|wx.ALL, 2) 
+        
        
 class CloudPanel(wx.Panel):    
     
@@ -35,15 +77,14 @@ class CloudPanel(wx.Panel):
                                    mappers=[ColumnMapper('Name', lambda c: c.name, defaultWidth=wx.LIST_AUTOSIZE)])
         
         self.chooseButton = wx.Button(self, wx.ID_FORWARD)
-        #self.cancelButton = wx.Button(self, wx.ID_ANY, 'Cancel')
         self.cancelButton = wx.Button(self, wx.ID_CANCEL)
         
         self.sizer = wx.BoxSizer(wx.VERTICAL) 
         self.SetSizer(self.sizer)
         
-        addStoreTxt = wx.StaticText(self, -1, 'Choose Cloud')
-        addStoreTxt.SetFont(wx.Font(15, wx.DEFAULT, wx.DEFAULT, wx.BOLD))
-        self.sizer.Add(addStoreTxt, 0)
+        txt = wx.StaticText(self, -1, 'Choose Cloud')
+        txt.SetFont(wx.Font(15, wx.DEFAULT, wx.DEFAULT, wx.BOLD))
+        self.sizer.Add(txt, 0, wx.ALL, 2)
         
         self.sizer.Add(self.cloudList, 0, wx.EXPAND|wx.ALL, 5)
        
@@ -64,7 +105,9 @@ class DeploymentPanel(wx.Panel):
         self.vsizer = wx.BoxSizer(wx.VERTICAL)
         self.SetSizer(self.vsizer)
         
-        self.vsizer.Add(wx.StaticText(self, -1, 'Specify role attributes:'))
+        txt = wx.StaticText(self, -1, 'Role Instance Type')
+        txt.SetFont(wx.Font(15, wx.DEFAULT, wx.DEFAULT, wx.BOLD))
+        self.vsizer.Add(txt, 0, wx.ALL, 2)
         
         self.roleValues = {}
      

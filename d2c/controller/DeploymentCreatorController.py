@@ -28,6 +28,7 @@ class RoleChoice(object):
         for t in self.instanceTypes:
             if t.name == name:
                 self.selectedInstanceType = t
+                
 
 class DeploymentCreatorController(object):
     
@@ -35,21 +36,44 @@ class DeploymentCreatorController(object):
         
         self._dao = dao
         self._view = deploymentCreator
-        self._view.showPanel("CLOUD")
+        self._view.showPanel("SIZE")
+        self._view.sizePanel.probSize.Bind(wx.EVT_TEXT, self._validateSize)
+        self._view.sizePanel.chooseButton.Bind(wx.EVT_BUTTON, self._selectSize)
+        self._view.sizePanel.chooseButton.Disable()
         self._view.cloudPanel.cloudList.setItems(dao.getClouds())
-        
-        self._view.cloudPanel.Bind(wx.EVT_BUTTON, self._selectCloud)
-        
+        self._view.cloudPanel.chooseButton.Bind(wx.EVT_BUTTON, self._selectCloud)
         self._view.deploymentPanel.doneButton.Bind(wx.EVT_BUTTON, self._createDeployment)
+        self._size = None
+        self._cloud = None
+        self._choices = None
+      
+    def _validateSize(self, _):
+        
+        self._view.sizePanel.chooseButton.Disable()
+        
+        val = self._view.sizePanel.probSize.GetValue()
+        
+        if len(val) == 0:
+            return
+            
+        try:
+            float(val)
+        except:
+            return
+            
+        self._view.sizePanel.chooseButton.Enable()
 
+    def _selectSize(self, _):
+        self._size = float(self._view.sizePanel.probSize.GetValue())
+        self._view.showPanel("CLOUD") 
         
     def _selectCloud(self, _):
         self._cloud = self._view.cloudPanel.cloudList.getSelectedItems()[0]
         
-        self.choices = []
+        self._choices = []
         for roleTemp in self._view.deploymentTemplate.roleTemplates:
             choice = RoleChoice(roleTemp, self._cloud)
-            self.choices.append(choice)
+            self._choices.append(choice)
             (countCtrl, instTypeCtrl) = self._view.deploymentPanel.addRoleChoice(choice)
             countCtrl.Bind(wx.EVT_SPINCTRL, choice.selectCountEvent)  
             instTypeCtrl.Bind(wx.EVT_COMBOBOX, choice.selectInstanceTypeEvent)
@@ -59,10 +83,10 @@ class DeploymentCreatorController(object):
     def _createDeployment(self, _):
         
         roleReq = {}
-        for choice in self.choices:
+        for choice in self._choices:
             roleReq[choice.roleTemp] = (choice.sourceImg, choice.selectedInstanceType, choice.count)
         
-        deployment = self._view.deploymentTemplate.createDeployment(self._cloud, roleReq)
+        deployment = self._view.deploymentTemplate.createDeployment(self._cloud, roleReq, probSize=self._size)
         self._dao.save(deployment)
         wx.CallAfter(Publisher().sendMessage, "DEPLOYMENT CREATED", 
                              {'deployment':deployment})

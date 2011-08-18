@@ -18,7 +18,7 @@ from d2c.RemoteShellExecutor import RemoteShellExecutorFactory
 from d2c.ShellExecutor import ShellExecutorFactory
 from d2c.model.DeploymentTemplate import DeploymentTemplate, RoleTemplate
 
-from sqlalchemy import Table, Column, Integer, String, MetaData, ForeignKey, create_engine, Boolean, UniqueConstraint
+from sqlalchemy import Table, Column, Integer, String, Float, MetaData, ForeignKey, create_engine, Boolean, UniqueConstraint
 from sqlalchemy.orm import sessionmaker, mapper, relationship
 from sqlalchemy.orm.interfaces import MapperExtension
 
@@ -128,7 +128,7 @@ class DAO:
                             Column('dataDir', String),
                             Column('pollRate', Integer),
                             Column('maxMemory', Integer),
-                            Column('problemSize', Integer, nullable=False)
+                            Column('problemSize', Float, nullable=False)
                             )  
         
         mapper(Deployment, deploymentTable, properties={

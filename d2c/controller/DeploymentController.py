@@ -22,8 +22,12 @@ class DeploymentThread(Thread):
               
     def pause(self):
         self.deployment.pause()
+
             
 class PersistenceListener:
+    '''
+    Saves in DB when the deployment state changes.
+    '''
     
     def __init__(self, dao, deployment):
         self.dao = dao
@@ -31,8 +35,12 @@ class PersistenceListener:
 
     def notify(self, _):
         self.dao.save(self.deployment)
+     
         
 class ViewListener:
+    '''
+    Notifies the View of deployment state changes.
+    '''
     
     def __init__(self, deploymentView):
         self.view = deploymentView
@@ -67,12 +75,10 @@ class DeploymentController:
         self.view.roles.PopupMenu(RolePopupMenu(self.view.roles.getSelectedItems()[0], self.dao),
                                   event.GetPosition())
     
-    def handleException(self, msg):
-        
+    def handleException(self, msg):     
         wx.MessageBox("Unexpected error: %s\nTrace%s" % (str(msg.data[0]), msg.data[1]), 'Error!', wx.ICON_ERROR)
 
-    def handleCancel(self, _):
-        
+    def handleCancel(self, _):  
         ret = wx.MessageBox('Are you sure you want to cancel?',
                             'Question', wx.YES_NO)
         
@@ -83,9 +89,7 @@ class DeploymentController:
             self.deployment.stop()
             self.view.cancelButton.Hide()
             
-
-    def handleLaunch(self, _):
-        
+    def handleLaunch(self, _):       
         ret = wx.MessageBox('Are you sure you want to start? \
                             AWS charges will start at the rate of $%.2f per hour' 
                             % self.deployment.costPerHour(), 'Question', wx.YES_NO)
@@ -140,7 +144,7 @@ class RolePopupMenu(wx.Menu):
         self.AppendItem(item)
         self.Bind(wx.EVT_MENU, self.onEditRole, item)
 
-    def onEditRole(self, event):
+    def onEditRole(self, _):
         print "Item One selected in the %s" % self.role.template.name
         
         roleDialog = RoleDialog(None, -1, size=(400,400))

@@ -53,9 +53,7 @@ class DeploymentTemplateWizardController:
         
         self.wizard.container.getPanel("ROLES").getPanel("ROLES").backButton.Bind(wx.EVT_BUTTON,self.showName)
         self.wizard.container.getPanel("ROLES").getPanel("ADD_ROLE").cancelButton.Bind(wx.EVT_BUTTON,self.showRoles)
-    
-
-    
+ 
     def setupFlexList(self, parent, boxsizer, textControls, fieldCount=1, labels=()):
         
         def handleRemove(evt): 

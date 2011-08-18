@@ -34,6 +34,14 @@ class DeploymentPanel(wx.Panel):
         self.cloudField = wx.StaticText(self, -1, deployment.cloud.name)
         sizer.Add(self.cloudField, 0, wx.ALIGN_CENTER)
         
+        self.sizeSizer = wx.BoxSizer(wx.HORIZONTAL)
+        self.GetSizer().Add(self.sizeSizer, 0, wx.BOTTOM, 5)
+        label = wx.StaticText(self, -1, 'Problem Size')
+        label.SetFont(wx.Font(wx.DEFAULT, wx.DEFAULT, wx.DEFAULT, wx.BOLD))
+        self.sizeSizer.Add(label, 0, wx.RIGHT, 5)
+        self.sizeField = wx.StaticText(self, -1, str(deployment.problemSize))
+        self.sizeSizer.Add(self.sizeField, 0, wx.ALIGN_CENTER)
+        
         self.statusSizer = wx.BoxSizer(wx.HORIZONTAL)
         self.GetSizer().Add(self.statusSizer, 0, wx.BOTTOM, 5)
         label = wx.StaticText(self, -1, 'Status')
