@@ -10,7 +10,7 @@ import wx
 
 #grapher = Grapher("/home/willmore/workspace/d2c/experiments/cloud-hpcc/test_4hosts_run2/", "/tmp")
 
-grapher = Grapher({"vm":"/home/willmore/d2c_experiments/cloud-hpcc/local/single_vm_1proc/collectd/vm0"}, "/tmp")
+grapher = Grapher({"vm":"/home/willmore/D2C-Experiments/cloud-hpcc/local/single_vm_1proc/collectd/vm0"}, "/tmp")
 
 
 cpuImg = grapher.generateCPUGraphsAverage("20110516 20:14", "20110516 20:34")

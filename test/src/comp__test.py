@@ -52,11 +52,12 @@ def run():
         p.cpu = c
     
     trainingPoints = []
-    #trainingPoints.extend(ec2Points)
+    trainingPoints.extend(ec2Points)
     trainingPoints.extend(vboxPoints)
     
     try:
         model = GustafsonCompModel2(dataPoints=trainingPoints, scaleFunction='linear')
+        #model = PolyCompModel3(dataPoints=trainingPoints, scaleFunction='linear')
     except:
         print "Exception ", sys.exc_info()[0]
         traceback.print_exc()

@@ -55,15 +55,15 @@ class DeploymentController:
         
         self.dao = dao
         self.view = deploymentView
-        self.view.deployButton.Bind(wx.EVT_BUTTON, self.handleLaunch)
-        self.view.cancelButton.Bind(wx.EVT_BUTTON, self.handleCancel)
+        self.view.overviewTab.deployButton.Bind(wx.EVT_BUTTON, self.handleLaunch)
+        self.view.overviewTab.cancelButton.Bind(wx.EVT_BUTTON, self.handleCancel)
         
         self.deployment = deploymentView.deployment
         
         Publisher.subscribe(self.handleException, 
                             "DEPLOYMENT EXCEPTION")
         
-        self.view.roles.Bind(wx.EVT_LIST_ITEM_RIGHT_CLICK, self.onRolesRightClick)
+        self.view.overviewTab.roles.Bind(wx.EVT_LIST_ITEM_RIGHT_CLICK, self.onRolesRightClick)
     
     def onRolesRightClick(self, event):
         item, flags = self.view.roles.HitTest(event.GetPosition())
@@ -87,7 +87,7 @@ class DeploymentController:
             self.view.showLogPanel()
             
             self.deployment.stop()
-            self.view.cancelButton.Hide()
+            self.view.overviewTab.cancelButton.Hide()
             
     def handleLaunch(self, _):       
         ret = wx.MessageBox('Are you sure you want to start? \
@@ -96,7 +96,7 @@ class DeploymentController:
         
         if wx.YES == ret:
             
-            self.view.deployButton.Hide()
+            self.view.overviewTab.deployButton.Hide()
             
             self.view.showLogPanel()
             
@@ -106,8 +106,8 @@ class DeploymentController:
             self.deployment.addAnyStateChangeListener(ViewListener(self.view))
             self.deploymentThread = DeploymentThread(self.deployment)
             self.deploymentThread.start()
-            self.view.cancelButton.Show()
-            self.view.Layout()
+            self.view.overviewTab.cancelButton.Show()
+            self.view.overviewTab.Layout()
     
     def __createLogger(self):
         channelId = self.deployment.id

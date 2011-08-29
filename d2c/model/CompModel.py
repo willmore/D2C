@@ -540,7 +540,7 @@ class PolyCompModel3(CompModel):
     def __generateModel(self, scaleFunction):
           
         def model_v(v, probSize, cpu, count):
-            return ( (v[0] + probSize * v[1]) / (count - (count - 1) * (v[2] / (v[3] + probSize))) ) / cpu
+            return ( (v[0] + probSize * v[1]) / (count - (count - 1) * (1 / (v[2] + v[3]*probSize))) ) / cpu
         
         ef = lambda v, probSize, cpu, count, time: (model_v(v, probSize, cpu, count)- time)
         v0 = [1.,1.,1.,1.]
@@ -608,14 +608,14 @@ def estimate_serial_frac(dps):
         ''' 
         TODO
         Don't know yet how to treat range of serialized time for single prob size
-        Why not take mean
+        Taking the mean for now...
         '''
         probSize = singleCPUDataPoints[0].probSize
         probSizes.append(probSize)
         serialTimes.append(mean(serializedTimes))
     
     '''
-    now we fit a function to estimated serialized times and problem sizes
+    Next we fit a function to estimated serialized times and problem sizes.
     '''
         
     def serial_frac_v(v, ps):

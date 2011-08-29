@@ -26,6 +26,83 @@ class DeploymentPanel(wx.Panel):
         label.SetFont(wx.Font(20, wx.DEFAULT, wx.DEFAULT, wx.BOLD))
         self.GetSizer().Add(label, 0, wx.BOTTOM, 10)
         
+        self.tabContainer = wx.Notebook(self, -1, style=wx.NB_TOP)
+        self.GetSizer().Add(self.tabContainer, 1, wx.ALL | wx.EXPAND, 2)
+        
+        self.overviewTab = OverviewTab(self.deployment, self.tabContainer, -1)
+        self.tabContainer.AddPage(self.overviewTab, "Overview")
+        
+        self.eventTab = EventTab(self.deployment, self.tabContainer, -1)
+        self.tabContainer.AddPage(self.eventTab, "Log / Events")
+        
+    def showLogPanel(self):
+        self.eventTab.showLogPanel()
+        
+    def appendLogPanelText(self, text):
+        self.eventTab.appendLogPanelText(text)
+    
+    def update(self):
+        '''
+        Update the panel to reflect the current Deployment
+        '''
+        self.overviewTab.update()
+        self.eventTab.update()
+        
+   
+class EventTab(wx.Panel):
+    '''
+    Displays Deployment events and log.
+    '''   
+        
+    def __init__(self, deployment, *args, **kwargs):
+        
+        wx.Panel.__init__(self, *args, **kwargs)    
+        
+        self.deployment = deployment
+        self.SetSizer(wx.BoxSizer(wx.VERTICAL))
+        
+        self.eventLabel = wx.StaticText(self, -1, label="Events")
+        self.eventLabel.SetFont(wx.Font(wx.DEFAULT, wx.DEFAULT, wx.DEFAULT, wx.BOLD))
+        self.GetSizer().Add(self.eventLabel, 0, wx.ALL, 2)
+        
+        self.eventList = ItemList(self, -1, 
+                                  mappers=[ColumnMapper('Event', lambda e: e.state, defaultWidth=wx.LIST_AUTOSIZE),
+                                           ColumnMapper('Time', lambda e: formatTime(e.time), defaultWidth=wx.LIST_AUTOSIZE)],
+                                  style=wx.LC_REPORT)
+        self.GetSizer().Add(self.eventList, 0, wx.ALL | wx.EXPAND, 2)
+        
+        self.logPanel = wx.TextCtrl(self, -1, size=(100,100), style=wx.TE_MULTILINE )
+        self.logLabel = wx.StaticText(self, -1, label="Log")
+        self.logLabel.SetFont(wx.Font(wx.DEFAULT, wx.DEFAULT, wx.DEFAULT, wx.BOLD))
+        self.GetSizer().Add(self.logLabel, 0, wx.ALL, 2)
+        self.logLabel.Hide()
+        self.logPanel.Hide() # logPanel will be shown later on demand
+        self.GetSizer().Add(self.logPanel, 1, wx.BOTTOM | wx.EXPAND, 5)
+        
+    def update(self):
+        self.eventList.setItems(self.deployment.stateEvents)
+    
+    
+    def appendLogPanelText(self, text):
+        self.logPanel.AppendText(str(text) + "\n")
+            
+    def showLogPanel(self):
+        self.logPanel.Show()
+        self.logLabel.Show()
+        self.Layout()
+        
+class OverviewTab(wx.Panel):
+    '''
+    Displays basic information about the Deployment.
+    '''
+    
+    def __init__(self, deployment, *args, **kwargs):
+        
+        wx.Panel.__init__(self, *args, **kwargs)
+        
+        self.deployment = deployment
+        self.SetSizer(wx.BoxSizer(wx.VERTICAL))
+                
         sizer = wx.BoxSizer(wx.HORIZONTAL)
         self.GetSizer().Add(sizer, 0, wx.BOTTOM, 5)
         label = wx.StaticText(self, -1, 'Cloud')
@@ -64,32 +141,7 @@ class DeploymentPanel(wx.Panel):
         
         self.cancelButton.Hide()
         
-        self.eventLabel = wx.StaticText(self, -1, label="Events")
-        self.eventLabel.SetFont(wx.Font(wx.DEFAULT, wx.DEFAULT, wx.DEFAULT, wx.BOLD))
-        self.GetSizer().Add(self.eventLabel, 0, wx.ALL, 2)
         
-        self.eventList = ItemList(self, -1, 
-                                  mappers=[ColumnMapper('Event', lambda e: e.state, defaultWidth=wx.LIST_AUTOSIZE),
-                                           ColumnMapper('Time', lambda e: formatTime(e.time), defaultWidth=wx.LIST_AUTOSIZE)],
-                                  style=wx.LC_REPORT)
-        self.GetSizer().Add(self.eventList, 0, wx.ALL | wx.EXPAND, 2)
-           
-        self.logPanel = wx.TextCtrl(self, -1, size=(100,100), style=wx.TE_MULTILINE )
-        self.logLabel = wx.StaticText(self, -1, label="Log")
-        self.logLabel.SetFont(wx.Font(wx.DEFAULT, wx.DEFAULT, wx.DEFAULT, wx.BOLD))
-        self.GetSizer().Add(self.logLabel, 0, wx.ALL, 2)
-        self.logLabel.Hide()
-        self.logPanel.Hide() # logPanel will be shown later on demand
-        self.GetSizer().Add(self.logPanel, 1, wx.BOTTOM | wx.EXPAND, 5)
-    
-        
-    def showLogPanel(self):
-        self.logPanel.Show()
-        self.logLabel.Show()
-        self.Layout()
-        
-    def appendLogPanelText(self, text):
-        self.logPanel.AppendText(str(text) + "\n")
     
     def update(self):
         '''
@@ -99,5 +151,6 @@ class DeploymentPanel(wx.Panel):
         
         if self.deployment.state == DeploymentState.COMPLETED:
             self.cancelButton.Hide()
+    
             
-        self.eventList.setItems(self.deployment.stateEvents)
+        
