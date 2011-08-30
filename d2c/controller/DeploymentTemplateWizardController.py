@@ -155,10 +155,12 @@ class DeploymentTemplateWizardController:
         
         role = RoleTemplate(None, 
                             roleName, image, 
-                    startActions=startActions,
-                    uploadActions=uploadActions,
-                    finishedChecks=finishedChecks,
-                    dataCollectors=dataCollectors )
+                            startActions=startActions,
+                            uploadActions=uploadActions,
+                            finishedChecks=finishedChecks,
+                            dataCollectors=dataCollectors )
+        self.dao.add(role)
+        
         # Zero-out holders
         self.uploadScripts = []
         self.startScripts = []
@@ -188,8 +190,6 @@ class DeploymentTemplateWizardController:
         self.prevSize = self.wizard.GetSize()
         self.wizard.SetMinSize((600,600))
         self.wizard.Fit()
-        
-
         
     def checkNameDeployment(self, _):
         panel = self.wizard.container.getPanel("NAME")

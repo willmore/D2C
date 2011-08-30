@@ -29,7 +29,7 @@ class TestConfig(Configuration):
                           settings['secretKey'])
         
         Configuration.__init__(self,
-                               ec2ToolHome='/opt/EC2_TOOLS',
+                               #ec2ToolHome='/opt/EC2_TOOLS',
                                awsUserId=settings['userid'],
                                ec2Cred=ec2Cred,
                                awsCred=awsCred)

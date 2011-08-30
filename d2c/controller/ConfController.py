@@ -1,8 +1,3 @@
-'''
-Created on Feb 15, 2011
-
-@author: willmore
-'''
 import wx
 from d2c.model.EC2Cred import EC2Cred
 from d2c.model.AWSCred import AWSCred
@@ -33,7 +28,7 @@ class ConfController:
         credView._updateButton.Bind(wx.EVT_BUTTON, self._onSave)
         credView._closeButton.Bind(wx.EVT_BUTTON, self._onClose)
         
-    def _onClose(self,event):
+    def _onClose(self, _):
         self._credView.close()
         
     def _onSave(self, event):
@@ -45,7 +40,7 @@ class ConfController:
         ec2Cred = EC2Cred("defaultEC2Cred", self._credView._ec2_cert.GetValue(),
                 self._credView._ec2_private_key.GetValue())
         
-        awsUserId = self._credView.aws_user_id.GetValue();
+        awsUserId = self._credView.aws_user_id.GetValue()
         
         conf = Configuration(awsUserId=awsUserId,
                              ec2Cred=ec2Cred,

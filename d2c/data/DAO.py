@@ -415,7 +415,7 @@ class DAO:
         
     def saveConfiguration(self, conf):
         
-        self.setConfValue('ec2ToolHome', conf.ec2ToolHome)
+        #self.setConfValue('ec2ToolHome', conf.ec2ToolHome)
         self.setConfValue('awsUserId', conf.awsUserId)
         
         if conf.ec2Cred is not None:
@@ -427,7 +427,7 @@ class DAO:
         
     def getConfiguration(self):
         
-        ec2ToolHome = self.getConfValue('ec2ToolHome')
+        #ec2ToolHome = self.getConfValue('ec2ToolHome')
         awsUserId = self.getConfValue('awsUserId')
 
         
@@ -436,7 +436,7 @@ class DAO:
         ec2Cred = self.getEC2Cred(defEC2Cred) if defEC2Cred is not None else None
         awsCred = self.getAWSCred("mainKey")
             
-        return Configuration(ec2ToolHome=ec2ToolHome,
+        return Configuration(#ec2ToolHome=ec2ToolHome,
                              awsUserId=awsUserId,
                              ec2Cred=ec2Cred,
                              awsCred=awsCred)
@@ -470,7 +470,8 @@ class DAO:
         self.session.commit()
         
     def getAWSCred(self, name):
-        return self.session.query(AWSCred).filter_by(name=name).one()
+        items = self.session.query(AWSCred).filter_by(name=name).limit(1).all()
+        return items[0] if len(items) == 1 else None
     
     def getDeployments(self):
         return self.session.query(Deployment)
@@ -479,7 +480,8 @@ class DAO:
         return self.session.query(DeploymentTemplate)
              
     def getEC2Cred(self, _id):
-        return self.session.query(EC2Cred).filter_by(id=_id).one()
+        items = self.session.query(EC2Cred).filter_by(id=_id).limit(1).all()
+        return items[0] if len(items) == 1 else None
     
     def __instanceType(self, name):
         '''
