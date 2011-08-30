@@ -94,7 +94,7 @@ class Role(object):
                                                  instanceType=self.instanceType,
                                                  keyName=self.sshCred.name) 
         
-        #TODO introduce abstraction appropriate exception
+        #TODO introduce abstraction-appropriate exception
         assert self.reservation is not None and self.reservation.id is not None
         
         self.reservationId = self.reservation.id

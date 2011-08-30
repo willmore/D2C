@@ -32,7 +32,8 @@ class DeploymentTemplate(object):
         
         for roleTemp, (image, instanceType, count) in roleCounts.iteritems():
             assert roleTemp in self.roleTemplates
-            roles.append(roleTemp.createRole(deployment, cloud, image, instanceType, count))
+            if count > 0:
+                roles.append(roleTemp.createRole(deployment, cloud, image, instanceType, count))
         
         deployment.roles = roles
         

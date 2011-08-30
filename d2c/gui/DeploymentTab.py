@@ -132,7 +132,7 @@ class DeploymentTemplatePanel(wx.Panel):
         #self.overviewTab.Bind(wx.EVT_NOTEBOOK_PAGE_CHANGED)
         
     def showDeploymentCreation(self, _):
-        c = DeploymentCreator(self, self.deployment)
+        c = DeploymentCreator(self, self.deployment, style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER)
         DeploymentCreatorController(c, self.dao)
         c.ShowModal()
         

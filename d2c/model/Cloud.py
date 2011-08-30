@@ -14,13 +14,11 @@ import libvirt
 from d2c.ShellExecutor import ShellExecutor
 from .GenerateDomainXml import GenerateXML
 import subprocess
-from d2c.RemoteShellExecutor import RemoteShellExecutor
 import time
 import guestfs
 from threading import RLock
 import types
 from d2c.util import ReadWriteLock
-from d2c.util import synchronous
 
 from abc import ABCMeta, abstractmethod
 
@@ -259,16 +257,11 @@ class LibVirtReservation(object):
         os.makedirs(self.dataDir)
         
     def __createVirtualNetwork(self, conn):
-        #create vboxnet0 network
+        ''' create vboxnet0 network '''
         try:
             network = conn.networkLookupByName("vboxnet0")
-            #print "vboxnet0 found, will destroy vboxnet0"
             print "existing vboxnet0 found"
             return
-            #network.destroy()
-            #time.sleep(5)
-            #network.undefine()
-            #print "vboxnet0 undefined"
         except:
             print "vboxnet0 not found, will create it now"
             
@@ -281,7 +274,6 @@ class LibVirtReservation(object):
             return xml    
             
         network_xml_file = pkg_resources.resource_filename(__package__, "virtualbox_xml/mynetwork.xml")
-        #network = libvirt.virConnect.networkDefineXML(conn, return_xml(network_xml_file))
         conn.networkDefineXML(return_xml(network_xml_file))
         if(network.create()):
             print 'An error occured while creating the network,terminating program.'
@@ -304,8 +296,6 @@ class LibVirtReservation(object):
     rwLock = ReadWriteLock()
 
     def reserve(self):
-        ''' Virtualbox creation is serialized through use of class level lock'''
-        #LibVirtReservation.__reserveLock.acquire()
         
         ''' Ensure we can get a libvirt connection before making large image copies. '''
         conn = LibVirtReservation.getLibVirtConn()
@@ -313,6 +303,7 @@ class LibVirtReservation(object):
         self.rwLock.acquireRead()
         for inst in self.instances:
             inst._provisionCopy(LibVirtReservation.getIPAddress())
+                                
         self.rwLock.release()
         
         self.rwLock.acquireWrite()
@@ -346,8 +337,12 @@ class LibVirtConn(CloudConnection):
         self.reservations = {}
         self.publicKeyMap = {}
         
-    def runInstances(self, image, instanceType, count, keyName):
-        #TODO action acquire instances
+    def runInstances(self, image, instanceType, count, keyName, runFromCopy=True):
+        
+        if not runFromCopy:
+            ''' We can only run from source directly if there is only one instance '''
+            assert count == 1 
+        
         reservation = LibVirtReservation(image, instanceType, count, self.publicKeyMap[keyName])
         self.reservations[reservation.id] = reservation
         LibVirtReservationThread(reservation).start()
@@ -391,6 +386,7 @@ class LibVirtConn(CloudConnection):
         self.publicKeyMap[keyPairName] = pubKeyFile
         
         return os.path.join(dataDir, "%s/%s" % (dataDir, keyPairName)) 
+
 
 class DesktopCloud(Cloud):
     

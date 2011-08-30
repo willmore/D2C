@@ -1,9 +1,3 @@
-'''
-Created on Apr 12, 2011
-
-@author: willmore
-'''
-
 from .ShellExecutor import ShellExecutor
 from .logger import StdOutLogger
 

@@ -86,7 +86,7 @@ class DeploymentCreatorController(object):
         for choice in self._choices:
             roleReq[choice.roleTemp] = (choice.sourceImg, choice.selectedInstanceType, choice.count)
         
-        deployment = self._view.deploymentTemplate.createDeployment(self._cloud, roleReq, probSize=self._size)
+        deployment = self._view.deploymentTemplate.createDeployment(self._cloud, roleReq, problemSize=self._size)
         self._dao.save(deployment)
         wx.CallAfter(Publisher().sendMessage, "DEPLOYMENT CREATED", 
                              {'deployment':deployment})

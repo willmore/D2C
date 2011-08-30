@@ -35,6 +35,9 @@ class DeploymentPanel(wx.Panel):
         self.eventTab = EventTab(self.deployment, self.tabContainer, -1)
         self.tabContainer.AddPage(self.eventTab, "Log / Events")
         
+        self.monitorTab = EventTab(self.deployment, self.tabContainer, -1)
+        self.tabContainer.AddPage(self.monitorTab, "Monitoring")
+        
     def showLogPanel(self):
         self.eventTab.showLogPanel()
         
@@ -48,7 +51,16 @@ class DeploymentPanel(wx.Panel):
         self.overviewTab.update()
         self.eventTab.update()
         
-   
+class MonitorTab(wx.Panel):
+    '''
+    Displays graphs of system resource usage.
+    This will only contain data after completion of a deployment.
+    '''
+    
+    def __init__(self, *args, **kwargs):
+         
+        wx.Panel.__init__(self, *args, **kwargs) 
+  
 class EventTab(wx.Panel):
     '''
     Displays Deployment events and log.
@@ -81,7 +93,6 @@ class EventTab(wx.Panel):
         
     def update(self):
         self.eventList.setItems(self.deployment.stateEvents)
-    
     
     def appendLogPanelText(self, text):
         self.logPanel.AppendText(str(text) + "\n")

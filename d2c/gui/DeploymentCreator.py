@@ -73,7 +73,7 @@ class CloudPanel(wx.Panel):
         
         wx.Panel.__init__(self, *args, **kwargs)
  
-        self.cloudList = ItemList(self, -1, style=wx.LC_REPORT, size=(-1, 130),
+        self.cloudList = ItemList(self, -1, style=wx.LC_REPORT, size=(-1, 200),
                                    mappers=[ColumnMapper('Name', lambda c: c.name, defaultWidth=wx.LIST_AUTOSIZE)])
         
         self.chooseButton = wx.Button(self, wx.ID_FORWARD)
@@ -124,24 +124,24 @@ class DeploymentPanel(wx.Panel):
        
        
         hboxSizer = wx.BoxSizer(wx.HORIZONTAL)
-        countCtrl = wx.SpinCtrl(self, wx.ID_ANY, '1', min=1, max=1024)
+        countCtrl = wx.SpinCtrl(self, wx.ID_ANY, '1', min=0, max=1024)
         hboxSizer.Add(wx.StaticText(self, -1,"Instance Count"))
         hboxSizer.Add(countCtrl, 0, wx.ALL, 2)
-        boxSizer.Add(hboxSizer, 0, wx.EXPAND)
+        boxSizer.Add(hboxSizer, 1)
                 
         hboxSizer = wx.BoxSizer(wx.HORIZONTAL)
-        imgTxt = wx.StaticText(self, wx.ID_ANY, size=(60, -1), label=choice.imgStr)
-        hboxSizer.Add(wx.StaticText(self, -1,"Image"))
-        hboxSizer.Add(imgTxt, 0, wx.ALL, 2)
-        boxSizer.Add(hboxSizer, 0, wx.EXPAND)
+        imgTxt = wx.StaticText(self, wx.ID_ANY, label=choice.imgStr)
+        hboxSizer.Add(wx.StaticText(self, -1,"Image"), 0)
+        hboxSizer.Add(imgTxt, 1)
+        boxSizer.Add(hboxSizer, 1)
         
         hboxSizer = wx.BoxSizer(wx.HORIZONTAL)
         instCtrl = wx.ComboBox(self, wx.ID_ANY, size=(120, -1), choices=[c.name for c in choice.instanceTypes])
         hboxSizer.Add(wx.StaticText(self, -1,"Instance Type"))
         hboxSizer.Add(instCtrl, 0, wx.ALL, 2)
-        boxSizer.Add(hboxSizer, 0, wx.EXPAND)
+        boxSizer.Add(hboxSizer, 1)
         
-        self.vsizer.Insert(self.choiceIdx, boxSizer, 0, wx.ALL)
+        self.vsizer.Insert(self.choiceIdx, boxSizer)
         
         return (countCtrl, instCtrl)
     
