@@ -22,6 +22,9 @@ class DeploymentCreator(wx.Dialog):
         self.cloudPanel = CloudPanel(self.container)
         self.container.addPanel("CLOUD", self.cloudPanel)
         
+        self.credPanel = CredPanel(self.container)
+        self.container.addPanel("CREDENTIAL", self.credPanel)
+        
         self.deploymentPanel = DeploymentPanel(self.container, deploymentTemplate)
         self.container.addPanel("DEPLOYMENT", self.deploymentPanel)
         
@@ -66,6 +69,31 @@ prediction.""")
         
         self.sizer.Add(self.hsizer, 0, wx.ALIGN_RIGHT|wx.ALL, 2) 
         
+class CredPanel(wx.Panel):
+    
+    def __init__(self, *args, **kwargs):
+        
+        wx.Panel.__init__(self, *args, **kwargs);
+
+        self.sizer = wx.BoxSizer(wx.VERTICAL)
+        self.SetSizer(self.sizer)
+        txt = wx.StaticText(self, -1, "Choose AWS Credential")
+        txt.SetFont(wx.Font(15, wx.DEFAULT, wx.DEFAULT, wx.BOLD))
+        self.sizer.Add(txt, 0, wx.ALL, 2)
+        
+        self.credList = ItemList(self, -1, style=wx.LC_REPORT, size=(-1, 150),
+                                   mappers=[ColumnMapper('Name', lambda c: c.name, defaultWidth=wx.LIST_AUTOSIZE)])
+        self.sizer.Add(self.credList, 0, wx.EXPAND|wx.ALL, 5)
+        
+        self.chooseButton = wx.Button(self, wx.ID_FORWARD)
+        self.cancelButton = wx.Button(self, wx.ID_CANCEL)
+        
+        self.hsizer = wx.BoxSizer(wx.HORIZONTAL)
+       
+        self.hsizer.Add(self.cancelButton, 0, wx.ALIGN_RIGHT|wx.ALL, 2)  
+        self.hsizer.Add(self.chooseButton, 0, wx.ALIGN_RIGHT|wx.ALL, 2)
+        
+        self.sizer.Add(self.hsizer, 0, wx.ALIGN_RIGHT|wx.ALL, 2) 
        
 class CloudPanel(wx.Panel):    
     
@@ -73,7 +101,7 @@ class CloudPanel(wx.Panel):
         
         wx.Panel.__init__(self, *args, **kwargs)
  
-        self.cloudList = ItemList(self, -1, style=wx.LC_REPORT, size=(-1, 200),
+        self.cloudList = ItemList(self, -1, style=wx.LC_REPORT, size=(-1, 150),
                                    mappers=[ColumnMapper('Name', lambda c: c.name, defaultWidth=wx.LIST_AUTOSIZE)])
         
         self.chooseButton = wx.Button(self, wx.ID_FORWARD)
@@ -141,7 +169,7 @@ class DeploymentPanel(wx.Panel):
         hboxSizer.Add(instCtrl, 0, wx.ALL, 2)
         boxSizer.Add(hboxSizer, 1)
         
-        self.vsizer.Insert(self.choiceIdx, boxSizer)
+        self.vsizer.Insert(self.choiceIdx, boxSizer, 0, wx.EXPAND | wx.ALL, 2)
         
         return (countCtrl, instCtrl)
     

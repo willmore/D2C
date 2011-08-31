@@ -42,6 +42,7 @@ class DeploymentCreatorController(object):
         self._view.sizePanel.chooseButton.Disable()
         self._view.cloudPanel.cloudList.setItems(dao.getClouds())
         self._view.cloudPanel.chooseButton.Bind(wx.EVT_BUTTON, self._selectCloud)
+        self._view.credPanel.chooseButton.Bind(wx.EVT_BUTTON, self._selectCred)
         self._view.deploymentPanel.doneButton.Bind(wx.EVT_BUTTON, self._createDeployment)
         self._size = None
         self._cloud = None
@@ -78,15 +79,23 @@ class DeploymentCreatorController(object):
             countCtrl.Bind(wx.EVT_SPINCTRL, choice.selectCountEvent)  
             instTypeCtrl.Bind(wx.EVT_COMBOBOX, choice.selectInstanceTypeEvent)
         
-        self._view.showPanel("DEPLOYMENT")
+        if self._cloud.requiresAWSCred():
+            self._view.credPanel.credList.setItems(self._dao.getAWSCreds())
+            self._view.showPanel("CREDENTIAL")
+        else:
+            self._view.showPanel("DEPLOYMENT")
         
+    def _selectCred(self, _):
+        self._awsCred = self._view.credPanel.credList.getSelectedItems()[0]
+        self._view.showPanel("DEPLOYMENT")
+    
     def _createDeployment(self, _):
         
         roleReq = {}
         for choice in self._choices:
             roleReq[choice.roleTemp] = (choice.sourceImg, choice.selectedInstanceType, choice.count)
         
-        deployment = self._view.deploymentTemplate.createDeployment(self._cloud, roleReq, problemSize=self._size)
+        deployment = self._view.deploymentTemplate.createDeployment(self._cloud, roleReq, problemSize=self._size, awsCred=self._awsCred)
         self._dao.save(deployment)
         wx.CallAfter(Publisher().sendMessage, "DEPLOYMENT CREATED", 
                              {'deployment':deployment})

@@ -473,6 +473,9 @@ class DAO:
         items = self.session.query(AWSCred).filter_by(name=name).limit(1).all()
         return items[0] if len(items) == 1 else None
     
+    def getAWSCreds(self):
+        return self.session.query(AWSCred).all()
+    
     def getDeployments(self):
         return self.session.query(Deployment)
     

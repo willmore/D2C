@@ -34,6 +34,13 @@ class Cloud(object):
         self.name = name
         self.instanceTypes=list(instanceTypes)
         
+    def requiresAWSCred(self):
+        '''
+        Returns True if the Cloud requires AWS Credentials for access rights.
+        This basically applies only to EC2 and Eucalyptus clouds.
+        '''
+        return False
+        
         
 class CloudConnection(object):
     
@@ -467,6 +474,9 @@ class EC2Cloud(Cloud):
         self.kernels = list(kernels)
         self.storage = WalrusStorage("placeholder_name", storageURL)
         self.deployments = list()
+    
+    def requiresAWSCred(self):
+        return True
        
     def getName(self):
         return self.name
