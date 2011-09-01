@@ -151,7 +151,7 @@ class OverviewTab(wx.Panel):
         
         label = wx.StaticText(self.dataPanel, -1, 'Role Data')
         label.SetFont(wx.Font(wx.DEFAULT, wx.DEFAULT, wx.DEFAULT, wx.BOLD))
-        self.dataPanel.GetSizer.Add(label, 0, wx.BOTTOM, 5)
+        self.dataPanel.GetSizer().Add(label, 0, wx.BOTTOM, 5)
         
         for role in self.deployment.roles:
             hbox = wx.BoxSizer(wx.HORIZONTAL)
