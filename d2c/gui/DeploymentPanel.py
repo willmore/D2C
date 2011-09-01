@@ -156,7 +156,7 @@ class OverviewTab(wx.Panel):
         for role in self.deployment.roles:
             hbox = wx.BoxSizer(wx.HORIZONTAL)
             label = wx.StaticText(self.dataPanel, -1, role.getName())
-            hbox.Add(), 0, wx.EXPAND | wx.ALL, 2)
+            hbox.Add(label, 0, wx.EXPAND | wx.ALL, 2)
             hbox.Add(wx.StaticText(self.dataPanel, -1, role.getDataDirectory()), 1, wx.EXPAND | wx.ALL, 2)
             self.dataPanel.GetSizer().Add(hbox, 0, wx.EXPAND | wx.ALL, 2)
         
