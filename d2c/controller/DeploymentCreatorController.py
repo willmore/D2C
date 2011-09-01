@@ -47,6 +47,7 @@ class DeploymentCreatorController(object):
         self._size = None
         self._cloud = None
         self._choices = None
+	self._awsCred = None
       
     def _validateSize(self, _):
         
