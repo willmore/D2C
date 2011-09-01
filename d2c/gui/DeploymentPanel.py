@@ -144,6 +144,22 @@ class OverviewTab(wx.Panel):
         self.roles = RoleList(self, -1, items=deployment.roles)
         self.GetSizer().Add(self.roles, 0, wx.BOTTOM | wx.EXPAND, 5)
         
+        self.dataPanel = wx.Panel(self,-1)
+        self.GetSizer().Add(self.dataPanel)
+        self.dataPanel.SetSizer(wx.BoxSizer(wx.VERTICAL))
+        self.dataPanel.Hide()
+        
+        label = wx.StaticText(self.dataPanel, -1, 'Role Data')
+        label.SetFont(wx.Font(wx.DEFAULT, wx.DEFAULT, wx.DEFAULT, wx.BOLD))
+        self.dataPanel.GetSizer.Add(label, 0, wx.BOTTOM, 5)
+        
+        for role in self.deployment.roles:
+            hbox = wx.BoxSizer(wx.HORIZONTAL)
+            label = wx.StaticText(self.dataPanel, -1, role.getName())
+            hbox.Add(), 0, wx.EXPAND | wx.ALL, 2)
+            hbox.Add(wx.StaticText(self.dataPanel, -1, role.getDataDirectory()), 1, wx.EXPAND | wx.ALL, 2)
+            self.dataPanel.GetSizer().Add(hbox, 0, wx.EXPAND | wx.ALL, 2)
+        
         self.deployButton = wx.Button(self, wx.ID_ANY, 'Deploy', size=(110, -1))
         self.GetSizer().Add(self.deployButton, 0, wx.ALL, 2)
         
@@ -151,6 +167,7 @@ class OverviewTab(wx.Panel):
         self.GetSizer().Add(self.cancelButton, 0, wx.ALL, 2)
         
         self.cancelButton.Hide()
+        self.update()
         
         
     
@@ -160,8 +177,12 @@ class OverviewTab(wx.Panel):
         '''
         self.statusField.SetLabel(self.deployment.state)
         
+        if self.deployment.state != DeploymentState.NOT_RUN:
+            self.deployButton.Hide()
+        
         if self.deployment.state == DeploymentState.COMPLETED:
             self.cancelButton.Hide()
+            self.dataPanel.Show()
     
             
         

@@ -25,7 +25,7 @@ class DataCollector(object):
         if not os.path.exists(destDir):
             os.makedirs(destDir)
         
-        cmd = "scp -r -i %s -o StrictHostKeyChecking=no %s@%s:%s %s" % (self.sshCred.privateKey, 
+        cmd = "scp -r -i '%s' -o StrictHostKeyChecking=no %s@%s:%s '%s'" % (self.sshCred.privateKey, 
                                                                         self.sshCred.username,
                                                                         instance.public_dns_name, 
                                                                         self.source,

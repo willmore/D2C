@@ -29,7 +29,7 @@ class RemoteShellExecutor(ShellExecutor):
         
     def run(self, cmd):
         
-        pKeyStr = "-i %s" % self.privateKey if self.privateKey else ""
+        pKeyStr = "-i '%s'" % self.privateKey if self.privateKey else ""
         cmd = string.replace(cmd, "\\", "\\\\")
         cmd = string.replace(cmd, "\"", "\\\"")
         cmd = string.replace(cmd, "`", "\`")

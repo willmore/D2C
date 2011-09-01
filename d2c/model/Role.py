@@ -47,6 +47,12 @@ class Role(object):
         self.logger = logger
         self.sshCred = None
     
+    def getName(self):
+        return self.template.name
+    
+    def getDataDirectory(self):
+        return os.path.join(self.deployment.dataDir, str(self.id))
+    
     def setSSHCred(self, sshCred):
         self.sshCred = sshCred
         
@@ -200,7 +206,7 @@ class Role(object):
         for collector in self.dataCollectors:
             for instance in self.reservation.instances:
                 
-                dest = os.path.join(self.deployment.dataDir, str(self.id), str(instance.id), collector.source[1:])
+                dest = os.path.join(self.getDataDirectory(), str(instance.id), collector.source[1:])
                 
                 self.logger.write("Downloading data from instance %s to %s... " % (instance.id, dest))
                 collector.collect(instance, 

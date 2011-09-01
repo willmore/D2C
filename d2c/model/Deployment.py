@@ -2,7 +2,6 @@
 from d2c.logger import StdOutLogger
 import time
 from .SSHCred import SSHCred
-from .Cloud import DesktopCloud
 
 class Instance(object):
     '''

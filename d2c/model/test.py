@@ -1,23 +1,110 @@
-from numpy import *
-import pylab as p
-#import matplotlib.axes3d as p3
-import mpl_toolkits.mplot3d.axes3d as p3
+#!/usr/bin/python
 
-# u and v are parametric variables.
-# u is an array from 0 to 2*pi, with 100 elements
-u=r_[0:2*pi:100j]
-# v is an array from 0 to 2*pi, with 100 elements
-v=r_[0:pi:100j]
-# x, y, and z are the coordinates of the points for plotting
-# each is arranged in a 100x100 array
-x=10*outer(cos(u),sin(v))
-y=10*outer(sin(u),sin(v))
-z=10*outer(ones(size(u)),cos(v))
+# commondialogs.py
 
-fig=p.figure()
-ax = p3.Axes3D(fig)
-ax.plot_wireframe(x,y,z)
-ax.set_xlabel('X')
-ax.set_ylabel('Y')
-ax.set_zlabel('Z')
-p.show()
+import wx
+import os, sys
+
+class MyFrame(wx.Frame):
+    def __init__(self, parent, id, title):
+      wx.Frame.__init__(self, parent, id, title)
+
+      self.CreateStatusBar()
+      menuBar = wx.MenuBar()
+      menu = wx.Menu()
+      menu.Append(99,  "&Message Dialog", "Shows a Message Dialog")
+      menu.Append(100, "&Color Dialog", "Shows a Color Dialog")
+      menu.Append(101, "&File Dialog", "Shows a File Dialog")
+      menu.Append(102, "&Page Setup Dialog", "Shows a Page Setup Dialog")
+      menu.Append(103, "&Font Dialog", "Shows a Font Dialog")
+      menu.Append(104, "&Directory Dialog", "Shows a Directory Dialog")
+      menu.Append(105, "&SingleChoice Dialog", "Shows a SingleChoice Dialog")
+      menu.Append(106, "&TextEntry Dialog", "Shows a TextEntry Dialog")
+      menuBar.Append(menu, "&Dialogs")
+      self.SetMenuBar(menuBar)
+
+      self.Bind(wx.EVT_MENU, self.message, id=99)
+      self.Bind(wx.EVT_MENU, self.choosecolor, id=100)
+      self.Bind(wx.EVT_MENU, self.openfile, id=101)
+      self.Bind(wx.EVT_MENU, self.pagesetup, id=102)
+      self.Bind(wx.EVT_MENU, self.choosefont, id=103)
+      self.Bind(wx.EVT_MENU, self.opendir, id=104)
+      self.Bind(wx.EVT_MENU, self.singlechoice, id=105)
+      self.Bind(wx.EVT_MENU, self.textentry, id=106)
+
+    def message(self, event):
+        dlg = wx.MessageDialog(self, 'To save one life is as if you have saved the world.', 'Talmud', wx.OK|wx.ICON_INFORMATION)
+        dlg.ShowModal()
+        dlg.Destroy()
+
+    def choosecolor(self, event):
+        dlg = wx.ColourDialog(self)
+        dlg.GetColourData().SetChooseFull(True)
+        if dlg.ShowModal() == wx.ID_OK:
+            data = dlg.GetColourData()
+            self.SetStatusText('You selected: %s\n' % str(data.GetColour().Get()))
+        dlg.Destroy()
+
+    def openfile(self, event):
+       dlg = wx.FileDialog(self, "Choose a file", os.getcwd(), "", "*.*", wx.OPEN)
+       if dlg.ShowModal() == wx.ID_OK:
+                path = dlg.GetPath()
+                mypath = os.path.basename(path)
+                self.SetStatusText("You selected: %s" % mypath)
+       dlg.Destroy()
+
+    def pagesetup(self, event):
+        dlg = wx.PageSetupDialog(self)
+        if dlg.ShowModal() == wx.ID_OK:
+            data = dlg.GetPageSetupData()
+            tl = data.GetMarginTopLeft()
+            br = data.GetMarginBottomRight()
+            self.SetStatusText('Margins are: %s %s' % (str(tl), str(br)))
+        dlg.Destroy()
+
+    def choosefont(self, event):
+        default_font = wx.Font(10, wx.SWISS , wx.NORMAL, wx.NORMAL, False, "Verdana")
+        data = wx.FontData()
+        if sys.platform == 'win32':
+            data.EnableEffects(True)
+        data.SetAllowSymbols(False)
+        data.SetInitialFont(default_font)
+        data.SetRange(10, 30)
+        dlg = wx.FontDialog(self, data)
+        if dlg.ShowModal() == wx.ID_OK:
+            data = dlg.GetFontData()
+            font = data.GetChosenFont()
+            color = data.GetColour()
+            text = 'Face: %s, Size: %d, Color: %s' % (font.GetFaceName(), font.GetPointSize(),  color.Get())
+            self.SetStatusText(text)
+        dlg.Destroy()
+
+    def opendir(self, event):
+        dlg = wx.DirDialog(self, "Choose a directory:", style=wx.DD_DEFAULT_STYLE | wx.DD_NEW_DIR_BUTTON)
+        if dlg.ShowModal() == wx.ID_OK:
+            self.SetStatusText('You selected: %s\n' % dlg.GetPath())
+        dlg.Destroy()
+
+    def singlechoice(self, event):
+        sins = ['Greed', 'Lust', 'Gluttony', 'Pride', 'Sloth', 'Envy', 'Wrath']
+        dlg = wx.SingleChoiceDialog(self, 'Seven deadly sins', 'Which one?', sins, wx.CHOICEDLG_STYLE)
+        if dlg.ShowModal() == wx.ID_OK:
+            self.SetStatusText('You chose: %s\n' % dlg.GetStringSelection())
+        dlg.Destroy()
+
+    def textentry(self, event):
+        dlg = wx.TextEntryDialog(self, 'Enter some text','Text Entry')
+        dlg.SetValue("Default")
+        if dlg.ShowModal() == wx.ID_OK:
+            self.SetStatusText('You entered: %s\n' % dlg.GetValue())
+        dlg.Destroy()
+
+class MyApp(wx.App):
+    def OnInit(self):
+        myframe = MyFrame(None, -1, "commondialogs.py")
+        myframe.CenterOnScreen()
+        myframe.Show(True)
+        return True
+
+app = MyApp(0)
+app.MainLoop()
