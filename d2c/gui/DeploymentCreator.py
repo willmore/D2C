@@ -73,7 +73,7 @@ class CredPanel(wx.Panel):
     
     def __init__(self, *args, **kwargs):
         
-        wx.Panel.__init__(self, *args, **kwargs);
+        wx.Panel.__init__(self, *args, **kwargs)
 
         self.sizer = wx.BoxSizer(wx.VERTICAL)
         self.SetSizer(self.sizer)

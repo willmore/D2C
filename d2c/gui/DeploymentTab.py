@@ -7,6 +7,7 @@ from d2c.controller.DeploymentController import DeploymentController
 from d2c.controller.DeploymentCreatorController import DeploymentCreatorController
 
 from .DeploymentCreator import DeploymentCreator
+from wx.lib.pubsub import Publisher
 
 from d2c.model.CompModel import GustafsonCompModel2
 
@@ -49,6 +50,22 @@ class DeploymentTab(wx.Panel):
         self.splitter.SplitVertically(self.tree, self.displayPanel)
         self.SetSizer(vbox)
         self.Layout()   
+   
+        Publisher.subscribe(self._handleDeleteDeploymentTemplate, "DELETE DEPLOYMENT TEMPLATE")
+       
+    def _handleDeleteDeploymentTemplate(self, msg):    
+        deploymentTemplate = msg.data['deploymentTemplate']
+        node = self._getTreeItemIdByName(deploymentTemplate.name)
+        self.tree.Delete(node)
+        self.displayPanel.removePanel(deploymentTemplate.name)
+        self.dao.delete(deploymentTemplate)
+       
+    def removeDeployment(self, deployment):
+        self.displayPanel.showPanel(deployment.deploymentTemplate.name)
+        label = deployment.deploymentTemplate.name  + ":" + str(deployment.id)
+        self.displayPanel.removePanel(label)
+        node = self._getTreeItemIdByName(label)
+        self.tree.Delete(node)
         
     def addDeploymentTemplatePanel(self, deploymentPanel):
         
@@ -59,7 +76,6 @@ class DeploymentTab(wx.Panel):
             self.addDeployment(d, node)
             
     def addDeployment(self, deployment, parentNode=None):
-    
     
         if parentNode is None:
             #Find parent node based on deployment name
@@ -72,16 +88,25 @@ class DeploymentTab(wx.Panel):
         DeploymentController(p, self.dao)
         
     def _getTreeItemIdByName(self, name):
-        '''
-        Only iterates through root children
-        '''
-        item, cookie = self.tree.GetFirstChild(self.treeRoot)
+        
+        return self._findTreeNode(name, self.treeRoot)
+    
+    def _findTreeNode(self, name, node):
+        if node is None:
+            return None
+        
+        item, cookie = self.tree.GetFirstChild(node)
         while item:
             
             if name == self.tree.GetItemText(item):
                 return item
             
-            item, cookie = self.tree.GetNextChild(self.treeRoot, cookie)
+            citem = self._findTreeNode(name, item)
+            
+            if citem is not None:
+                return citem
+            
+            item, cookie = self.tree.GetNextChild(node, cookie)
         
         return None
         
@@ -98,10 +123,7 @@ class DeploymentTemplatePanel(wx.Panel):
         
         label = wx.StaticText(self, -1, deployment.name)
         label.SetFont(wx.Font(20, wx.DEFAULT, wx.DEFAULT, wx.BOLD))
-        self.GetSizer().Add(label, 0, wx.BOTTOM, 10)
-          
-          
-        #self.GetSizer().Add(self.roles, 0, wx.BOTTOM | wx.EXPAND, 5)
+        self.GetSizer().Add(label, 0, wx.BOTTOM | wx.TOP, 10)
         
         self.deployButton = wx.Button(self, wx.ID_ANY, 'Create Deployment')
         
@@ -128,13 +150,22 @@ class DeploymentTemplatePanel(wx.Panel):
         
         self.experimentTab = CostGraphPanel(deployment, self.dao.getClouds(), self.tabContainer)
         self.tabContainer.AddPage(self.experimentTab, "Cost Prediction")
+                
+        self.deleteButton = wx.Button(self, wx.ID_ANY, 'Delete')
         
-        #self.overviewTab.Bind(wx.EVT_NOTEBOOK_PAGE_CHANGED)
+        self.deleteButton.Bind(wx.EVT_BUTTON, self.handleDelete)
+        self.GetSizer().Add(self.deleteButton, 0, wx.ALL, 2)
         
     def showDeploymentCreation(self, _):
         c = DeploymentCreator(self, self.deployment, style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER)
         DeploymentCreatorController(c, self.dao)
         c.ShowModal()
+        
+    def handleDelete(self, _):
+        wx.CallAfter(Publisher().sendMessage, "DELETE DEPLOYMENT TEMPLATE", 
+                             {'deploymentTemplate':self.deployment})   
+        
+        
         
 class CanvasPanel(wx.Panel):
 
@@ -224,6 +255,7 @@ class CanvasPanel(wx.Panel):
 
     def OnPaint(self, event):
         self.canvas.draw()
+        
         
 class CostGraphPanel(wx.Panel):
 

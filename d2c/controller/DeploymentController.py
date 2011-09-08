@@ -64,15 +64,27 @@ class DeploymentController:
                             "DEPLOYMENT EXCEPTION")
         
         self.view.overviewTab.roles.Bind(wx.EVT_LIST_ITEM_RIGHT_CLICK, self.onRolesRightClick)
+        self.view.cloneButton.Bind(wx.EVT_BUTTON, self.handleClone)
+        self.view.deleteButton.Bind(wx.EVT_BUTTON, self.handleDelete)
+    
+    def handleDelete(self, _):
+        wx.CallAfter(Publisher().sendMessage, "DELETE DEPLOYMENT", 
+                             {'deployment':self.deployment})        
+    
+    def handleClone(self, _):
+        newDeployment = self.deployment.clone()
+        self.dao.add(newDeployment)
+        wx.CallAfter(Publisher().sendMessage, "DEPLOYMENT CREATED", 
+                             {'deployment':newDeployment})
     
     def onRolesRightClick(self, event):
-        item, flags = self.view.roles.HitTest(event.GetPosition())
+        item, flags = self.view.overviewTab.roles.HitTest(event.GetPosition())
         if flags == wx.NOT_FOUND:
             event.Skip()
             return
-        self.view.roles.Select(item)
+        self.view.overviewTab.roles.Select(item)
         
-        self.view.roles.PopupMenu(RolePopupMenu(self.view.roles.getSelectedItems()[0], self.dao),
+        self.view.overviewTab.roles.PopupMenu(RolePopupMenu(self.view.overviewTab.roles.getSelectedItems()[0], self.dao),
                                   event.GetPosition())
     
     def handleException(self, msg):     
@@ -140,19 +152,18 @@ class RolePopupMenu(wx.Menu):
         self.dao = dao
         self.role = role
         
-        item = wx.MenuItem(self, wx.NewId(), "View / Edit Role")
+        item = wx.MenuItem(self, wx.NewId(), "View Role" if role.deployment.hasCompleted() else "View / Edit Role")
         self.AppendItem(item)
         self.Bind(wx.EVT_MENU, self.onEditRole, item)
 
-    def onEditRole(self, _):
-        print "Item One selected in the %s" % self.role.template.name
-        
-        roleDialog = RoleDialog(None, -1, size=(400,400))
+    def onEditRole(self, _):        
+        roleDialog = RoleDialog(True, None, -1, size=(600,800), style=wx.RESIZE_BORDER)
         
         RolePanelController(roleDialog, self.role, self.dao)
         
         roleDialog.ShowModal()
         roleDialog.Destroy()
+        
       
 class DeploymentTemplateController:
     

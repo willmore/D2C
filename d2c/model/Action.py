@@ -23,7 +23,7 @@ class Action(object):
                             instance.public_dns_name, 
                             self.sshCred.privateKey).run(self.command)
                             
-                            
+                      
 class StartAction(Action):
 
     def __init__(self, 
@@ -37,3 +37,5 @@ class StartAction(Action):
         
     def copy(self):
         return StartAction(self.command)
+
+        

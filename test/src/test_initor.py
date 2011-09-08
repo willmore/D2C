@@ -10,8 +10,10 @@ from TestConfig import TestConfig
 from d2c.model.DeploymentTemplate import DeploymentTemplate, RoleTemplate
 from d2c.model.FileExistsFinishedCheck import FileExistsFinishedCheck
 from d2c.model.Action import StartAction
+from d2c.model.AsyncAction import AsyncAction
 from d2c.model.Deployment import StateEvent, DeploymentState
 import tempfile
+import time
 
 from numpy import true_divide
 
@@ -71,7 +73,7 @@ def init_db(dao, confFile):
     for cloud in clouds:
         dao.add(cloud)
         
-    deskImg = DesktopImage(None, None, clouds[3], "/home/willmore/images/worker.vdi")
+    deskImg = DesktopImage(None, None, clouds[3], time.time(), 2000000, 8000000, "/home/willmore/images/worker.vdi")
     myWorkerImg = Image(None, "Worker", deskImg, [deskImg])
     
     dao.add(myWorkerImg) 
@@ -81,7 +83,7 @@ def init_db(dao, confFile):
     ramdisk = Ramdisk("eri-83141744", cloud, archs[1])
     dao.add(ramdisk)
 
-    ami = AMI(None, myWorkerImg, "emi-77180ECD", cloud)
+    ami = AMI(None, myWorkerImg, "emi-77180ECD", cloud, time.time(), 8000000)
     dao.addAMI(ami)
      
     for instance in []:
@@ -104,7 +106,8 @@ def init_db(dao, confFile):
                                                         image = myWorkerImg, 
                                                         dataCollectors=[DataCollector("/tmp/pingtest.out")],
                                                         finishedChecks=[FileExistsFinishedCheck("/tmp/pingtest.out")],
-                                                        startActions=[StartAction("for ip in `cat /tmp/d2c.context`; do ping $ip; done > /tmp/pingtest.out", None)]
+                                                        startActions=[StartAction("echo \"Host *\" >> /home/dirac/.ssh/config; echo \"    StrictHostKeyChecking no\" >> /home/dirac/.ssh/config;", None)],
+                                                        asyncStartActions=[AsyncAction("sudo -u dirac mpirun -wdir /home/dirac -np 2 -hostfile /tmp/d2c.context hostname > /tmp/pingtest.out", None)]
                                                     
                                         )])
     

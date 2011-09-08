@@ -47,13 +47,19 @@ class Application:
         
         Publisher.subscribe(self._handleNewDeploymentTemplate, "DEPLOYMENT TEMPLATE CREATED")
         Publisher.subscribe(self._handleNewDeployment, "DEPLOYMENT CREATED")
+        Publisher.subscribe(self._handleDeleteDeployment, "DELETE DEPLOYMENT")
         
         self._frame
         self._frame.Show()     
-        
-        
+            
     def deploymentSelect(self, event):
         self._frame.deploymentPanel.displayPanel.showPanel(self._frame.deploymentPanel.tree.GetItemText(event.GetItem()))
+    
+    def _handleDeleteDeployment(self, msg):    
+        deployment = msg.data['deployment']
+        #del self.deplomentControllers[deployment.id]
+        self._frame.deploymentPanel.removeDeployment(deployment)
+        self._dao.delete(deployment)
     
     def _handleNewDeploymentTemplate(self, msg):    
         deployment = msg.data['deployment']

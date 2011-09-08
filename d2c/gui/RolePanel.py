@@ -1,22 +1,19 @@
-'''
-Created on Jul 20, 2011
-
-@author: willmore
-'''
 import wx
 
 class RolePanel(wx.Panel):
     
-    def __init__(self, *args, **kwargs):
+    def __init__(self, modifiable, *args, **kwargs):
         wx.Panel.__init__(self, *args, **kwargs)
+        
+        self.modifiable = modifiable
                 
         self.sizer = wx.BoxSizer(wx.VERTICAL)
         
         self.sw = wx.ScrolledWindow(self, style=wx.VSCROLL)
         self.sw.SetMinSize((-1, 300))
-        self.sw.SetMaxSize((-1, 300))
+
         self.sw.SetScrollbars(1,1,1,1)
-        self.sizer.Add(self.sw, 0, wx.ALL | wx.EXPAND, 5)
+        self.sizer.Add(self.sw, 1, wx.ALL | wx.EXPAND, 5)
         self.sw.sizer = wx.BoxSizer(wx.VERTICAL)
         
         self.sw.uploadScriptBox = wx.StaticBox(self.sw, label="Uploads")
@@ -29,6 +26,12 @@ class RolePanel(wx.Panel):
         self.sw.startScriptBox.boxSizer = wx.StaticBoxSizer(self.sw.startScriptBox, wx.VERTICAL)
         
         self.sw.sizer.Add(self.sw.startScriptBox.boxSizer, 0, wx.EXPAND| wx.ALL, 2)
+        
+        #####
+        self.sw.asyncScriptBox = wx.StaticBox(self.sw, label="Async Start Scripts")
+        self.sw.asyncScriptBox.boxSizer = wx.StaticBoxSizer(self.sw.asyncScriptBox, wx.VERTICAL)
+        
+        self.sw.sizer.Add(self.sw.asyncScriptBox.boxSizer, 0, wx.EXPAND| wx.ALL, 2)
         
         #####
         self.sw.endScriptBox = wx.StaticBox(self.sw, label="File Done Check")
@@ -47,10 +50,13 @@ class RolePanel(wx.Panel):
         self.saveButton = wx.Button(self, wx.ID_ANY, 'Save', style=wx.SAVE)
         self.hsizer.Add(self.saveButton,0, wx.ALIGN_RIGHT)
         
-        self.cancelButton = wx.Button(self, wx.ID_ANY, 'Cancel')
+        if not modifiable:
+            self.saveButton.Hide()
+        
+        self.cancelButton = wx.Button(self, wx.ID_ANY, 'Cancel' if modifiable else 'Close')
         self.hsizer.Add(self.cancelButton,wx.ALIGN_RIGHT)
         
-        self.sizer.Add(self.hsizer, 0, wx.ALIGN_RIGHT|wx.ALL, 2)
+        self.sizer.Add(self.hsizer, 0, wx.ALIGN_RIGHT | wx.BOTTOM | wx.RIGHT, 10)
         
         self.SetSizer(self.sizer)
             
@@ -58,7 +64,7 @@ class RolePanel(wx.Panel):
         
 class RoleDialog(wx.Dialog):
     
-    def __init__(self, *args, **kwargs):
+    def __init__(self, modifiable=True, *args, **kwargs):
         wx.Dialog.__init__(self, *args, **kwargs)
-        
-        self.panel = RolePanel(self, -1)
+        self.modifiable = modifiable
+        self.panel = RolePanel(modifiable, self, -1)

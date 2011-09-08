@@ -85,6 +85,13 @@ class AddRolePanel(wx.Panel):
         
         self.sw.sizer.Add(self.sw.startScriptBox.boxSizer, 0, wx.EXPAND| wx.ALL, 2)
         
+        ###
+        
+        self.sw.asyncScriptBox = wx.StaticBox(self.sw, label="Async Start Scripts")
+        self.sw.asyncScriptBox.boxSizer = wx.StaticBoxSizer(self.sw.asyncScriptBox, wx.VERTICAL)
+        
+        self.sw.sizer.Add(self.sw.asyncScriptBox.boxSizer, 0, wx.EXPAND| wx.ALL, 2)
+        
         #####
         self.sw.endScriptBox = wx.StaticBox(self.sw, label="File Done Check")
         self.sw.endScriptBox.boxSizer = wx.StaticBoxSizer(self.sw.endScriptBox, wx.VERTICAL)

@@ -2,6 +2,7 @@ import wx
 from d2c.model.DeploymentTemplate import DeploymentTemplate, RoleTemplate
 from wx.lib.pubsub import Publisher
 from d2c.model.Action import StartAction
+from d2c.model.AsyncAction import AsyncAction
 from d2c.model.FileExistsFinishedCheck import FileExistsFinishedCheck
 from d2c.model.DataCollector import DataCollector
 from d2c.model.SSHCred import SSHCred
@@ -40,11 +41,14 @@ class DeploymentTemplateWizardController:
         
         self.uploadScripts = []
         self.startScripts = []
+        self.asyncStartScripts = []
         self.endScripts = []
         self.dataCollectors = []
+        
            
-        self.setupFlexList(p.sw, p.sw.uploadScriptBox.boxSizer,self.uploadScripts, 2, ("Source", "Destination"))   
-        self.setupFlexList(p.sw, p.sw.startScriptBox.boxSizer,self.startScripts)
+        self.setupFlexList(p.sw, p.sw.uploadScriptBox.boxSizer, self.uploadScripts, 2, ("Source", "Destination"))   
+        self.setupFlexList(p.sw, p.sw.startScriptBox.boxSizer, self.startScripts)
+        self.setupFlexList(p.sw, p.sw.asyncScriptBox.boxSizer, self.asyncStartScripts)
         self.setupFlexList(p.sw, p.sw.endScriptBox.boxSizer, self.endScripts)
         self.setupFlexList(p.sw, p.sw.dataBox.boxSizer, self.dataCollectors)
         
@@ -150,12 +154,14 @@ class DeploymentTemplateWizardController:
                                              tmpCred))        
         
         startActions = [StartAction(s.GetValue(), tmpCred) for s in self.startScripts] 
+        asyncStartActions = [AsyncAction(s.GetValue(), tmpCred) for s in self.asyncStartScripts] 
         finishedChecks = [FileExistsFinishedCheck(f.GetValue(), tmpCred) for f in self.endScripts]
         dataCollectors = [DataCollector(d.GetValue(), tmpCred) for d in self.dataCollectors]
         
         role = RoleTemplate(None, 
                             roleName, image, 
                             startActions=startActions,
+                            asyncStartActions=asyncStartActions,
                             uploadActions=uploadActions,
                             finishedChecks=finishedChecks,
                             dataCollectors=dataCollectors )

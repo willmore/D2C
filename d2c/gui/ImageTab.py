@@ -160,18 +160,12 @@ class ImagePanel(wx.Panel):
         label.SetFont(wx.Font(20, wx.DEFAULT, wx.DEFAULT, wx.BOLD))
         self.GetSizer().Add(label, 0, wx.BOTTOM, 10)
         
-        gs = wx.GridBagSizer(2,2)
-        self.GetSizer().Add(gs, 0, wx.EXPAND)
-        self.__addField("Date Added", "some date", gs, 0)
-        self.__addField("Size on Disk", "some date", gs, 1)
-        self.__addField("Total Disk Size", "some date", gs, 2)
-        
-    def __addField(self, name, value, sizer, row):
-        label = wx.StaticText(self, -1, name)
-        label.SetFont(wx.Font(wx.DEFAULT, wx.DEFAULT, wx.DEFAULT, wx.BOLD))
-        sizer.Add(label, (row, 0))
-        
-        sizer.Add(wx.StaticText(self, -1, value), (row, 1))
+def _addField(panel, name, value, sizer, row):
+    label = wx.StaticText(panel, -1, name)
+    label.SetFont(wx.Font(wx.DEFAULT, wx.DEFAULT, wx.DEFAULT, wx.BOLD))
+    sizer.Add(label, (row, 0))
+    
+    sizer.Add(wx.StaticText(panel, -1, value), (row, 1))
         
 class AMIImagePanel(wx.Panel):    
     
@@ -185,6 +179,11 @@ class AMIImagePanel(wx.Panel):
         label = wx.StaticText(self, -1, image.amiId)
         label.SetFont(wx.Font(20, wx.DEFAULT, wx.DEFAULT, wx.BOLD))
         self.GetSizer().Add(label, 0, wx.BOTTOM, 10)
+        
+        gs = wx.GridBagSizer(2,2)
+        self.GetSizer().Add(gs, 0, wx.EXPAND)
+        _addField(self, "Date Added", "some date", gs, 0)
+        _addField(self, "Total Disk Size", "some date", gs, 1)
         
 class DesktopImagePanel(wx.Panel):    
     
@@ -206,6 +205,12 @@ class DesktopImagePanel(wx.Panel):
         
         self.sizer.Add(self.createAMIButton)
         self.SetSizer(self.sizer)
+        
+        gs = wx.GridBagSizer(2,2)
+        self.GetSizer().Add(gs, 0, wx.EXPAND)
+        _addField(self, "Date Added", "some date", gs, 0)
+        _addField(self, "Size on Disk", "some date", gs, 1)
+        _addField(self, "Total Disk Size", "some date", gs, 2)
         
     def createAMI(self, _):
         amiWiz = NewAMIWizard(None, -1, 'Create AMI', size=(600,300))

@@ -45,7 +45,7 @@ class DeploymentTemplate(object):
 class RoleTemplate(object):
     
     def __init__(self, id, name, image, roles=(), 
-                 startActions=(), uploadActions=(),
+                 startActions=(), asyncStartActions=(), uploadActions=(),
                  finishedChecks=(), 
                  dataCollectors=(), launchCred=None, contextCred=None):
         self.id = id
@@ -53,6 +53,7 @@ class RoleTemplate(object):
         self.image = image
         self.roles = list(roles)
         self.startActions= list(startActions)
+        self.asyncStartActions= list(asyncStartActions)
         self.uploadActions= list(uploadActions)
         self.finishedChecks= list(finishedChecks)
         self.dataCollectors= list(dataCollectors)
@@ -70,6 +71,10 @@ class RoleTemplate(object):
         '''
         role.startActions = [a.copy() for a in self.startActions]
         for a in role.startActions:
+            a.id = None
+            
+        role.asyncStartActions = [a.copy() for a in self.asyncStartActions]
+        for a in role.asyncStartActions:
             a.id = None
             
         role.uploadActions = [a.copy() for a in self.uploadActions]

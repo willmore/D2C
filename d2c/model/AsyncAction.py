@@ -16,3 +16,6 @@ class AsyncAction(Action):
         AsyncRemoteShellExecutor(self.sshCred.username, 
                             instance.public_dns_name, 
                             self.sshCred.privateKey).run(self.command)
+
+    def copy(self):
+        return AsyncAction(self.command, self.sshCred)

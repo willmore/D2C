@@ -2,6 +2,10 @@
 from d2c.logger import StdOutLogger
 import time
 from .SSHCred import SSHCred
+from copy import copy
+import string
+import random
+import os
 
 class Instance(object):
     '''
@@ -111,7 +115,7 @@ class Deployment(object):
                  cloud=None,
                  roles=(),
                  state=DeploymentState.NOT_RUN, 
-                 listeners={},
+                 listeners=(),
                  logger=StdOutLogger(), 
                  pollRate=15,
                  deploymentTemplate=None,
@@ -151,6 +155,9 @@ class Deployment(object):
         
         for role in self.roles:
             role.setLogger(self.logger)
+    
+    def hasCompleted(self):
+        return self.state == DeploymentState.JOB_COMPLETED
     
     def roleRunTime(self):
         startTime = 0
@@ -287,6 +294,8 @@ class Deployment(object):
                     #self.logger.write('All instances not running; continue polling.')
                     allRunning = False
                     break
+                
+            
         
     def __launchInstancesSerial(self):
         
@@ -315,6 +324,11 @@ class Deployment(object):
                         #self.logger.write('All instances not running; continue polling.')
                         allRunning = False
                         break
+                    
+                for role in self.roles:
+                    for ip in role.getPrivateIPs():
+                        if ip is None or ip is "" or ip is "0.0.0.0":
+                            allRunning = False
         
     
     def __launchInstances(self):
@@ -436,6 +450,21 @@ class Deployment(object):
     def setPollRate(self, pollRate): 
         self.pollRate = pollRate
         self.monitor.pollRate = pollRate
+        
+    def clone(self):
+        '''
+        Create a clone of this Deployment and Roles. Id's will be set to None.
+        '''
+        id = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(6))
+        dataDir = os.path.join(self.deploymentTemplate.dataDir, id)
+        c = Deployment(id, dataDir, cloud=self.cloud, deploymentTemplate=self.deploymentTemplate, awsCred=self.awsCred, problemSize=self.problemSize)
+        
+        c.roles = [r.clone() for r in self.roles]
+        
+        for r in c.roles:
+            r.deployment = c
+        
+        return c
         
     def __str__(self):
         return "{id:%s, roles:%s}" % (self.id,str(self.roles))

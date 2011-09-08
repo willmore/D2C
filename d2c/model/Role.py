@@ -5,6 +5,7 @@ from d2c.model.Deployment import Deployment
 from d2c.model.AWSCred import AWSCred
 import string
 import os
+from copy import copy
 
 import time   
 
@@ -19,7 +20,8 @@ class Role(object):
                  deployment=None,
                  reservationId=None,
                  remoteExecutorFactory=None,
-                 startActions=(), 
+                 startActions=(),
+                 asyncStartActions=(), 
                  uploadActions=(),
                  finishedChecks=(), 
                  dataCollectors=(),
@@ -41,11 +43,42 @@ class Role(object):
         self.deployment = deployment
         self.remoteExecutorFactory = remoteExecutorFactory
         self.startActions= list(startActions)
+        self.asyncStartActions = list(asyncStartActions)
         self.uploadActions= list(uploadActions)
         self.finishedChecks= list(finishedChecks)
         self.dataCollectors= list(dataCollectors)
         self.logger = logger
         self.sshCred = None
+        
+    def clone(self):
+        '''
+        Make a clone of this Role. Id will be set to None.
+        Actions will be cloned as well.
+        '''
+        c = Role(None, image=self.image, count=self.count, instanceType=self.instanceType, 
+                    template=self.template)
+        
+        c.startActions = [a.copy() for a in self.startActions]
+        for a in c.startActions:
+            a.id = None
+            
+        c.asyncStartActions = [a.copy() for a in self.asyncStartActions]
+        for a in c.asyncStartActions:
+            a.id = None
+            
+        c.uploadActions = [a.copy() for a in self.uploadActions]
+        for a in c.uploadActions:
+            a.id = None
+            
+        c.finishedChecks = [a.copy() for a in self.finishedChecks]
+        for a in c.finishedChecks:
+            a.id = None
+            
+        c.dataCollectors = [a.copy() for a in self.dataCollectors]
+        for a in c.dataCollectors:
+            a.id = None
+        
+        return c
     
     def getName(self):
         return self.template.name
@@ -56,7 +89,7 @@ class Role(object):
     def setSSHCred(self, sshCred):
         self.sshCred = sshCred
         
-        for collection in [self.startActions, self.uploadActions, self.finishedChecks, self.dataCollectors]:
+        for collection in [self.startActions, self.asyncStartActions, self.uploadActions, self.finishedChecks, self.dataCollectors]:
             for a in collection:
                 a.sshCred = sshCred
     
@@ -159,6 +192,7 @@ class Role(object):
         '''
         self.__executeActions(self.uploadActions)
         self.__executeActions(self.startActions)
+        self.__executeActions(self.asyncStartActions)
                 
     def executeStopCommands(self):
         '''
@@ -179,10 +213,9 @@ class Role(object):
         for instance in self.reservation.instances:
             for check in self.finishedChecks:
                 if not check.check(instance):
-                    self.logger.write("Returning False for finished test")
                     return False
                 
-        self.logger.write("Returning true for finished test")        
+        self.logger.write("Role " + self.template.name + " Returning true for finished test")        
         
         return True
         

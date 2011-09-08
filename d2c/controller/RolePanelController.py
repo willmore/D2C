@@ -4,6 +4,7 @@ from d2c.model.Deployment import Deployment
 from d2c.model.InstanceType import InstanceType
 from wx.lib.pubsub import Publisher
 from d2c.model.Action import StartAction
+from d2c.model.AsyncAction import AsyncAction
 from d2c.model.FileExistsFinishedCheck import FileExistsFinishedCheck
 from d2c.model.DataCollector import DataCollector
 from d2c.model.SSHCred import SSHCred
@@ -28,6 +29,7 @@ class RolePanelController:
         
         self.uploadScripts = []
         self.startScripts = []
+        self.asyncScripts = []
         self.endScripts = []
         self.dataCollectors = []
            
@@ -37,6 +39,9 @@ class RolePanelController:
            
         self.setupFlexList(p.sw, p.sw.startScriptBox.boxSizer,self.startScripts,
                            initialValues=[(a.command,) for a in self.role.startActions])
+        
+        self.setupFlexList(p.sw, p.sw.asyncScriptBox.boxSizer,self.asyncScripts,
+                           initialValues=[(a.command,) for a in self.role.asyncStartActions])
         
         self.setupFlexList(p.sw, p.sw.endScriptBox.boxSizer, self.endScripts,
                            initialValues=[(a.fileName,) for a in self.role.finishedChecks])
@@ -65,6 +70,7 @@ class RolePanelController:
                                              tmpCred))        
         
         self.role.startActions = [StartAction(s.GetValue(), tmpCred) for s in self.startScripts] 
+        self.role.asyncStartActions = [AsyncAction(s.GetValue(), tmpCred) for s in self.asyncScripts] 
         self.role.finishedChecks = [FileExistsFinishedCheck(f.GetValue(), tmpCred) for f in self.endScripts]
         self.role.dataCollectors = [DataCollector(d.GetValue(), tmpCred) for d in self.dataCollectors]
         
@@ -79,7 +85,7 @@ class RolePanelController:
         self.dao.commit()
         
                 
-    def setupFlexList(self, parent, boxsizer, textControls, fieldCount=1, labels=(), initialValues=()):
+    def setupFlexList(self, parent, boxsizer, textControls, fieldCount=1, labels=(), initialValues=(), modifiable=True):
         
         def handleRemove(evt): 
             for c in evt.GetEventObject().GetParent().GetChildren():
@@ -117,16 +123,21 @@ class RolePanelController:
                 field = wx.TextCtrl(parent, -1)
                 sizer.Add(field, 1)
                 fields.append(field)
-                
-            if initialVals is None:
-                btn = wx.Button(parent, -1, "Add")
-                btn.Bind(wx.EVT_BUTTON, handleAdd)
-            else:
-                btn = wx.Button(parent, -1, "Remove")
-                btn.Bind(wx.EVT_BUTTON, handleRemove)
+            if self.view.modifiable:    
+                if initialVals is None and self.view.modifiable:
+                    btn = wx.Button(parent, -1, "Add")
+                    btn.Bind(wx.EVT_BUTTON, handleAdd)
+                else:
+                    btn = wx.Button(parent, -1, "Remove")
+                    btn.Bind(wx.EVT_BUTTON, handleRemove)
+                    for i,val in enumerate(initialVals):
+                        fields[i].SetValue(val)
+                        textControls.append(fields[i])
+            elif initialVals is not None:
                 for i,val in enumerate(initialVals):
-                    fields[i].SetValue(val)
-                    textControls.append(fields[i])
+                        fields[i].SetValue(val)
+                        textControls.append(fields[i])
+                
             
             btn.fields = fields
             sizer.Add(btn, 0)

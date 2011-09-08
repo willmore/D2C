@@ -9,6 +9,7 @@ from d2c.model.InstanceType import InstanceType, Architecture
 from d2c.model.Cloud import EC2Cloud, DesktopCloud, Cloud
 from d2c.model.Kernel import Kernel
 from d2c.model.Action import StartAction
+from d2c.model.AsyncAction import AsyncAction
 from d2c.model.UploadAction import UploadAction
 from d2c.model.DataCollector import DataCollector
 from d2c.model.SSHCred import SSHCred
@@ -115,9 +116,7 @@ class DAO:
                                 Column('time', Integer, nullable=False)
                                 )
         
-        mapper(StateEvent, stateEventTable, properties={
-                                    'deployment': relationship(Deployment, backref='stateEvents')
-                                    })
+        mapper(StateEvent, stateEventTable)
         
         deploymentTable = Table('deploy', metadata,
                             Column('id', String, primary_key=True),
@@ -132,8 +131,9 @@ class DAO:
                             )  
         
         mapper(Deployment, deploymentTable, properties={
-                                    'roles': relationship(Role, backref='deployment'),
-                                    'awsCred' : relationship(AWSCred)
+                                    'roles': relationship(Role, backref='deployment', cascade="all, delete, delete-orphan"),
+                                    'awsCred' : relationship(AWSCred),
+                                    'stateEvents': relationship(StateEvent, backref='deployment', cascade="all, delete, delete-orphan")
                                     })
         
         deploymentTemplateTable = Table('deployment_template', metadata,
@@ -144,7 +144,7 @@ class DAO:
         
         mapper(DeploymentTemplate, deploymentTemplateTable, properties={
                                     'roleTemplates': relationship(RoleTemplate, backref='deploymentTemplate'),
-                                    'deployments': relationship(Deployment, backref='deploymentTemplate'),    
+                                    'deployments': relationship(Deployment, backref='deploymentTemplate', cascade="all, delete, delete-orphan"),    
                                     })
         
         sshCredTable = Table('ssh_cred', metadata,
@@ -207,6 +207,18 @@ class DAO:
         mapper(StartAction, startActionTable, properties={
                 'sshCred': relationship(SSHCred)}, extension=actionExtension)
         
+        asyncActionTable = Table('async_action', metadata,
+                            Column('id', Integer, primary_key=True),
+                            Column('command', String),
+                            Column('role_template_id', ForeignKey('role_template.id')),
+                            Column('role_id', ForeignKey('role.id')),
+                            Column('deploy_id', ForeignKey('deploy.id')),
+                            Column('ssh_cred_id', ForeignKey('ssh_cred.id'))
+                            )
+        
+        mapper(AsyncAction, asyncActionTable, properties={
+                'sshCred': relationship(SSHCred)}, extension=actionExtension)
+        
         uploadActionTable = Table('upload_action', metadata,
                             Column('id', Integer, primary_key=True),
                             Column('source', String),
@@ -249,7 +261,9 @@ class DAO:
                             Column('id', Integer, primary_key=True),
                             Column('image_id', ForeignKey('image.id')),
                             Column('type', String(30), nullable=False),
-                            Column('cloud_id', ForeignKey('cloud.id'), nullable=False)
+                            Column('cloud_id', ForeignKey('cloud.id'), nullable=False),
+                            Column('dateAdded', Integer, nullable=False),
+                            Column('size', Integer, nullable=False)
                             )
             
         imgTable = Table('image', metadata,
@@ -260,7 +274,8 @@ class DAO:
         
         desktopImageTable = Table('desktop_img', metadata,
                             Column('path', String),
-                            Column('id', Integer, ForeignKey('src_img.id'), primary_key=True)
+                            Column('id', Integer, ForeignKey('src_img.id'), primary_key=True),
+                            Column('sizeOnDisk', Integer, nullable=False) 
                             )
             
         amiTable = Table('ami', metadata,
@@ -305,6 +320,7 @@ class DAO:
         mapper(RoleTemplate, roleTemplateTable, properties={
                                     'image' : relationship(Image),
                                     'startActions': relationship(StartAction),
+                                    'asyncStartActions': relationship(AsyncAction),
                                     'uploadActions': relationship(UploadAction),
                                     'dataCollectors': relationship(DataCollector),
                                     'finishedChecks': relationship(FileExistsFinishedCheck),
@@ -327,6 +343,7 @@ class DAO:
                                     'image' : relationship(SourceImage),
                                     'template' : relationship(RoleTemplate),
                                     'startActions': relationship(StartAction),
+                                    'asyncStartActions': relationship(AsyncAction),
                                     'uploadActions': relationship(UploadAction),
                                     'dataCollectors': relationship(DataCollector),
                                     'finishedChecks': relationship(FileExistsFinishedCheck)
@@ -369,13 +386,6 @@ class DAO:
         mapper(ConfValue, confValueTable)
         
         metadata.create_all(self.engine)
-        '''  
-        c.execute(create table if not exists deploy_role_instance
-                    (instance text primary key, -- AWS instance ID
-                    role_name text,
-                    role_deploy text,
-                    foreign key(role_name, role_deploy) references role(name, deploy)))
-        '''
     
     def setRemoteShellExecutorFactory(self, action):
         action.remoteExecutorFactory = self.remoteExecutorFactory
@@ -394,6 +404,7 @@ class DAO:
         
     def delete(self, entity):
         self.session.delete(entity)
+        self.session.commit()
     
     def commit(self):
         self.session.commit()

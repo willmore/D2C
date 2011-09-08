@@ -24,11 +24,13 @@ class DeploymentPanel(wx.Panel):
         
         label = wx.StaticText(self, -1, deployment.deploymentTemplate.name + ":" + str(deployment.id))
         label.SetFont(wx.Font(20, wx.DEFAULT, wx.DEFAULT, wx.BOLD))
-        self.GetSizer().Add(label, 0, wx.BOTTOM, 10)
+        self.GetSizer().Add(label, 0, wx.BOTTOM | wx.TOP, 10)
+        
+        
         
         self.tabContainer = wx.Notebook(self, -1, style=wx.NB_TOP)
-        self.GetSizer().Add(self.tabContainer, 1, wx.ALL | wx.EXPAND, 2)
-        
+        self.GetSizer().Add(self.tabContainer, 1, wx.ALL | wx.EXPAND, 5)
+         
         self.overviewTab = OverviewTab(self.deployment, self.tabContainer, -1)
         self.tabContainer.AddPage(self.overviewTab, "Overview")
         
@@ -37,6 +39,14 @@ class DeploymentPanel(wx.Panel):
         
         self.monitorTab = EventTab(self.deployment, self.tabContainer, -1)
         self.tabContainer.AddPage(self.monitorTab, "Monitoring")
+        
+        hbox = wx.BoxSizer(wx.HORIZONTAL)
+        self.GetSizer().Add(hbox)
+        self.cloneButton = wx.Button(self, -1 , "Clone")
+        hbox.Add(self.cloneButton, 0, wx.ALL, 5)
+        
+        self.deleteButton = wx.Button(self, -1 , "Delete")
+        hbox.Add(self.deleteButton, 0, wx.ALL, 5)
         
     def showLogPanel(self):
         self.eventTab.showLogPanel()
@@ -115,10 +125,10 @@ class OverviewTab(wx.Panel):
         self.SetSizer(wx.BoxSizer(wx.VERTICAL))
                 
         sizer = wx.BoxSizer(wx.HORIZONTAL)
-        self.GetSizer().Add(sizer, 0, wx.BOTTOM, 5)
+        self.GetSizer().Add(sizer, 0, wx.BOTTOM | wx.TOP, 5)
         label = wx.StaticText(self, -1, 'Cloud')
         label.SetFont(wx.Font(wx.DEFAULT, wx.DEFAULT, wx.DEFAULT, wx.BOLD))
-        sizer.Add(label, 0, wx.RIGHT, 5)
+        sizer.Add(label, 0, wx.RIGHT| wx.LEFT, 5)
         self.cloudField = wx.StaticText(self, -1, deployment.cloud.name)
         sizer.Add(self.cloudField, 0, wx.ALIGN_CENTER)
         
@@ -126,7 +136,7 @@ class OverviewTab(wx.Panel):
         self.GetSizer().Add(self.sizeSizer, 0, wx.BOTTOM, 5)
         label = wx.StaticText(self, -1, 'Problem Size')
         label.SetFont(wx.Font(wx.DEFAULT, wx.DEFAULT, wx.DEFAULT, wx.BOLD))
-        self.sizeSizer.Add(label, 0, wx.RIGHT, 5)
+        self.sizeSizer.Add(label, 0, wx.RIGHT| wx.LEFT, 5)
         self.sizeField = wx.StaticText(self, -1, str(deployment.problemSize))
         self.sizeSizer.Add(self.sizeField, 0, wx.ALIGN_CENTER)
         
@@ -134,15 +144,15 @@ class OverviewTab(wx.Panel):
         self.GetSizer().Add(self.statusSizer, 0, wx.BOTTOM, 5)
         label = wx.StaticText(self, -1, 'Status')
         label.SetFont(wx.Font(wx.DEFAULT, wx.DEFAULT, wx.DEFAULT, wx.BOLD))
-        self.statusSizer.Add(label, 0, wx.RIGHT, 5)
+        self.statusSizer.Add(label, 0, wx.RIGHT | wx.LEFT, 5)
         self.statusField = wx.StaticText(self, -1, deployment.state)
         self.statusSizer.Add(self.statusField, 0, wx.ALIGN_CENTER)
                   
         label = wx.StaticText(self, -1, 'Roles')
         label.SetFont(wx.Font(wx.DEFAULT, wx.DEFAULT, wx.DEFAULT, wx.BOLD))
-        self.GetSizer().Add(label, 0, wx.BOTTOM, 5)
+        self.GetSizer().Add(label, 0, wx.BOTTOM | wx.LEFT, 5)
         self.roles = RoleList(self, -1, items=deployment.roles)
-        self.GetSizer().Add(self.roles, 0, wx.BOTTOM | wx.EXPAND, 5)
+        self.GetSizer().Add(self.roles, 0, wx.ALL | wx.EXPAND, 5)
         
         self.dataPanel = wx.Panel(self,-1)
         self.GetSizer().Add(self.dataPanel)
@@ -169,8 +179,6 @@ class OverviewTab(wx.Panel):
         self.cancelButton.Hide()
         self.update()
         
-        
-    
     def update(self):
         '''
         Update the panel to reflect the current Deployment
