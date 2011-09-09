@@ -395,12 +395,26 @@ class Deployment(object):
         self._cascadeLogger()  
         
         for role in self.roles:
-            role.executeStartCommands()
+            role.executeStartCommands(self._getEnvVars())
             
         self.__setState(DeploymentState.ROLES_STARTED)
             
         self.logger.write("Roles started")
         
+    def _getEnvVars(self):
+        """
+        Create environment variables for use in scripts run on instances.
+        """
+        return {"D2C_MPI_HOSTFILE" : "/tmp/d2c.context",
+                "D2C_MPI_HOSTCOUNT" : self._instanceCount(),
+                }
+        
+    def _instanceCount(self):
+        count = 0
+        for role in self.roles:
+            count += role.count;
+        return count
+    
     def __stopRoles(self):
         self.logger.write("Stopping roles")
         #        

@@ -8,6 +8,7 @@ from d2c.model.Kernel import Kernel
 from d2c.data.DAO import DAO
 from d2c.model.Cloud import Cloud
 from d2c.model.SourceImage import SourceImage, AMI
+import time
 
 class UnsupportedImageError(Exception):
     def __init__(self, value):
@@ -81,6 +82,7 @@ class AMICreator:
         newImg = self.__amiTools.ec2izeImage(self.__srcImg, self.__outputDir, 
                                              self.__kernel, self.__cloud.getFStab())       
 
+        fullImgSize = os.path.getsize(newImg)
         self.__logger.write("Bundling image (preparation for upload to cloud)")
         bundleDir =  self.__outputDir + "/bundle"
         manifest = self.__amiTools.bundleImage(newImg, 
@@ -99,7 +101,7 @@ class AMICreator:
         self.__logger.write("Registering image manifest %s with cloud: %s" % (s3ManifestPath, self.__cloud.name))
         amiId = self.__amiTools.registerAMI(s3ManifestPath, self.__cloud, self.__awsCred)     
         
-        ami = AMI(None, self.__srcImg.image, amiId, self.__cloud, kernel=self.__kernel)
+        ami = AMI(None, self.__srcImg.image, amiId, self.__cloud, time.time(), fullImgSize, kernel=self.__kernel)
         self.__dao.add(ami)
         
         self.__logger.write("Image registered with cloud %s as %s" % (self.__cloud.name, ami.amiId))

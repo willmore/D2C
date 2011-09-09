@@ -140,7 +140,7 @@ class Role(object):
         
         self.logger.write("Instance(s) reserved with ID: %s" % self.reservationId)    
      
-    def __executeActions(self, actions): 
+    def __executeActions(self, actions, shellVars=None): 
         '''
         Execute the actions on each instance within the role.
         '''
@@ -186,13 +186,13 @@ class Role(object):
         return [str(i.private_ip_address) if i.private_ip_address is not None else str(i.private_dns_name) 
                     for i in self.reservation.instances]
         
-    def executeStartCommands(self):
+    def executeStartCommands(self, shellVars):
         '''
         Execute the start action(s) on each instance within the role.
         '''
-        self.__executeActions(self.uploadActions)
-        self.__executeActions(self.startActions)
-        self.__executeActions(self.asyncStartActions)
+        self.__executeActions(self.uploadActions, shellVars)
+        self.__executeActions(self.startActions, shellVars)
+        self.__executeActions(self.asyncStartActions, shellVars)
                 
     def executeStopCommands(self):
         '''

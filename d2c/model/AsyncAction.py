@@ -11,11 +11,15 @@ class AsyncAction(Action):
         
         Action.__init__(self, command, sshCred, logger)
      
-    def execute(self, instance):   
-            
+    def execute(self, instance, shellVars=None):   
+        shellStr = '';
+        if shellVars is not None:
+            shellStr = ';'
+            for k,v in shellVars.iteritems():
+                shellStr = k + "=" + v + " " + shellStr    
         AsyncRemoteShellExecutor(self.sshCred.username, 
                             instance.public_dns_name, 
-                            self.sshCred.privateKey).run(self.command)
+                            self.sshCred.privateKey).run(shellStr + self.command)
 
     def copy(self):
         return AsyncAction(self.command, self.sshCred)

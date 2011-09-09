@@ -17,11 +17,17 @@ class Action(object):
     def copy(self):
         return Action(self.command, self.sshCred)
      
-    def execute(self, instance):   
+    def execute(self, instance, shellVars=None):   
+        
+        shellStr = '';
+        if shellVars is not None:
+            shellStr = ';'
+            for k,v in shellVars.iteritems():
+                shellStr = k + "=" + v + " " + shellStr
             
         self.remoteExecutorFactory.executor(self.sshCred.username, 
                             instance.public_dns_name, 
-                            self.sshCred.privateKey).run(self.command)
+                            self.sshCred.privateKey).run(shellStr + self.command)
                             
                       
 class StartAction(Action):

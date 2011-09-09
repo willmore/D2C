@@ -7,6 +7,7 @@ from d2c.model.SourceImage import Image, DesktopImage, AMI
 from .NewAMIWizard import NewAMIWizard
 from d2c.controller.AMIWizardController import AMIWizardController
 from wx.lib.pubsub import Publisher
+import time
 
 class ImageTab(wx.Panel):
     
@@ -92,7 +93,8 @@ class ImageTab(wx.Panel):
         dialog = AddImageDialog(self.dao, None, -1, 'Add Image', size=(400,400))
         
         if dialog.ShowModal() == wx.ID_OK:
-            deskImg = DesktopImage(None, None, self.dao.getCloud(dialog.cloud.GetValue()), dialog.path.GetValue())
+            imageFullSize = 0;
+            deskImg = DesktopImage(None, None, self.dao.getCloud(dialog.cloud.GetValue()), time.time(), imageFullSize, os.path.getsize(dialog.path.GetValue()), dialog.path.GetValue())
             img = Image(None, dialog.name.GetValue(), deskImg, [deskImg])
             self.dao.add(img)
             self.addImagePanel(ImagePanel(img, self.displayPanel, -1)) 
@@ -182,8 +184,8 @@ class AMIImagePanel(wx.Panel):
         
         gs = wx.GridBagSizer(2,2)
         self.GetSizer().Add(gs, 0, wx.EXPAND)
-        _addField(self, "Date Added", "some date", gs, 0)
-        _addField(self, "Total Disk Size", "some date", gs, 1)
+        _addField(self, "Date Added", time.strftime("%c", time.localtime(image.dateAdded)), gs, 0)
+        _addField(self, "Disk Size", str(image.size / 1000000.0) + " GB", gs, 1)
         
 class DesktopImagePanel(wx.Panel):    
     
@@ -208,9 +210,10 @@ class DesktopImagePanel(wx.Panel):
         
         gs = wx.GridBagSizer(2,2)
         self.GetSizer().Add(gs, 0, wx.EXPAND)
-        _addField(self, "Date Added", "some date", gs, 0)
-        _addField(self, "Size on Disk", "some date", gs, 1)
-        _addField(self, "Total Disk Size", "some date", gs, 2)
+        _addField(self, "Date Added", time.strftime("%c", time.localtime(image.dateAdded)), gs, 0)
+        #_addField(self, "Disk Size", str(image.size / 1000000.0) + " GB", gs, 1)
+        _addField(self, "Size on Disk", str(image.sizeOnDisk / 1000000.0) + " GB", gs, 1)
+        
         
     def createAMI(self, _):
         amiWiz = NewAMIWizard(None, -1, 'Create AMI', size=(600,300))

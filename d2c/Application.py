@@ -57,7 +57,6 @@ class Application:
     
     def _handleDeleteDeployment(self, msg):    
         deployment = msg.data['deployment']
-        #del self.deplomentControllers[deployment.id]
         self._frame.deploymentPanel.removeDeployment(deployment)
         self._dao.delete(deployment)
     
