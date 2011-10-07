@@ -14,9 +14,9 @@ class AsyncAction(Action):
     def execute(self, instance, shellVars=None):   
         shellStr = '';
         if shellVars is not None:
-            shellStr = ';'
+            shellStr = ' '
             for k,v in shellVars.iteritems():
-                shellStr = k + "=" + v + " " + shellStr    
+                shellStr = k + "=" + str(v) + " " + shellStr    
         AsyncRemoteShellExecutor(self.sshCred.username, 
                             instance.public_dns_name, 
                             self.sshCred.privateKey).run(shellStr + self.command)

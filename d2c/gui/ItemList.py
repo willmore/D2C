@@ -32,7 +32,6 @@ class ItemList(wx.ListCtrl):
         for i,colMapper in enumerate(self.mappers):
             self.InsertColumn(i, colMapper.name)
             
-
         self.items = {}
         
         self.setItems(items)

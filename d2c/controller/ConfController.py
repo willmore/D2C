@@ -9,31 +9,19 @@ class ConfController:
         
         self._credView = credView
         self._dao = dao
-         
-        conf = dao.getConfiguration()
         
-        if conf is not None: 
-            
-            if conf.awsUserId is not None:
-                self._credView.aws_user_id.WriteText(conf.awsUserId)
-         
-            if conf.awsCred is not None:
-                self._credView._aws_key_id.WriteText(conf.awsCred.access_key_id)
-                self._credView._aws_secret_access_key.WriteText(conf.awsCred.secret_access_key)
-       
-            if conf.ec2Cred is not None:
-                self._credView._ec2_cert.WriteText(conf.ec2Cred.cert)
-                self._credView._ec2_private_key.WriteText(conf.ec2Cred.private_key)  
-        
-        credView._updateButton.Bind(wx.EVT_BUTTON, self._onSave)
-        credView._closeButton.Bind(wx.EVT_BUTTON, self._onClose)
+        credView.addButton.Bind(wx.EVT_BUTTON, self._onAdd)
+        credView.closeButton.Bind(wx.EVT_BUTTON, self._onClose)
         
     def _onClose(self, _):
         self._credView.close()
         
+    def _onAdd(self, _):
+        self._credView.addCred()
+        
     def _onSave(self, event):
         
-        
+
         awsCred = AWSCred("mainKey", self._credView._aws_key_id.GetValue(),
                           self._credView._aws_secret_access_key.GetValue())
         

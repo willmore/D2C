@@ -10,12 +10,19 @@ import wx
 
 #grapher = Grapher("/home/willmore/workspace/d2c/experiments/cloud-hpcc/test_4hosts_run2/", "/tmp")
 
-grapher = Grapher({"vm":"/home/willmore/D2C-Experiments/cloud-hpcc/local/single_vm_1proc/collectd/vm0"}, "/tmp")
+#grapher = Grapher({"vm":"/home/willmore/D2C-Experiments/cloud-hpcc/local/single_vm_1proc/collectd/vm0"}, "/tmp")
 
 
-cpuImg = grapher.generateCPUGraphsAverage("20110516 20:14", "20110516 20:34")
-memImg = grapher.generateMemoryGraph("20110516 20:14", "20110516 20:34")
-netImg = grapher.generateNetworkGraph("20110516 20:14", "20110516 20:34")
+grapher = Grapher({"vm":"/home/willmore/.d2c/deployments/22.py/QCW7N1/31/i-4B450863/opt/collectd/var/lib/collectd/dirac.lan/",
+                   "vm2":"/home/willmore/.d2c/deployments/22.py/QCW7N1/32/i-468F08BD/opt/collectd/var/lib/collectd/dirac.lan/"
+                   
+                   
+                   
+                   }, "/tmp")
+
+cpuImg = grapher.generateCPUGraphsAverage("20110929 00:00", "20110930 23:00")
+memImg = grapher.generateMemoryGraph("20110929 00:00", "20110930 23:00")
+#netImg = grapher.generateNetworkGraph("20110929 00:00", "20110929 23:00")
 
 class MyScrolledWindow(wx.Frame):
    def __init__(self, parent, id, title):
@@ -33,12 +40,12 @@ class MyScrolledWindow(wx.Frame):
        hsizer = wx.BoxSizer(wx.HORIZONTAL)
        hsizer.Add(wx.StaticBitmap(sw, -1, bmp))
        sizer.Add(hsizer)
-       
+       '''
        bmp = wx.Image(netImg,wx.BITMAP_TYPE_PNG).ConvertToBitmap()
        hsizer = wx.BoxSizer(wx.HORIZONTAL)
        hsizer.Add(wx.StaticBitmap(sw, -1, bmp))
        sizer.Add(hsizer)
-       
+       '''
        sw.SetScrollbars(20,20,55,40)
        sw.SetSizer(sizer)
 

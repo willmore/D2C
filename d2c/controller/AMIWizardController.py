@@ -9,11 +9,14 @@ class AMIWizardController:
         self.cloud = None
         self.kernel = None
         self.ramdisk = None
+        self.cloudCred = None
         
         self._view = view
         self._dao = dao
          
         self._view.container.getPanel("CLOUD").setClouds(dao.getClouds())
+        self._view.container.getPanel("CLOUD").setCloudCreds([c.name for c in dao.getCloudCreds()])
+        self._view.container.getPanel("CLOUD").credCombo.Bind(wx.EVT_COMBOBOX, self.onSelectCred)
         self._view.container.getPanel("CLOUD").chooseButton.Bind(wx.EVT_BUTTON, self.selectCloud)
         self._view.container.getPanel("CLOUD").cancelButton.Bind(wx.EVT_BUTTON, lambda _: self._view.EndModal(wx.ID_OK))
         
@@ -34,6 +37,10 @@ class AMIWizardController:
         self._view.container.getPanel("BUCKET").createButton.Bind(wx.EVT_BUTTON, self.createAMI)
         self._view.container.getPanel("CLOUD").cloudList.Bind(wx.EVT_LIST_ITEM_SELECTED, self.testContinue)
         self._view.showPanel("CLOUD") 
+    
+    def onSelectCred(self, _):
+        self.cloudCred = self._dao.getCloudCred(self._view.container.getPanel("CLOUD").credCombo.GetValue())
+        assert self.cloudCred != None
         
     def testContinue(self, _):
         if self._view.container.getPanel("CLOUD").cloudList.GetSelectedItemCount() == 1:
@@ -91,7 +98,7 @@ class AMIWizardController:
         
         bucket = self._view.container.getPanel("BUCKET").bucket.GetValue()
         
-        wx.CallAfter(Publisher().sendMessage, "CREATE AMI", (self.img, self.cloud, self.kernel, bucket, self.ramdisk))
+        wx.CallAfter(Publisher().sendMessage, "CREATE AMI", (self.img, self.cloud, self.kernel, bucket, self.ramdisk, self.cloudCred))
         
         self._view.EndModal(wx.ID_OK)
     

@@ -107,7 +107,7 @@ def init_db(dao, confFile):
                                                         dataCollectors=[DataCollector("/tmp/pingtest.out")],
                                                         finishedChecks=[FileExistsFinishedCheck("/tmp/pingtest.out")],
                                                         startActions=[StartAction("echo \"Host *\" >> /home/dirac/.ssh/config; echo \"    StrictHostKeyChecking no\" >> /home/dirac/.ssh/config;", None)],
-                                                        asyncStartActions=[AsyncAction("sudo -u dirac mpirun -wdir /home/dirac -np 2 -hostfile /tmp/d2c.context hostname > /tmp/pingtest.out", None)]
+                                                        asyncStartActions=[AsyncAction("sudo -u dirac mpirun -wdir /home/dirac -np $D2C_MPI_HOSTCOUNT -hostfile $D2C_MPI_HOSTFILE hostname > /tmp/pingtest.out", None)]
                                                     
                                         )])
     

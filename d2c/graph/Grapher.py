@@ -84,14 +84,14 @@ class Grapher:
         
         imageName = os.path.join(self.destDir, "TotalNetwork.png")
         
-        pxRegex = re.compile(".*if_packets-(.*).rrd$")
+        pxRegex = re.compile(".*if_packets(-.*)?\.rrd$")
         
         dataSets = {}
         cdefSets = {}
         
         for (hostName,hostDir) in self.srcs.iteritems():
            
-            interfaceDir = os.path.join(hostDir, "interface")
+            interfaceDir = os.path.join(hostDir, "interface-eth0")
             
             if not os.path.isdir(os.path.join(interfaceDir)):
                 continue

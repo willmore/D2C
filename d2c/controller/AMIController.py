@@ -15,13 +15,13 @@ class AMIThread(Thread):
     Thread that encapsulates creation of a new AMI from a source VM image.
     '''
              
-    def __init__(self, img, conf, amiToolsFactory, 
+    def __init__(self, img, cloudCred, amiToolsFactory, 
                   cloud, kernel, s3Bucket, dao, logger, ramdisk):
         
         Thread.__init__(self)
         self.__img = img
         self.__amiToolsFactory = amiToolsFactory
-        self.__conf = conf
+        self.__cloudCred = cloudCred
         self.__s3Bucket = s3Bucket
         self.__cloud = cloud
         self.__kernel = kernel
@@ -38,9 +38,9 @@ class AMIThread(Thread):
     def run(self):
         try:
             amiCreator = AMICreator(self.__img, 
-                 self.__conf.ec2Cred, 
-                 self.__conf.awsCred,
-                 self.__conf.awsUserId, 
+                 self.__cloudCred.ec2Cred, 
+                 self.__cloudCred.awsCred,
+                 self.__cloudCred.awsUserId, 
                  self.__s3Bucket,
                  self.__cloud,
                  self.__kernel,
@@ -107,7 +107,7 @@ class AMIController(object):
         3. Add a new entry into the AMI list with the in-creation-progress AMI information.
         '''
         
-        rawImg,cloud,kernel,s3Bucket,ramdisk = msg.data
+        rawImg,cloud,kernel,s3Bucket,ramdisk,cloudCred = msg.data
 
         #Create a logger that will capture process output and display in a GUI panel        
         logger = self.__createLogger(rawImg.path)
@@ -116,7 +116,7 @@ class AMIController(object):
         self.__amiView.Refresh()
 
         amiThread = AMIThread(rawImg,
-                              self.__dao.getConfiguration(),
+                              cloudCred,
                               self.__amiToolsFactory,
                               cloud,
                               kernel,

@@ -151,7 +151,7 @@ class Role(object):
             instance.update()
             
             for action in actions:
-                action.execute(instance)
+                action.execute(instance, shellVars)
                 
     def setIPContext(self, ips):
         '''
@@ -245,6 +245,35 @@ class Role(object):
                 collector.collect(instance, 
                                   dest)
                 self.logger.write("Done")
+                
+    def getInstanceDataDirs(self):
+        '''
+        Returns iterable of full directory paths storing data of instances bound to this role.
+        '''
+        
+        if not os.path.isdir(self.getDataDirectory()):
+            return []
+        
+        baseDir = self.getDataDirectory()
+        
+        out = [os.path.join(baseDir,dir) for dir in os.listdir(baseDir) 
+                if os.path.isdir(os.path.join(baseDir, dir))]
+        
+        print len(out)
+        return out
+    
+    def getIntsanceCollectdDirs(self):
+        
+        out = []
+        for dataDir in self.getInstanceDataDirs():
+            collectdDir = os.path.join(dataDir, 'opt/collectd/var/lib/collectd')
+            if os.path.isdir(collectdDir):
+                #Get host dir
+                paths = os.listdir(collectdDir)
+                if len(paths) == 1 and os.path.isdir(os.path.join(collectdDir, paths[0])):
+                    out.append(os.path.join(collectdDir, paths[0]))
+                    
+        return out
     
     def shutdown(self):
         

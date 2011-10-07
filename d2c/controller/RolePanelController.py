@@ -49,6 +49,14 @@ class RolePanelController:
         self.setupFlexList(p.sw, p.sw.dataBox.boxSizer, self.dataCollectors,
                            initialValues=[(a.source,) for a in self.role.dataCollectors])
         
+        p.instancePicker.SetValue(role.instanceType.name)
+        p.instancePicker.AppendItems([i.name for i in role.instanceType.cloud.instanceTypes])
+        
+        p.imagePicker.SetValue(role.image.amiId)
+        p.imagePicker.AppendItems([i.amiId for i in self.dao.getAMIs()])
+
+        p.countPicker.SetValue(role.count)
+        
         self.view.panel.saveButton.Bind(wx.EVT_BUTTON, self.handleSave)
         self.view.panel.cancelButton.Bind(wx.EVT_BUTTON, self.handleCancel)
 
@@ -73,8 +81,14 @@ class RolePanelController:
         self.role.asyncStartActions = [AsyncAction(s.GetValue(), tmpCred) for s in self.asyncScripts] 
         self.role.finishedChecks = [FileExistsFinishedCheck(f.GetValue(), tmpCred) for f in self.endScripts]
         self.role.dataCollectors = [DataCollector(d.GetValue(), tmpCred) for d in self.dataCollectors]
+        p = self.view.panel
         
+        self.role.count = p.countPicker.GetValue()
+        self.role.image = self.dao.getAmi(p.imagePicker.GetValue())
+        self.role.instanceType = [i for i in self.role.instanceType.cloud.instanceTypes if i.name == p.instancePicker.GetValue()][0]
         self.dao.save(self.role)
+        
+        
         
         self.view.EndModal(wx.OK)
         

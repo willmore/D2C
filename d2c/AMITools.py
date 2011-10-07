@@ -100,6 +100,7 @@ class AMITools:
         arch = gf.file_architecture(self.__guestFSLink(gf, TEST_FILE)) 
         
         del gf
+        
         return arch   
     
     def __initGuestFS(self, *disks):
@@ -171,7 +172,9 @@ class AMITools:
             
             #Step 2: copy kernel
             contentsPath = kernel.getContentsAbsPath()
-            if re.match('.*tgz', contentsPath) or re.match('.*tar\.gz', contentsPath):
+            if contentsPath is None:
+                pass
+            elif re.match('.*tgz', contentsPath) or re.match('.*tar\.gz', contentsPath):
                 gf.tgz_in(contentsPath, "/") 
             elif re.match('.*tar', contentsPath):
                 gf.tar_in(contentsPath, "/")

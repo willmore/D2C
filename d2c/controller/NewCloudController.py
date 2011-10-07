@@ -53,7 +53,7 @@ class NewCloudController:
         cloud = Cloud(panel.name.GetValue(), panel.serviceURL.GetValue(), 
                       panel.storageURL.GetValue(), panel.ec2Cert.GetValue())
         
-        cloud.addKernels(panel.kernelList.getItems())
+        cloud.kernels = panel.kernelList.getItems()
         
         self._dao.saveCloud(cloud)
         self._view.container.getPanel("MAIN").cloudList.addItem(cloud)
@@ -63,7 +63,7 @@ class NewCloudController:
     def addKernel(self, _):
         panel = self._view.container.getPanel("NEW_CLOUD")
         panel.kernelList.addItem(Kernel(panel.kernelId.GetValue(), 
-                                        Kernel.ARCH_X86_64, panel.kernelData.GetValue()))
+                                        self._dao.getArchitecture('x86_64'), panel.kernelData.GetValue()))
         
         
     def checkCanAddKernel(self, _):

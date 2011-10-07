@@ -21,9 +21,9 @@ class Action(object):
         
         shellStr = '';
         if shellVars is not None:
-            shellStr = ';'
+            shellStr = ' '
             for k,v in shellVars.iteritems():
-                shellStr = k + "=" + v + " " + shellStr
+                shellStr = k + "=" + str(v) + " " + shellStr
             
         self.remoteExecutorFactory.executor(self.sshCred.username, 
                             instance.public_dns_name, 

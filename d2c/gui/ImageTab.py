@@ -195,7 +195,6 @@ class DesktopImagePanel(wx.Panel):
         self.dao = dao
         self.sizer = wx.BoxSizer(wx.VERTICAL)
         
-        
         self.image = image
         
         label = wx.StaticText(self, -1, image.path)

@@ -36,6 +36,29 @@ def main(argv=None):
     SQLITE_FILE = "%s/.d2c/d2c_db.sqlite" % os.path.expanduser('~') 
     
     dao = DAO(SQLITE_FILE)
+    '''
+    X86 = dao.getArchitecture('x86');
+    X86_64 = dao.getArchitecture('x86_64');
+    print "Save cloud"
+    cloud = EC2Cloud(
+                       None,
+                       "us-east-1", 
+                      "https://us-east-1.ec2.amazonaws.com", 
+                      "https://s3.amazonaws.com", 
+                      "/opt/EC2_TOOLS/etc/ec2/amitools/cert-ec2.pem",
+                      kernels=[Kernel("aki-9ba0f1de", X86_64, "internal://ami_data/kernels/2.6.35-24-virtual-x86_64.tar")],
+                      instanceTypes=[InstanceType('m1.small', 1, 1, 1700, 2, (X86,), 0.0),
+                                       InstanceType('m1.large', 2, 2, 7500, 15, (X86_64,), 0.0),
+                                       InstanceType('m1.xlarge', 2, 4, 15000, 20, (X86_64,), 0.0),
+                                       InstanceType('m2.xlarge', 3.25, 2, 17100, 20, (X86_64,), 0.0),
+                                       InstanceType('m2.2xlarge', 3.25, 4, 34200, 20, (X86_64,), 0.0),
+                                       InstanceType('m2.4xlarge', 3.25, 8, 68400, 20, (X86_64,), 0.0),
+                                       InstanceType('c1.medium', 2.5, 2, 1700, 5, (X86,), 0.0),
+                                       InstanceType('c1.xlarge', 2.5, 8, 7000, 20, (X86_64,), 0.0)],
+                      botoModule=boto)
+    dao.add(cloud);
+    '''
+    
     init(dao)
     app = Application(dao, AMIToolsFactory())
     app.MainLoop()

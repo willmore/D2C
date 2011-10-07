@@ -16,6 +16,18 @@ class RolePanel(wx.Panel):
         self.sizer.Add(self.sw, 1, wx.ALL | wx.EXPAND, 5)
         self.sw.sizer = wx.BoxSizer(wx.VERTICAL)
         
+        hbox = wx.BoxSizer(wx.HORIZONTAL)
+        self.instancePicker = wx.ComboBox(self, -1, style=wx.CB_READONLY)
+        hbox.Add(self.instancePicker)
+        
+        self.imagePicker = wx.ComboBox(self, -1, style=wx.CB_READONLY)
+        hbox.Add(self.imagePicker)
+        
+        self.countPicker = wx.SpinCtrl(self, -1, min=0, max=120)
+        hbox.Add(self.countPicker)
+        
+        self.sizer.Add(hbox)
+        
         self.sw.uploadScriptBox = wx.StaticBox(self.sw, label="Uploads")
         self.sw.uploadScriptBox.boxSizer = wx.StaticBoxSizer(self.sw.uploadScriptBox, wx.VERTICAL)
         

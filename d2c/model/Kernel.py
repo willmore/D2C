@@ -18,6 +18,9 @@ class Kernel(object):
         Return absolute path of contents
         '''
         
+        if self.contents is None:
+            return None
+        
         m = re.match("internal\:\/\/(.*)", self.contents)
         if m:
             return pkg_resources.resource_filename(__package__, m.group(1))

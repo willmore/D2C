@@ -1,9 +1,10 @@
 
 import wx
-import datetime     
 from .RoleList import RoleList
 from d2c.model.Deployment import DeploymentState
 from d2c.gui.ItemList import ItemList, ColumnMapper
+from d2c.graph.Grapher import Grapher
+import datetime
 
 
 def formatTime(t):
@@ -26,8 +27,6 @@ class DeploymentPanel(wx.Panel):
         label.SetFont(wx.Font(20, wx.DEFAULT, wx.DEFAULT, wx.BOLD))
         self.GetSizer().Add(label, 0, wx.BOTTOM | wx.TOP, 10)
         
-        
-        
         self.tabContainer = wx.Notebook(self, -1, style=wx.NB_TOP)
         self.GetSizer().Add(self.tabContainer, 1, wx.ALL | wx.EXPAND, 5)
          
@@ -35,9 +34,10 @@ class DeploymentPanel(wx.Panel):
         self.tabContainer.AddPage(self.overviewTab, "Overview")
         
         self.eventTab = EventTab(self.deployment, self.tabContainer, -1)
+        #self.eventTab.update();
         self.tabContainer.AddPage(self.eventTab, "Log / Events")
         
-        self.monitorTab = EventTab(self.deployment, self.tabContainer, -1)
+        self.monitorTab = MonitorTab(self.deployment, self.tabContainer, -1)
         self.tabContainer.AddPage(self.monitorTab, "Monitoring")
         
         hbox = wx.BoxSizer(wx.HORIZONTAL)
@@ -67,9 +67,71 @@ class MonitorTab(wx.Panel):
     This will only contain data after completion of a deployment.
     '''
     
-    def __init__(self, *args, **kwargs):
+    def __init__(self, deployment, *args, **kwargs):
+        wx.Panel.__init__(self, *args, **kwargs)
+        
+        self.deployment = deployment
          
-        wx.Panel.__init__(self, *args, **kwargs) 
+        self.sizer = wx.BoxSizer(wx.VERTICAL)
+        self.SetSizer(self.sizer)
+         
+        self.sw = wx.ScrolledWindow(self, style=wx.VSCROLL)
+        self.sizer.Add(self.sw, 1, wx.ALL | wx.EXPAND, 5)
+        
+        self.sw.SetScrollbars(1,1,1,1)
+        self.sw.SetMinSize((-1, 50))
+        
+        self.sw.SetScrollbars(20,20,55,40)
+        self.sw.SetSizer(wx.BoxSizer(wx.VERTICAL))
+        
+    def graph(self):
+        #grapher = Grapher({"vm":"/home/willmore/.d2c/deployments/22.py/QCW7N1/31/i-4B450863/opt/collectd/var/lib/collectd/dirac.lan/",
+        #           "vm2":"/home/willmore/.d2c/deployments/22.py/QCW7N1/32/i-468F08BD/opt/collectd/var/lib/collectd/dirac.lan/"
+        #           }, "/tmp")
+
+
+        collectdPaths = []
+        for role in self.deployment.roles:
+            collectdPaths.extend(role.getIntsanceCollectdDirs())
+        
+        if len(collectdPaths) == 0:
+            print "No Data"
+            return
+        
+        print "Graph data"
+        
+        graphMap = {}
+        for n,path in enumerate(collectdPaths):
+            print "Adding path: " + path
+            graphMap["vm"+str(n)] = str(path)
+
+        print "Graphing " + str(graphMap)
+        grapher = Grapher(graphMap, "/tmp")
+
+        print self.deployment.getRoleStartTime()
+        startString = datetime.datetime.fromtimestamp(self.deployment.getRoleStartTime()).strftime('%Y%m%d %H:%M')
+        endString = datetime.datetime.fromtimestamp(self.deployment.getRoleEndTime()).strftime('%Y%m%d %H:%M')
+        
+        cpuImg = grapher.generateCPUGraphsAverage(startString, endString)
+        memImg = grapher.generateMemoryGraph(startString, endString)
+        netImg = grapher.generateNetworkGraph(startString, endString)
+        
+        bmp = wx.Image(cpuImg,wx.BITMAP_TYPE_PNG).ConvertToBitmap()
+       
+        hsizer = wx.BoxSizer(wx.HORIZONTAL)
+        hsizer.Add(wx.StaticBitmap(self.sw, -1, bmp))
+        self.sw.GetSizer().Add(hsizer)
+       
+        bmp = wx.Image(memImg,wx.BITMAP_TYPE_PNG).ConvertToBitmap()
+        hsizer = wx.BoxSizer(wx.HORIZONTAL)
+        hsizer.Add(wx.StaticBitmap(self.sw, -1, bmp))
+        self.sw.GetSizer().Add(hsizer)
+        
+        bmp = wx.Image(netImg,wx.BITMAP_TYPE_PNG).ConvertToBitmap()
+        hsizer = wx.BoxSizer(wx.HORIZONTAL)
+        hsizer.Add(wx.StaticBitmap(self.sw, -1, bmp))
+        self.sw.GetSizer().Add(hsizer)
+        
   
 class EventTab(wx.Panel):
     '''

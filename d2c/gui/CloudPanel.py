@@ -64,7 +64,7 @@ class NewCloudPanel(wx.Panel):
         
         self.kernelList = ItemList(self, -1, style=wx.LC_REPORT, size=(-1, 100),
                                      mappers=[ColumnMapper('AKI', lambda k: k.aki),
-                                              ColumnMapper('Architecture', lambda k: k.arch)])
+                                              ColumnMapper('Architecture', lambda k: k.architecture)])
         
         self.addKernelButton = wx.Button(self, wx.ID_ANY, 'Add Kernel', size=(110, -1))
         self.sizer.Add(self.addKernelButton, 0, wx.ALIGN_LEFT | wx.ALL, 5)

@@ -66,6 +66,9 @@ class DeploymentController:
         self.view.overviewTab.roles.Bind(wx.EVT_LIST_ITEM_RIGHT_CLICK, self.onRolesRightClick)
         self.view.cloneButton.Bind(wx.EVT_BUTTON, self.handleClone)
         self.view.deleteButton.Bind(wx.EVT_BUTTON, self.handleDelete)
+        
+        if self.deployment.hasCompleted():
+            deploymentView.monitorTab.graph()
     
     def handleDelete(self, _):
         wx.CallAfter(Publisher().sendMessage, "DELETE DEPLOYMENT", 

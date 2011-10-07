@@ -9,7 +9,7 @@ class CloudPanel(wx.Panel):
         
         wx.Panel.__init__(self, *args, **kwargs)
  
-        self.cloudList = ItemList(self, -1, style=wx.LC_REPORT, size=(-1, 200),
+        self.cloudList = ItemList(self, -1, style=wx.LC_REPORT, size=(-1, 100),
                                    mappers=[ColumnMapper('Name', lambda c: c.name, defaultWidth=wx.LIST_AUTOSIZE)])
         
         self.chooseButton = wx.Button(self, wx.ID_FORWARD)
@@ -24,7 +24,10 @@ class CloudPanel(wx.Panel):
         self.sizer.Add(addStoreTxt, 0)
         
         self.sizer.Add(self.cloudList, 0, wx.EXPAND|wx.ALL, 5)
-       
+        
+        self.credCombo = wx.ComboBox(self, -1, style=wx.CB_READONLY) 
+        self.sizer.Add(self.credCombo, 0, wx.ALL, 5)
+        
         self.hsizer = wx.BoxSizer(wx.HORIZONTAL)
        
         self.hsizer.Add(self.cancelButton, 0, wx.ALIGN_RIGHT|wx.ALL, 2)  
@@ -32,9 +35,13 @@ class CloudPanel(wx.Panel):
         
         self.sizer.Add(self.hsizer, 0, wx.ALIGN_RIGHT|wx.ALL, 2)   
         
+        
+        
     def setClouds(self, clouds):
         self.cloudList.setItems(clouds)
-        
+    
+    def setCloudCreds(self, creds):
+        self.credCombo.SetItems(creds)
         
 class KernelPanel(wx.Panel):    
     

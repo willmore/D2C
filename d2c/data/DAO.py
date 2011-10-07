@@ -18,10 +18,12 @@ from d2c.model.Ramdisk import Ramdisk
 from d2c.RemoteShellExecutor import RemoteShellExecutorFactory
 from d2c.ShellExecutor import ShellExecutorFactory
 from d2c.model.DeploymentTemplate import DeploymentTemplate, RoleTemplate
+from d2c.model.CloudCred import CloudCred
 
 from sqlalchemy import Table, Column, Integer, String, Float, MetaData, ForeignKey, create_engine, Boolean, UniqueConstraint
 from sqlalchemy.orm import sessionmaker, mapper, relationship
 from sqlalchemy.orm.interfaces import MapperExtension
+
 
 
 import boto
@@ -379,6 +381,20 @@ class DAO:
       
         mapper(EC2Cred, ec2CredTable)
         
+        cloudCredTable = Table('cloud_cred', metadata,
+                            Column('id', Integer, primary_key=True),
+                            Column('name', String, nullable=False),
+                            Column('awsUserId', String, nullable=False),
+                            Column('awsCredId', ForeignKey('aws_cred.name')),
+                            Column('ec2CredId', ForeignKey('ec2_cred.id'))
+                            )
+      
+        mapper(CloudCred, cloudCredTable,
+                    properties={
+                        'awsCred': relationship(AWSCred),
+                        'ec2Cred': relationship(EC2Cred)
+                    })
+        
         confValueTable = Table('conf', metadata,
                             Column('key', String, primary_key=True),
                             Column('value', String))  
@@ -468,6 +484,9 @@ class DAO:
         else:
             val.value = value
             self.save(val)
+            
+    def getAmi(self, _id):
+        return self.session.query(AMI).filter_by(amiId=_id).first()
     
     def getAMIs(self):
         return self.session.query(AMI)
@@ -486,6 +505,13 @@ class DAO:
     
     def getAWSCreds(self):
         return self.session.query(AWSCred).all()
+    
+    def getCloudCreds(self):
+        return self.session.query(CloudCred)
+    
+    def getCloudCred(self, name):
+        items = self.session.query(CloudCred).filter_by(name=name).limit(1).all()
+        return items[0] if len(items) == 1 else None
     
     def getDeployments(self):
         return self.session.query(Deployment)

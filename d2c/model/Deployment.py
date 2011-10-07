@@ -157,19 +157,24 @@ class Deployment(object):
             role.setLogger(self.logger)
     
     def hasCompleted(self):
-        return self.state == DeploymentState.JOB_COMPLETED
+        return self.state == DeploymentState.COMPLETED
     
     def roleRunTime(self):
-        startTime = 0
-        endTime = 0
-        
+        return self.getRoleEndTime() - self.getRoleStartTime()
+    
+    def getRoleStartTime(self):
         for e in self.stateEvents:
             if e.state == DeploymentState.ROLES_STARTED:
-                startTime = e.time
-            elif e.state == DeploymentState.JOB_COMPLETED:
-                endTime = e.time
-                
-        return endTime - startTime
+                return e.time
+        
+        return -1
+        
+    def getRoleEndTime(self):
+        for e in self.stateEvents:
+            if e.state == DeploymentState.JOB_COMPLETED:
+                return e.time
+        
+        return -1
     
     def setCloud(self, cloud):
 

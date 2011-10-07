@@ -22,7 +22,7 @@ class UploadAction(object):
     def copy(self):      
         return UploadAction(self.source, self.destination, self.sshCred)
      
-    def execute(self, instance):   
+    def execute(self, instance, shellVars):   
             
         assert os.path.isdir(self.source) or os.path.isfile(self.source), "Source not present: %s" % str(self.source)    
        

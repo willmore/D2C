@@ -10,7 +10,7 @@ from wx.lib.pubsub import Publisher
 from d2c.gui.Gui import Gui
 from d2c.controller.ConfController import ConfController
 
-from d2c.gui.ConfPanel import ConfPanel
+from d2c.gui.ConfPanel import CredDialog
 from d2c.controller.ImageController import ImageController
 from d2c.controller.AMIController import AMIController
 from d2c.gui.DeploymentTemplateWizard import DeploymentTemplateWizard
@@ -87,7 +87,7 @@ class Application:
         
     def showConf(self, event):
         
-        conf = ConfPanel(None, size=(800,400))
+        conf = CredDialog(self._dao, None, size=(800,400))
         ConfController(conf, self._dao)
         conf.ShowModal()
         conf.Destroy()
