@@ -124,7 +124,7 @@ class LibVirtInstance(object):
         assert (len(roots) == 1) #Only supporting one main partition for now
         rootDev = roots[0]
         gf.mount(rootDev, "/")
-        gf.mkdir_mode("/root/.ssh", 0755)
+        #gf.mkdir_mode("/root/.ssh", 0755)
         gf.write("/root/.ssh/authorized_keys", publicKey)
         gf.chown(0, 0, "/root/.ssh")
         gf.chown(0, 0, "/root/.ssh/authorized_keys")
@@ -445,7 +445,10 @@ class EC2CloudConn(CloudConnection):
         
         privKey = os.path.join(dataDir, "%s/%s.pem" % (dataDir, keyPairName))
         os.chmod(privKey, 0600)
-        return privKey
+        
+        #Temp hack as I'm having trouble getting EC2 to insert the public key
+        #return privKey
+        return "/home/willmore/.d2c/root_key"
     
 
 class EC2Cloud(Cloud):

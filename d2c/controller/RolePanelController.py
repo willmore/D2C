@@ -1,5 +1,6 @@
 import wx
 from d2c.model.Role import Role
+from d2c.model.SourceImage import AMI
 from d2c.model.Deployment import Deployment
 from d2c.model.InstanceType import InstanceType
 from wx.lib.pubsub import Publisher
@@ -52,7 +53,8 @@ class RolePanelController:
         p.instancePicker.SetValue(role.instanceType.name)
         p.instancePicker.AppendItems([i.name for i in role.instanceType.cloud.instanceTypes])
         
-        p.imagePicker.SetValue(role.image.amiId)
+        
+        p.imagePicker.SetValue(role.image.amiId if isinstance(role.image, AMI) else str(role.image.id))
         p.imagePicker.AppendItems([i.amiId for i in self.dao.getAMIs()])
 
         p.countPicker.SetValue(role.count)
@@ -84,7 +86,13 @@ class RolePanelController:
         p = self.view.panel
         
         self.role.count = p.countPicker.GetValue()
-        self.role.image = self.dao.getAmi(p.imagePicker.GetValue())
+        
+        #First test to see if it was an AMI
+        image = self.dao.getAmi(p.imagePicker.GetValue())
+        #otherwise it is simple image
+        if image is None:
+            image = self.dao.getSourceImage(p.imagePicker.GetValue())
+        self.role.image = image
         self.role.instanceType = [i for i in self.role.instanceType.cloud.instanceTypes if i.name == p.instancePicker.GetValue()][0]
         self.dao.save(self.role)
         

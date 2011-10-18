@@ -24,7 +24,7 @@ class UploadAction(object):
      
     def execute(self, instance, shellVars):   
             
-        assert os.path.isdir(self.source) or os.path.isfile(self.source), "Source not present: %s" % str(self.source)    
+        #assert os.path.isdir(self.source) or os.path.isfile(self.source), "Source not present: %s" % str(self.source)    
        
         cmd = "scp -i %(key)s -o StrictHostKeyChecking=no %(src)s %(user)s@%(host)s:%(dest)s" % \
             {'key':self.sshCred.privateKey,

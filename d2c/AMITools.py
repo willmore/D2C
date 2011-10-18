@@ -69,8 +69,8 @@ class AMITools:
         if not os.path.exists(destDir):
             os.makedirs(destDir)
         
-        BUNDLE_CMD = "euca-bundle-image -i %s -c %s -k %s -u %s -r %s -d %s --kernel %s --ec2cert %s"
-        
+        BUNDLE_CMD = "ec2-bundle-image -i %s -c %s -k %s -u %s -r %s -d %s --kernel %s --ec2cert %s"
+        BUNDLE_CMD += " --block-device-mapping ami=sda1,root=/dev/sda1"
         bundleCmd = BUNDLE_CMD % (img, ec2Cred.cert, ec2Cred.private_key, 
                                     userId, kernel.architecture.arch, destDir, kernel.aki,
                                     cloud.getEC2Cert())

@@ -123,6 +123,9 @@ class Role(object):
         
         assert awsCred is None or isinstance(awsCred, AWSCred)
         
+        if self.count == 0:
+            return
+        
         cloudConn = self.deployment.cloud.getConnection(awsCred)
        
         self.logger.write("Reserving %d instance(s) of %s with launchKey %s" % (self.count, str(self.image.image.name), self.sshCred.name))
@@ -144,6 +147,10 @@ class Role(object):
         '''
         Execute the actions on each instance within the role.
         '''
+        
+        if self.count == 0:
+            return
+        
         if self.reservation is None:
             self.reservation = self.__getReservation()
         
@@ -161,6 +168,9 @@ class Role(object):
         This will be reworked in the the future to create a more full-featured 
         context scheme.
         '''
+        
+        if self.count == 0:
+            return
         
         ctxt = string.join(ips, "\n")
         cmd = "echo -e \"%s\" > /tmp/d2c.context" % ctxt
@@ -207,6 +217,9 @@ class Role(object):
         return True, else return False. 
         '''
         
+        if self.count == 0:
+            return True
+        
         if self.reservation is None:
             self.reservation = self.__getReservation()
             
@@ -232,6 +245,9 @@ class Role(object):
         return reservations[0] 
         
     def collectData(self):
+        
+        if self.count == 0:
+            return
         
         if self.reservation is None:
             self.reservation = self.__getReservation()

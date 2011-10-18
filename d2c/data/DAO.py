@@ -434,6 +434,9 @@ class DAO:
     def getImages(self):
         return self.session.query(Image)
     
+    def getSourceImage(self, _id):
+        return self.session.query(SourceImage).filter_by(id=_id).first()
+    
     def getSourceImages(self):
         return self.session.query(SourceImage)
     
