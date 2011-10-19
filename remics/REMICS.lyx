@@ -1,0 +1,1221 @@
+#LyX 2.0 created this file. For more info see http://www.lyx.org/
+\lyxformat 413
+\begin_document
+\begin_header
+\textclass article
+\use_default_options true
+\maintain_unincluded_children false
+\language english
+\language_package default
+\inputencoding auto
+\fontencoding global
+\font_roman default
+\font_sans default
+\font_typewriter default
+\font_default_family default
+\use_non_tex_fonts false
+\font_sc false
+\font_osf false
+\font_sf_scale 100
+\font_tt_scale 100
+
+\graphics default
+\default_output_format default
+\output_sync 0
+\bibtex_command default
+\index_command default
+\paperfontsize default
+\use_hyperref false
+\papersize default
+\use_geometry false
+\use_amsmath 1
+\use_esint 1
+\use_mhchem 1
+\use_mathdots 1
+\cite_engine basic
+\use_bibtopic false
+\use_indices false
+\paperorientation portrait
+\suppress_date false
+\use_refstyle 1
+\index Index
+\shortcut idx
+\color #008000
+\end_index
+\secnumdepth 3
+\tocdepth 3
+\paragraph_separation indent
+\paragraph_indentation default
+\quotes_language english
+\papercolumns 1
+\papersides 1
+\paperpagestyle default
+\tracking_changes false
+\output_changes false
+\html_math_output 0
+\html_css_as_file 0
+\html_be_strict false
+\end_header
+
+\begin_body
+
+\begin_layout Section
+Introduction 
+\end_layout
+
+\begin_layout Subsection
+Legacy System Description
+\end_layout
+
+\begin_layout Standard
+The target legacy system is an ad-hoc personal setup of the Grid-based Projector
+-Augmented Wave Method
+\begin_inset Foot
+status open
+
+\begin_layout Plain Layout
+https://wiki.fysik.dtu.dk/gpaw/index.html
+\end_layout
+
+\end_inset
+
+ (GPAW) application.
+ GPAW is a popular distributed application which provides in conjunction
+ with the Atomic Simulation Environment
+\begin_inset Foot
+status open
+
+\begin_layout Plain Layout
+https://wiki.fysik.dtu.dk/ase/
+\end_layout
+
+\end_inset
+
+ (ASE) optimization atomic structures.
+ The legacy system is the personal deployment of a PhD student at the University
+ of Tartu, Institute of Physical Chemistry.
+ 
+\end_layout
+
+\begin_layout Subsubsection
+Deployment Architecture 
+\end_layout
+
+\begin_layout Standard
+The legacy deployment resides on a single host: a Intel® Core™2 Quad CPU
+ 2.83 GHz with 8 GB RAM.
+\end_layout
+
+\begin_layout Subsubsection
+Software Artefacts 
+\end_layout
+
+\begin_layout Description
+GPAW
+\end_layout
+
+\begin_deeper
+\begin_layout Standard
+GPAW provides a Python library for optimizing molecular structures.
+ The library contains solvers for optimizing the engery of molecular structures
+ and computing atomic forces.
+\end_layout
+
+\end_deeper
+\begin_layout Description
+ASE
+\end_layout
+
+\begin_deeper
+\begin_layout Standard
+The Automic Simulation Environment (ASE) is a Python software library for
+ definining, modifying, and visualizing molecular structures.
+ GPAW uses ASE as the model upon which its algorithms operate.
+\end_layout
+
+\end_deeper
+\begin_layout Description
+LAPACK
+\end_layout
+
+\begin_deeper
+\begin_layout Standard
+GPAW calculations require great amounts of matrix calculations.
+ These are performed using the Linear Algebra PACkage
+\begin_inset Foot
+status open
+
+\begin_layout Plain Layout
+http://www.netlib.org/lapack/
+\end_layout
+
+\end_inset
+
+ (LAPACK).
+\end_layout
+
+\end_deeper
+\begin_layout Description
+Python
+\end_layout
+
+\begin_deeper
+\begin_layout Standard
+GPAW and ASE are implemented as Python libraries.
+ Users create Python scripts to interface these libraries.
+ GPAW supports Python versions 2.3 to 2.7.
+\end_layout
+
+\end_deeper
+\begin_layout Description
+MPI
+\end_layout
+
+\begin_deeper
+\begin_layout Standard
+Users may preform distributed GPAW using a library implementing the Message
+ Passing Interface (MPI).
+ The legacy system uses the Open MPI
+\begin_inset Foot
+status open
+
+\begin_layout Plain Layout
+http://www.open-mpi.org/
+\end_layout
+
+\end_inset
+
+ implementation.
+\end_layout
+
+\end_deeper
+\begin_layout Description
+Linux
+\end_layout
+
+\begin_deeper
+\begin_layout Standard
+The legacy system runs on the Linux 2.6.35-27 operating system.
+ The distribution is Ubuntu 10.10.
+\end_layout
+
+\end_deeper
+\begin_layout Subsubsection
+Disadvantages of the Legacy System 
+\end_layout
+
+\begin_layout Standard
+The primary disadavantage of the legacy system is that it is limited to
+ the resources of a single desktop.
+ The memory limits the size of GPAW problems that can be solved.
+ GPAW calculations are memory intensive and common problems that the user
+ wishes to solve can easilly exhaust the 8GBs available.
+ The GPAW application when used in conjunction with MPI can scale to multiple
+ hosts, but the user does not have additional resources available.
+ 
+\end_layout
+
+\begin_layout Standard
+The resources available also preclude the user from running multiple GPAW
+ calculations in parrallel.
+ As a normal calculation may run for a day or longer (depending on the CPU
+ available), the user must manually batch calculations and wait a considerable
+ for results.
+\end_layout
+
+\begin_layout Section
+Migration Tool Description
+\end_layout
+
+\begin_layout Standard
+The Desktop-to-Cloud (D2C) tool provides two facilities: transformation
+ of user-supplied virtual machine images to the Amazon Machine Image format
+ and life-cycle management of OLAP distributed applications hosted on Amazon's
+ Elastic Cloud Computing (EC2) platform (or compatible infrastructure, such
+ as Eucalyptus).
+ Therefore, the base of the desktop-to-cloud process is at least one image
+ of a virtual machine being able to run non-interactively an experiment.
+ At the moment, the tool is targeted at computational intense scientific
+ use cases but is not optimized for management of large datasets.
+ 
+\end_layout
+
+\begin_layout Standard
+The general process flow of preparing the legacy system, migrating it to
+ a cloud infrastructure, and running the migrated system is depicted in
+ Figure
+\begin_inset space ~
+\end_inset
+
+
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig:Process-overview"
+
+\end_inset
+
+.
+ This process, which we have derived from our own experience and the experience
+ of users of the D2C prototype is detailed in the following sections.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Graphics
+	filename figures/overall_prozess.pdf
+	lyxscale 50
+	width 70col%
+	BoundingBox 40bp 310bp 480bp 730bp
+	clip
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+Process overview
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:Process-overview"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
+System Preparation
+\end_layout
+
+\begin_layout Standard
+From discussions with scientific application users, we have derived Figure
+\begin_inset space ~
+\end_inset
+
+
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig:Process-overview"
+
+\end_inset
+
+ and Figure
+\begin_inset space ~
+\end_inset
+
+
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig:Flow-diagram-preparation"
+
+\end_inset
+
+.
+ In this section, we will discuss the preparation part depicted in Figure
+\begin_inset space ~
+\end_inset
+
+
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig:Flow-diagram-preparation"
+
+\end_inset
+
+.
+\begin_inset Float figure
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Graphics
+	filename figures/preparation.pdf
+	lyxscale 50
+	width 90col%
+	BoundingBox 12bp 0bp 560bp 850bp
+	clip
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+Flow diagram preparation
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:Flow-diagram-preparation"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+For preparing to migrate a desktop application to the cloud, there are two
+ steps involved: 1.
+\begin_inset space ~
+\end_inset
+
+creating a local virtual environment and 2.
+\begin_inset space ~
+\end_inset
+
+determining a scaling function which plays a crucial role in approximating
+ the costs of executing experiments.
+\end_layout
+
+\begin_layout Standard
+In step
+\begin_inset space ~
+\end_inset
+
+1, we have to deal with creating an initial virtual machine, installing
+ required software, configuring the virtual machine, testing a relevant
+ example in a single virtual machine instance and respective refinements
+ if the test fails.
+\end_layout
+
+\begin_layout Itemize
+Create VM(s)
+\end_layout
+
+\begin_deeper
+\begin_layout Standard
+For creating virtual machines, we have to allocate an appropriate amount
+ of host system resources.
+ These are a disk image and its maximum host disk space consumption, assigned
+ memory, and visible core count.
+ In a current case, we assume that we have a desktop computer having 4GB
+ of main memory, two cores, and more than 20GB free disk space.
+ For a current Linux desktop distribution (like Fedora, Suse, or Ubuntu),
+ we need at least 512MB per guest system, for non trivial scientific application
+s usually higher numbers in the range of 1 to 4GB will be feasible for initial
+ tests.
+ To avoid swapping and resulting two long test runs the sum of the memory
+ consumed by the virtual machines should not take more than 75% of the host
+ system.
+ The 4GB host memory demand results out of the fact that we want to be able
+ to run at least two virtual machines with 1GB guest memory each.
+ 
+\end_layout
+
+\begin_layout Standard
+For the initial operating system, it can be just installed via a downloadable
+ ISO cd image, or ready-made vendor specific virtual machine template can
+ be used.
+ 
+\end_layout
+
+\begin_layout Standard
+This step might have to be repeated or the disks have to be cloned for multiple
+ virtual machines, if there are right from the beginning distinctive roles
+ with different software setups.
+\end_layout
+
+\end_deeper
+\begin_layout Itemize
+Install software
+\end_layout
+
+\begin_deeper
+\begin_layout Standard
+In this step, we have to install the domain specific software and its dependenci
+es.
+ If there are multiple roles which require different software, we have to
+ account for this for each of these distinct machines here.
+\end_layout
+
+\end_deeper
+\begin_layout Itemize
+Scripting/Debugging single VM(s)
+\end_layout
+
+\begin_deeper
+\begin_layout Standard
+Here, we bring in pre-existing scripted experiments or we develop one from
+ scratch.
+ The scripts combines input data with configuration aspects, the actual
+ executable, and experiment-specific control flow.
+\end_layout
+
+\begin_layout Standard
+As this is a possible re-entry point of the described flow, this is also
+ a point of debugging and refinement of the initially configured scripts
+ and parameters.
+ If any defects in the execution have been identified, we will try to fix
+ these at this point.
+ 
+\end_layout
+
+\end_deeper
+\begin_layout Itemize
+Test single VM(s) in isolation
+\end_layout
+
+\begin_deeper
+\begin_layout Standard
+In this step each of the virtual machine is executed in isolation, running
+ a representative experiment that executes against a problem size manageable
+ within the VM resources.
+ 
+\end_layout
+
+\end_deeper
+\begin_layout Itemize
+If the test was successful (returning an expected outcome in a manageable
+ runtime), we proceed to the next step.
+ If we had problems either leading to a expectantly late result or no result
+ at all, we proceed with the Scripting/Debugging single VM(s) step to address
+ this problem.
+ In the example, we discovered here first that the default problem size
+ was used rather than the expected due to a malformed configuration file.
+ This forced us to re-iterate.
+\end_layout
+
+\begin_layout Itemize
+Assign Roles
+\end_layout
+
+\begin_deeper
+\begin_layout Standard
+At this stage we have one or more VM images with installed software and
+ configured that have passed tests in isolation.
+ We now describe the distributed system in terms of machine roles, but without
+ assigning definite amounts per role.
+ This requires creating a role name and mapping it to a single machine image.
+ Multiple roles may and often are assigned to a single image.
+ A common case is when an image may serve as either a master or slave within
+ a deployment.
+\begin_inset Foot
+status open
+
+\begin_layout Plain Layout
+The only distinguishing factor between master and slave is the machine on
+ which the experiment script is launched.
+\end_layout
+
+\end_inset
+
+ 
+\end_layout
+
+\end_deeper
+\begin_layout Itemize
+Scripting/Debugging distributed VM(s)
+\end_layout
+
+\begin_deeper
+\begin_layout Standard
+Running multiple machines of various role types to achieve a coordinated
+ requires scripting of execution life-cycle.
+ This means support for start-up and shutdown phases as well as health monitorin
+g.
+ 
+\end_layout
+
+\begin_layout Standard
+In iteration of the step, bugs discovered at the networking layer such as
+ incorrect IPs, firewall settings and SSH misconfiguration are corrected.
+\end_layout
+
+\end_deeper
+\begin_layout Itemize
+Clone and Test VM(s) distributed 
+\end_layout
+
+\begin_deeper
+\begin_layout Standard
+Once we have roles and their associated machine images and life-cycle management
+ scripts, we must test a minimum deployment.
+ A minimum deployment includes at least one instance of each role as a VM,
+ all running on a single host machine.
+ In the case that more than one role maps to a single image, we must clone
+ the image in order run independently.
+ 
+\end_layout
+
+\begin_layout Standard
+Once all machines have been launched, we execute the start-up script(s)
+ and monitor and wait until job completion or unrecoverable error encountered.
+ Once the test has passed, we proceed to scaling measurements.
+ If we discover any defects, we return to Scripting/Debugging distributed
+ VM(s).
+\end_layout
+
+\end_deeper
+\begin_layout Standard
+The scaling part of the workflow is not further refined as a workflow here
+ is not yet finished and under current development.
+ We share our experience in the following section.
+\end_layout
+
+\begin_layout Subsection
+Migrating to the Cloud
+\end_layout
+
+\begin_layout Standard
+A major hurdle in porting applications to an Infrastructure as a Service
+ (Iaas) is re-creation of a software environment on vendor-supplied (maybe
+ supported) OS and images.
+ The D2C seeks to mitigate potential problems of this often laborious task
+ by taking the entire environment as-is, provided it is within a virtual
+ environment, and programmatically transforming it to the vendor-specific
+ format with as few changes as necessary.
+ The tool has two supported IaaS vendors: Amazon's EC2 and Eucalyptus
+\begin_inset Foot
+status open
+
+\begin_layout Plain Layout
+http://www.eucalyptus.com/
+\end_layout
+
+\end_inset
+
+.
+ EC2 is a popular cloud computing platform which is part of the suite of
+ cloud services collectively branded as Amazon Web Services (AWS).
+ Eucalyptus is an open source platform providing a compatable subset of
+ AWS services including EC2.
+ 
+\end_layout
+
+\begin_layout Standard
+EC2's underlying machine virtualization is Xen
+\begin_inset Foot
+status open
+
+\begin_layout Plain Layout
+http://www.xen.org/
+\end_layout
+
+\end_inset
+
+, a widely used open-source technology which supports full and para-virtualizati
+on.
+ While Amazon provides a range of free and for pay images, it also supports
+ user supplied images, provided they function with a kernel using a Xen
+ compatible kernelMust have pv-ops with XSAVE hypercall disabled.
+ [ward_enabling_????].
+ An image may either be configured to boot with Amazon supplied kernels,
+ known as AKIs, or boot with a kernel packaged within the image itself.
+ The later option, which uses Xen's PVGRUB boot process, is the one which
+ D2C uses.
+ In the kernel update section of the transformation process, the D2C tool
+ installs a new kernel, either 32 or 64 bit depending on the detected image
+ type, and modified GRUB configuration to boot with the new kernel by default.
+\end_layout
+
+\begin_layout Standard
+In addition to working with a compliant kernel, an image must also be able
+ to mount devices in the manner supplied by the EC2 virtual machine.
+ EC2 instances have a default device mapping that usually does not match
+ the fstab entries within the user-supplied image.
+ EC2 instances come in a variety of types
+\begin_inset Foot
+status open
+
+\begin_layout Plain Layout
+http://aws.amazon.com/ec2/instance-types/
+\end_layout
+
+\end_inset
+
+ that may have more or less storage devices than the image is configured
+ for.
+ Some instances do not provide swap devices.
+ Most instances provide additional storage devices that the user may want
+ to utilize.
+ To conform with this new virtual hardware environment, the D2C tool changes
+ the fstab appropriately.
+\end_layout
+
+\begin_layout Standard
+In the current implementation, the D2C tool only supports transformation
+ of a single disk partition.
+ If an image has more than one partition, only the primary can be migrated
+ to EC2.
+\end_layout
+
+\begin_layout Standard
+The first step to application migration requires the user to supply the
+ D2C tool with valid AWS credentials (cf.
+ Figure [fig:tool-AWS-credentials]).
+ The user then registers a desktop image with the tool (cf.
+ Figure [fig:tool-added-images]).
+ After this, the user may select to initiate the migration process.
+ The tool proceeds with the above mentioned image transformations, making
+ any changes in a separate image copy, preserving the integrity of the source
+ (cf.
+ Figure [fig:tool-image-transformation]).
+ Upon transformation completion, the tool uploads the image to Amazon's
+ Simple Storage Service
+\begin_inset Foot
+status open
+
+\begin_layout Plain Layout
+http://aws.amazon.com/s3/
+\end_layout
+
+\end_inset
+
+, one of two hosting solutions for images running on EC2.
+ Once uploaded, the tool registers the image with the EC2 system, declaring
+ default settings such as suitable system architecture.
+ All images are currently registered as private, authorizing read and boot
+ access to the account which uploaded and registered it.
+ The duration of the entire transformation and upload procedure varies greatly
+ depending on the image size and user's Internet connection speed.
+ At this point, the user's image is ready to run on the EC2 platform (cf.
+ Figure [fig:tool-list-amis] and Figure ).
+ This process must be repeated for each Desktop image required for the distribut
+ed application.
+\end_layout
+
+\begin_layout Subsection
+Execution of Deployment 
+\end_layout
+
+\begin_layout Standard
+The current supported model of applications supported by D2C are non-interactive
+ computations which operate on a finite input data set.
+ A single execution of an application is defined as a deployment.
+ A deployment consists of one or more roles.
+ A role is defined by a deployment unique name, association to an EC2 image,
+ instance count and type, and life-cycle scripting (cf.
+ Figure [fig:tool-deployment-creation]-[fig:tool-deployment-cost]).
+ There may be a many to one relationship between roles and an unique EC2
+ image.
+ The instance count defines the number of virtual machines of specified
+ type that will be allocated upon deployment start-up.
+ Roles include optional life-cycle scripts that the deployment manager invokes
+ at the appropriate stage.
+ A deployment's life-cycle proceeds through the following phases:
+\end_layout
+
+\begin_layout Description
+Reservation 
+\end_layout
+
+\begin_deeper
+\begin_layout Standard
+Upon user initiation, the tool iterates through deployment roles, reserving
+ instances matching user specifications.
+ If the request cannot be completely fulfilled by EC2, any successful allocation
+s are released and the process ends.
+ The moment instances are reserved, AWS begins charging the user's account.
+ Prior to actual reservation, the tool prompts the user for confirmation,
+ displaying the per hour rate in USD as determined by the deployment's instance
+ type and count composition.
+\end_layout
+
+\end_deeper
+\begin_layout Description
+Contextualization 
+\end_layout
+
+\begin_deeper
+\begin_layout Standard
+Processes that operate cooperatively require some discovery mechanism.
+ Contextualization facilitates this discovery.
+ When all instances within a deployment are assigned IP addresses, the tool
+ installs a text file containing all addresses on each host in the deployment.
+ Currently applications must be configured to work with this D2C specific
+ file, but in the future the location and format of this file will be configurab
+le by the user.
+\end_layout
+
+\end_deeper
+\begin_layout Description
+Start-up 
+\end_layout
+
+\begin_deeper
+\begin_layout Standard
+Once the machines have been acquired, the tool executes any user-defined
+ start actions.
+ If a role contains multiple instances, the start actions will be run on
+ each instance.
+ Currently the tool supplies three classes of start-up actions: synchronous,
+ asynchronous, and upload.
+ 
+\end_layout
+
+\begin_layout Standard
+The upload action allows the user to install files on the instances which
+ were not bundled with the image.
+ These files may either correct minor image defects or supply experiment
+ specific input.
+ 
+\end_layout
+
+\begin_layout Standard
+The synchrounous action executes a specified BASH script.
+ The tool executes all scripts for a given role and instance in serial.
+ This functionality allows users to make modifications to deployment hosts
+ that are guaranteed to finish before starting any main scripts, which are
+ run using the asynchronous actions.
+\end_layout
+
+\begin_layout Standard
+The asynchronous action executes a script remotely on an instance, returning
+ execution control immediately back to the tool.
+ In contrast to the synchronous action, the user may assume that all asynchronou
+s actions run in parallel.
+ The action is asynchronous in that it logs on to the remote instance, executes
+ the user's script in a daemonizing (nohup) wrapper, and then immediately
+ ends the remote connection.
+ This is the mechanism by which a user should initiate the main application
+ process.
+ An example asynchronous action script is:
+\end_layout
+
+\begin_layout LyX-Code
+mpirun -np 16 python matrix_calc.py
+\end_layout
+
+\begin_layout Standard
+Once all deployment asynchronous actions have been initiated, the tool changes
+ the deployment state to Completion Monitoring.
+\end_layout
+
+\end_deeper
+\begin_layout Description
+Completion
+\begin_inset space ~
+\end_inset
+
+Monitoring 
+\end_layout
+
+\begin_deeper
+\begin_layout Standard
+The user must configure the D2C tool to test for application specific completion.
+ The only option provided currently, is the ability to monitor for the presence
+ of a file on an instance.
+ The tool continually polls the instances of roles with the specified check.
+ If no check is provided for a given role, that role is automatically assumed
+ to be in the finished state.
+ Only when all roles are in the finished state, does the program proceed
+ to finalization.
+\end_layout
+
+\end_deeper
+\begin_layout Description
+Finalization 
+\end_layout
+
+\begin_deeper
+\begin_layout Standard
+The result of supported applications will be some collection of output files.
+ These must be migrated to persistent storage as the EC2 instances used
+ only provide ephemeral storage, i.e.
+ storage that exists for limited lifespan of the instance.
+ D2C supports configurable downloading of files from the instances to local
+ storage.
+ This occurs after the remotely executing application has completed and
+ before the instances are terminated.
+\end_layout
+
+\end_deeper
+\begin_layout Description
+Termination 
+\end_layout
+
+\begin_deeper
+\begin_layout Standard
+Upon retrieval of required files, the deployment is shutdown.
+ D2C terminates all instances associated with the deployment, ending runtime
+ charges.
+\end_layout
+
+\end_deeper
+\begin_layout Subsection
+Domain Model
+\end_layout
+
+\begin_layout Description
+Cloud
+\end_layout
+
+\begin_deeper
+\begin_layout Standard
+The cloud blah blah
+\end_layout
+
+\end_deeper
+\begin_layout Description
+Instance
+\end_layout
+
+\begin_deeper
+\begin_layout Standard
+The instance represents blah
+\end_layout
+
+\end_deeper
+\begin_layout Subsection
+Tool Implementation
+\end_layout
+
+\begin_layout Standard
+D2C is a GUI desktop application implemented in Python.
+ The following section highlights key libraries that faciliate D2C functionality.
+\end_layout
+
+\begin_layout Subsubsection
+Software Libraries
+\end_layout
+
+\begin_layout Description
+Python
+\end_layout
+
+\begin_deeper
+\begin_layout Standard
+We choose Python as the primary implementation language for its cross-platform
+ support, support of multiple programming paradigms (functional, imperitive,
+ and object oriented) and ease of use for creating GUI applications.
+ 
+\end_layout
+
+\end_deeper
+\begin_layout Description
+WxPython
+\end_layout
+
+\begin_deeper
+\begin_layout Standard
+WxPython provides Python bindings for the wxWidgets GUI framework.
+ We choose wxPython based on its ability to create attractive, native-looking
+ applications regardless of its runtime desktop (Windows, OSX or various
+ Linux flavours).
+ Additionally, wxPython / wxWidgets has a large user and support base.
+\end_layout
+
+\end_deeper
+\begin_layout Description
+Boto
+\end_layout
+
+\begin_deeper
+\begin_layout Standard
+AWS provides programatic access to its services via command-line utilities
+\begin_inset Foot
+status open
+
+\begin_layout Plain Layout
+http://docs.amazonwebservices.com/AWSEC2/latest/CommandLineReference/
+\end_layout
+
+\end_inset
+
+ and a SOAP XML API
+\begin_inset Foot
+status open
+
+\begin_layout Plain Layout
+http://docs.amazonwebservices.com/AWSEC2/latest/APIReference/
+\end_layout
+
+\end_inset
+
+.
+ While not supported by Amazon directly, Boto
+\begin_inset Foot
+status open
+
+\begin_layout Plain Layout
+https://github.com/boto/boto
+\end_layout
+
+\end_inset
+
+ is the recommended Python wrapper for the AWS SOAP services.
+ The D2C tool manages instance lifecycles using the Boto API.
+\end_layout
+
+\end_deeper
+\begin_layout Description
+Libguestfs
+\end_layout
+
+\begin_deeper
+\begin_layout Standard
+Libguestfs
+\begin_inset Foot
+status open
+
+\begin_layout Plain Layout
+http://libguestfs.org/
+\end_layout
+
+\end_inset
+
+ provides a veritable Swiss Army Knife of functions to inspect and manipulate
+ virtual machine images.
+ Using libguestfs is highly preferred to mounting the images within the
+ user's filesystem.
+ Directly mounting the image is undesirable as it requires the host OS to
+ support the image's filesystem(s) and requires root privelges.
+ Libguestfs provides access to the image through use of a qemu appliance
+ bypassing such onerous requirements.
+ Libguestfs' API includes functions to extract partions from images and
+ insert SSH key files.
+ 
+\end_layout
+
+\begin_layout Standard
+D2C tool interfaces with libguestfs via supported Python bindings
+\begin_inset Foot
+status open
+
+\begin_layout Plain Layout
+http://libguestfs.org/guestfs-python.3.html
+\end_layout
+
+\end_inset
+
+.
+\end_layout
+
+\end_deeper
+\begin_layout Description
+Libvirt
+\end_layout
+
+\begin_deeper
+\begin_layout Standard
+Libvirt
+\begin_inset Foot
+status open
+
+\begin_layout Plain Layout
+http://libvirt.org/
+\end_layout
+
+\end_inset
+
+ is an abraction library for interacting with desktop hypervisors.
+ The D2C tool uses libvirt to access the currently supported hypervisor,
+ VirtualBox.
+ In the future, if so desired, adding support for other popular hypervisors
+ such as KVM, Xen, and VMWare should be greatly eased by use of libvirt.
+\end_layout
+
+\end_deeper
+\begin_layout Description
+SQLAlchemy
+\end_layout
+
+\begin_deeper
+\begin_layout Standard
+The D2C tool has a rich domain model and requirement of persistance across
+ user sessions.
+ SQLAlchemy
+\begin_inset Foot
+status open
+
+\begin_layout Plain Layout
+http://www.sqlalchemy.org/
+\end_layout
+
+\end_inset
+
+ is a Python Object Relational Mapper (ORM) that simplifies SQL-based peristence
+ of D2C's classes and relationships.
+ As SQLAlchemy absracts the underlying SQL database, the D2C tool could
+ make use of MySQL or ther popular SQL databases without significant effort.
+\end_layout
+
+\end_deeper
+\begin_layout Description
+SQLite
+\end_layout
+
+\begin_deeper
+\begin_layout Standard
+SQLite provides persistence management for D2C's highly relational data.
+ We choose SQLite for simplicity of installation and use.
+ As the D2C tool is designed for single user use, a serverless SQL database
+ implementation meets all requirements.
+ 
+\end_layout
+
+\end_deeper
+\begin_layout Section
+Migration Case Study
+\end_layout
+
+\begin_layout Standard
+Experiment 1: Compute minimum-engery state of structure composed of a gold
+ slab and a boron + floride molecule.
+\end_layout
+
+\begin_layout Standard
+File 22.py
+\end_layout
+
+\begin_layout LyX-Code
+
+\end_layout
+
+\begin_layout LyX-Code
+\begin_inset Float figure
+wide false
+sideways false
+status open
+
+\begin_layout LyX-Code
+# Define geometry of slab + BF4: 
+\end_layout
+
+\begin_layout LyX-Code
+slab = fcc111('Au', size=(2, 2, 3),orthogonal=True) 
+\end_layout
+
+\begin_layout LyX-Code
+slab.center(axis=2, vacuum=12)
+\end_layout
+
+\begin_layout LyX-Code
+d=0.8 
+\end_layout
+
+\begin_layout LyX-Code
+tFB1 = Atoms([Atom('B', (0, 0, 0)), 
+\end_layout
+
+\begin_layout LyX-Code
+              Atom('F', (d, d, d)), 
+\end_layout
+
+\begin_layout LyX-Code
+              Atom('F', (-d, -d, d)), 
+\end_layout
+
+\begin_layout LyX-Code
+              Atom('F', (-d, d, -d)),  
+\end_layout
+
+\begin_layout LyX-Code
+              Atom('F', (d, -d, -d))]) 
+\end_layout
+
+\begin_layout LyX-Code
+
+\end_layout
+
+\begin_layout LyX-Code
+tFB1.rotate('y',pi/4,center=(0, 0, 0)) 
+\end_layout
+
+\begin_layout LyX-Code
+tFB1.rotate('x',asin(1/sqrt(3))+pi,center=(0, 0, 0)) 
+\end_layout
+
+\begin_layout LyX-Code
+tFB1.rotate('z',pi/3,center=(0, 0, 0)) tFB1.translate(slab.positions[5]+(0.,0.,5.118))
+ 
+\end_layout
+
+\begin_layout LyX-Code
+slab += tFB1
+\end_layout
+
+\begin_layout LyX-Code
+
+\end_layout
+
+\begin_layout LyX-Code
+# Fix second and third layers: 
+\end_layout
+
+\begin_layout LyX-Code
+mask = [atom.tag > 1 for atom in slab]  slab.set_constraint(constraints.FixAtoms(ma
+sk=mask))
+\end_layout
+
+\begin_layout LyX-Code
+
+\end_layout
+
+\begin_layout LyX-Code
+# Initial state: 
+\end_layout
+
+\begin_layout LyX-Code
+calc = GPAW(h=0.16, kpts=(4, 4, 1), txt='22.txt',
+\end_layout
+
+\begin_layout LyX-Code
+            parallel={'domain':world.size}, xc='RPBE') 
+\end_layout
+
+\begin_layout LyX-Code
+slab.set_calculator(calc)
+\end_layout
+
+\begin_layout LyX-Code
+
+\end_layout
+
+\begin_layout LyX-Code
+qn=optimize.QuasiNewton(slab,trajectory='22.traj',restart='22.pckl') qn.run(fmax=0.05
+) qn.attach(calc.write,1,'22.gpw') calc.write('22.gpw')
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+22.py
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_body
+\end_document
