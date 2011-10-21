@@ -2526,6 +2526,268 @@ name "tab:22.py-EC2-Results"
 \end_inset
 
 
+\end_layout
+
+\begin_layout LyX-Code
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+  ___ ___ ___ _ _ _  
+\end_layout
+
+\begin_layout Plain Layout
+
+ |   |   |_  | | | | 
+\end_layout
+
+\begin_layout Plain Layout
+
+ | | | | | .
+ | | | | 
+\end_layout
+
+\begin_layout Plain Layout
+
+ |__ |  _|___|_____|  0.7.2.6974
+\end_layout
+
+\begin_layout Plain Layout
+
+ |___|_|             
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+User: dirac@dirac
+\end_layout
+
+\begin_layout Plain Layout
+
+Date: Wed Sep 28 14:37:05 2011
+\end_layout
+
+\begin_layout Plain Layout
+
+Arch: x86_64
+\end_layout
+
+\begin_layout Plain Layout
+
+Pid:  702
+\end_layout
+
+\begin_layout Plain Layout
+
+Dir:  /usr/lib/python2.6/dist-packages/gpaw
+\end_layout
+
+\begin_layout Plain Layout
+
+ase:   /usr/lib/python2.6/dist-packages/ase  version:  3.4.1
+\end_layout
+
+\begin_layout Plain Layout
+
+numpy: /usr/lib/python2.6/dist-packages/numpy
+\end_layout
+
+\begin_layout Plain Layout
+
+units: Angstrom and eV
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+Memory estimate
+\end_layout
+
+\begin_layout Plain Layout
+
+---------------
+\end_layout
+
+\begin_layout Plain Layout
+
+Calculator  839.37 MiB
+\end_layout
+
+\begin_layout Plain Layout
+
+    Initial overhead  107.55 MiB
+\end_layout
+
+\begin_layout Plain Layout
+
+    Density  56.37 MiB
+\end_layout
+
+\begin_layout Plain Layout
+
+        Arrays  10.16 MiB
+\end_layout
+
+\begin_layout Plain Layout
+
+        Localized functions  34.05 MiB
+\end_layout
+
+\begin_layout Plain Layout
+
+        Mixer  2.32 MiB
+\end_layout
+
+\begin_layout Plain Layout
+
+        Interpolator  9.84 MiB
+\end_layout
+
+\begin_layout Plain Layout
+
+    Hamiltonian  70.47 MiB
+\end_layout
+
+\begin_layout Plain Layout
+
+        Arrays  6.64 MiB
+\end_layout
+
+\begin_layout Plain Layout
+
+        Restrictor  6.36 MiB
+\end_layout
+
+\begin_layout Plain Layout
+
+        XC 3D grid  28.95 MiB
+\end_layout
+
+\begin_layout Plain Layout
+
+        Poisson  25.98 MiB
+\end_layout
+
+\begin_layout Plain Layout
+
+        vbar  2.54 MiB
+\end_layout
+
+\begin_layout Plain Layout
+
+    Wavefunctions  604.98 MiB
+\end_layout
+
+\begin_layout Plain Layout
+
+        Arrays psit_nG  396.00 MiB
+\end_layout
+
+\begin_layout Plain Layout
+
+        Eigensolver  102.87 MiB
+\end_layout
+
+\begin_layout Plain Layout
+
+        Projectors  5.65 MiB
+\end_layout
+
+\begin_layout Plain Layout
+
+        Overlap op  99.25 MiB
+\end_layout
+
+\begin_layout Plain Layout
+
+        Kinetic operator  1.22 MiB
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+Positions:
+\end_layout
+
+\begin_layout Plain Layout
+
+  0 Au    1.4425    0.8328   12.0000
+\end_layout
+
+\begin_layout Plain Layout
+
+  1 Au    4.3275    0.8328   12.0000
+\end_layout
+
+\begin_layout Plain Layout
+
+  2 Au    0.0000    3.3313   12.0000
+\end_layout
+
+\begin_layout Plain Layout
+
+  3 Au    2.8850    3.3313   12.0000
+\end_layout
+
+\begin_layout Plain Layout
+
+  4 Au    0.0000    1.6657   14.3556
+\end_layout
+
+\begin_layout Plain Layout
+
+  5 Au    2.8850    1.6657   14.3556
+\end_layout
+
+\begin_layout Plain Layout
+
+  6 Au    1.4425    4.1641   14.3556
+\end_layout
+
+\begin_layout Plain Layout
+
+  7 Au    4.3275    4.1641   14.3556
+\end_layout
+
+\begin_layout LyX-Code
+
+\begin_inset Caption
+
+\begin_layout Plain Layout
+Example output of initialization phase and one iteration of the optimization
+ phase.
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:Example-output-of-1"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout LyX-Code
 \begin_inset Float figure
 wide false
 sideways false
@@ -2548,10 +2810,6 @@ name "fig:Example-output-of"
 
 \end_inset
 
-
-\end_layout
-
-\begin_layout Plain Layout
 
 \end_layout
 
