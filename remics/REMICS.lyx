@@ -869,23 +869,169 @@ Upon retrieval of required files, the deployment is shutdown.
 Domain Model
 \end_layout
 
+\begin_layout Standard
+A UML diagram which represents domain model of D2C can be seen on 
+\begin_inset CommandInset ref
+LatexCommand formatted
+reference "fig:Domain-Model"
+
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\begin_inset Graphics
+	filename figures/domain_model.png
+	scale 50
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+Domain Model 
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:Domain-Model"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
 \begin_layout Description
 Cloud
 \end_layout
 
 \begin_deeper
 \begin_layout Standard
-The cloud blah blah
+The cloud represents the platform which will be the deployment will run
+ on.
+ Cloud can be either Amazon EC2 or Desktop Cloud.
 \end_layout
 
 \end_deeper
 \begin_layout Description
-Instance
+Deployment
 \end_layout
 
 \begin_deeper
 \begin_layout Standard
-The instance represents blah
+A deployment is run on cloud for a specific computation task with the help
+ of roles which define each instance's contribution to the deployment.
+\end_layout
+
+\end_deeper
+\begin_layout Description
+InstanceType
+\end_layout
+
+\begin_deeper
+\begin_layout Standard
+Instance type represents hardware configuration, architecture and cost of
+ running environment of an image on cloud environment.
+\end_layout
+
+\end_deeper
+\begin_layout Description
+Architecture
+\end_layout
+
+\begin_deeper
+\begin_layout Standard
+Architecture of an instance defines kernel and ramdisk of the instance.
+\end_layout
+
+\end_deeper
+\begin_layout Description
+Role
+\end_layout
+
+\begin_deeper
+\begin_layout Standard
+Role represents the characteristic of an instance for a given deployment.
+ A role has one or more Source Images, Async Actions, Remote Data Collectors,Sta
+rt Actions, File Exist Checkers and SSH Credentials.
+\end_layout
+
+\end_deeper
+\begin_layout Description
+SourceImage
+\end_layout
+
+\begin_deeper
+\begin_layout Standard
+Source Image consists of an operating system image which can be derived
+ to Desktop Image or AMI(Amazon Machine Image)
+\end_layout
+
+\end_deeper
+\begin_layout Description
+AsyncAction
+\end_layout
+
+\begin_deeper
+\begin_layout Standard
+Asynchronous remote shell commands which run on instances.
+\end_layout
+
+\end_deeper
+\begin_layout Description
+RemoteDataCollector
+\end_layout
+
+\begin_deeper
+\begin_layout Standard
+Remote Data Collector represents the data collectors which enables to collect
+ results from instances.
+\end_layout
+
+\end_deeper
+\begin_layout Description
+StartAction
+\end_layout
+
+\begin_deeper
+\begin_layout Standard
+Start Action represents the scripts which are run after the instance is
+ deployed on the cloud, which includes the scripts for starting the computations.
+ 
+\end_layout
+
+\end_deeper
+\begin_layout Description
+SSHCredentials
+\end_layout
+
+\begin_deeper
+\begin_layout Standard
+SSH Credentials are consisting of ID, Username and Private Key and they
+ enable logging into running instances of a deployment.
 \end_layout
 
 \end_deeper
