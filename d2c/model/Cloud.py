@@ -448,7 +448,8 @@ class EC2CloudConn(CloudConnection):
         
         #Temp hack as I'm having trouble getting EC2 to insert the public key
         #return privKey
-        return "/home/willmore/.d2c/root_key"
+        #return "/home/willmore/.d2c/root_key"
+        return privKey
     
 
 class EC2Cloud(Cloud):

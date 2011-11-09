@@ -42,10 +42,10 @@ class DeploymentPanel(wx.Panel):
         
         hbox = wx.BoxSizer(wx.HORIZONTAL)
         self.GetSizer().Add(hbox)
-        self.cloneButton = wx.Button(self, -1 , "Clone")
+        self.cloneButton = wx.Button(self, -1 , "Clone Deployment")
         hbox.Add(self.cloneButton, 0, wx.ALL, 5)
         
-        self.deleteButton = wx.Button(self, -1 , "Delete")
+        self.deleteButton = wx.Button(self, -1 , "Delete Deployment")
         hbox.Add(self.deleteButton, 0, wx.ALL, 5)
         
     def showLogPanel(self):

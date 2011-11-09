@@ -151,7 +151,7 @@ class DeploymentTemplatePanel(wx.Panel):
         self.experimentTab = CostGraphPanel(deployment, self.dao.getClouds(), self.tabContainer)
         self.tabContainer.AddPage(self.experimentTab, "Cost Prediction")
                 
-        self.deleteButton = wx.Button(self, wx.ID_ANY, 'Delete')
+        self.deleteButton = wx.Button(self, wx.ID_ANY, 'Delete Deployment Template')
         
         self.deleteButton.Bind(wx.EVT_BUTTON, self.handleDelete)
         self.GetSizer().Add(self.deleteButton, 0, wx.ALL, 2)

@@ -26,7 +26,7 @@ class Gui(wx.Frame):
     ID_CLOUD = 5
     
     def __init__(self, dao, parent=None, id=-1, title='D2C'):
-        wx.Frame.__init__(self, parent, id, title, size=(750, 450))
+        wx.Frame.__init__(self, parent, id, title, size=(750, 550))
 
         self.Center()
 
@@ -44,13 +44,13 @@ class Gui(wx.Frame):
         self.tabContainer.AddPage(self.imageTab, "Images")
         
         self.imagePanel = RawImagePanel(self.tabContainer, -1)
-        self.tabContainer.AddPage(self.imagePanel, "Source Images")
+        #self.tabContainer.AddPage(self.imagePanel, "Source Images")
         
         self.amiPanel = AMIPanel(self.tabContainer, -1)
         self.tabContainer.AddPage(self.amiPanel, "AMIs")
         
         self.deploymentPanel = DeploymentTab(dao, self.tabContainer, -1)
-        self.tabContainer.AddPage(self.deploymentPanel, "Deployments")
+        self.tabContainer.AddPage(self.deploymentPanel, "Deployment Templates/Deployments")
         
         #TODO move to controller
         pub.subscribe(self.__createAMI, "CREATE AMI")

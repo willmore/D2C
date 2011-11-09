@@ -185,7 +185,7 @@ class AMIImagePanel(wx.Panel):
         gs = wx.GridBagSizer(2,2)
         self.GetSizer().Add(gs, 0, wx.EXPAND)
         _addField(self, "Date Added", time.strftime("%c", time.localtime(image.dateAdded)), gs, 0)
-        _addField(self, "Disk Size", str(image.size / 1000000.0) + " GB", gs, 1)
+        _addField(self, "Disk Size", str(image.size / 1000000) + " MB", gs, 1)
         
 class DesktopImagePanel(wx.Panel):    
     
@@ -211,7 +211,7 @@ class DesktopImagePanel(wx.Panel):
         self.GetSizer().Add(gs, 0, wx.EXPAND)
         _addField(self, "Date Added", time.strftime("%c", time.localtime(image.dateAdded)), gs, 0)
         #_addField(self, "Disk Size", str(image.size / 1000000.0) + " GB", gs, 1)
-        _addField(self, "Size on Disk", str(image.sizeOnDisk / 1000000.0) + " GB", gs, 1)
+        _addField(self, "Size on Disk", str(image.sizeOnDisk / 1000000) + " MB", gs, 1)
         
         
     def createAMI(self, _):

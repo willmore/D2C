@@ -17,6 +17,7 @@ class CredDialog(wx.Dialog):
         
         self.splitter = wx.SplitterWindow(self, -1)
         self.splitter.SetMinimumPaneSize(150)
+        
         vbox = wx.BoxSizer(wx.VERTICAL)
 
         self.list = wx.ListCtrl(self.splitter, -1)
@@ -26,10 +27,11 @@ class CredDialog(wx.Dialog):
         self.displayPanel = ContainerPanel(self.splitter, -1)
         
         self.splitter.SplitVertically(self.list, self.displayPanel)
+        self.splitter.SetSashPosition(100)
         
         self.bottomPanel = wx.Panel(self, -1)
         self.bottomPanel.vbox = wx.BoxSizer(wx.VERTICAL)
-        self.addButton = wx.Button(self.bottomPanel, -1, 'Add Credential')
+        self.addButton = wx.Button(self.bottomPanel, -1, 'Add New Credential')
         self.bottomPanel.vbox.Add(self.addButton, 0, wx.ALL, 5)
         self.bottomPanel.SetSizer(self.bottomPanel.vbox)
         self.bottomPanel.SetBackgroundColour('GREY')
