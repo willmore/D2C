@@ -34,7 +34,24 @@ libvirt installation:
 Since libvirt in ubuntu repository does not support VirtualBox drivers, libvirt should be downloaded from 
 ftp://libvirt.org/libvirt/libvirt-0.8.8.tar.gz and libxml2-dev,libgnutls-dev,libdevmapper-dev,python-dev,libnl-dev packages should be installed
  for compiling
- (Automated way : http://stackoverflow.com/questions/2778638/libvirt-and-virtualbox-getting-started) 
+ 
+ Or following automated way:(Source : http://stackoverflow.com/questions/2778638/libvirt-and-virtualbox-getting-started) 
+    
+    mkdir libvirt
+    cd libvirt
+    apt-get source -d libvirt
+    sudo apt-get build-dep libvirt
+    dpkg-source -x libvirt*dsc
+    cd libvirt-0.8.8/debian
+    gedit rules
+        Change "--without-vbox" to "--with-vbox"
+    gedit changelog
+        Change "0.8.8-1ubuntu6.5" to "0.8.8-1ubuntu6.5.local"
+    cd ..
+    dpkg-buildpackage -us -uc -b -rfakeroot
+    cd ..
+    sudo dpkg -i *.deb
+    
 
 --------------------
 - Installation
