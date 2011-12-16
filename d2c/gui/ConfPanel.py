@@ -150,6 +150,7 @@ class CredPanel(wx.Panel):
             self.cloudCred.ec2Cred.cert = self._ec2_cert.GetValue()
             self.cloudCred.ec2Cred.private_key = self._ec2_private_key.GetValue()
         
+        #TODO: Update Credentials Name
         self.dao.add(self.cloudCred)
         
     
