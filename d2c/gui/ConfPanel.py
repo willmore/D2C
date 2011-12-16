@@ -38,6 +38,8 @@ class CredDialog(wx.Dialog):
         
         self.closeButton = wx.Button(self.bottomPanel, wx.ID_ANY, 'Close')
         self.bottomPanel.vbox.Add(self.closeButton, 0, wx.ALL, 5)
+        #New line
+        self.list.Bind(wx.EVT_LIST_ITEM_SELECTED, self.selectCred, self.list)
         
         vbox.Add(self.bottomPanel, 0, wx.EXPAND)
         
@@ -49,10 +51,13 @@ class CredDialog(wx.Dialog):
         self.Close()
     
     def selectCred(self, evt):
-        pass
+        self.displayPanel.showPanel(self.list.GetItemText(evt.m_itemIndex))
     
     def addCred(self):
-        self.addCredPanel(CredPanel(self.dao, CloudCred(name="New Credential"), self.displayPanel, -1))
+        try:
+            self.displayPanel.getPanel("New Credential")
+        except:
+            self.addCredPanel(CredPanel(self.dao, CloudCred(name="New Credential"), self.displayPanel, -1))
     
     def loadCreds(self):
         for cred in self.dao.getCloudCreds():
@@ -146,7 +151,5 @@ class CredPanel(wx.Panel):
             self.cloudCred.ec2Cred.private_key = self._ec2_private_key.GetValue()
         
         self.dao.add(self.cloudCred)
-        
-        
         
     
